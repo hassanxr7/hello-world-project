@@ -58,65 +58,6 @@ export const translations = {
     chatbotPlaceholder: "Type your message...",
     send: "Send",
   },
-  so: {
-    // Header
-    home: "Guriga",
-    about: "Naga Saabsan",
-    services: "Adeegyada",
-    api: "API",
-    pricing: "Qiimaha",
-    news: "Wararka",
-    contact: "Nala Soo Xiriir",
-    becomeMerchant: "Noqo Ganacsi",
-    
-    // Hero
-    heroTitle: "Beddelka Lacag Bixinta Afrika",
-    heroSubtitle: "Hab lacag bixin oo degdeg ah, ammaan ah oo la isku halleyn karo South Sudan iyo meel kasta. Ku soo dhawoow HubdexPay.",
-    getStarted: "Bilow Hadda",
-    learnMore: "Wax Badan Baro",
-    
-    // Features
-    featuresTitle: "Maxaa Aad HubdexPay U Doranaysaa",
-    featuresSubtitle: "Xalka lacag bixinta ee ugu wanaagsan South Sudan",
-    
-    feature1Title: "Lacag Bixin Degdeg ah",
-    feature1Desc: "Lacag bixinta si degdeg ah ayaa lagu sameeyaa ilbiriqsi ah, oo hubinaysa hawlaha ganacsiga.",
-    
-    feature2Title: "Ammaanka Bank-ka",
-    feature2Desc: "Sirta horumarsan iyo ogaanshaha khiyaamada si loo ilaaliyo lacag bixin kasta.",
-    
-    feature3Title: "Mobile Koowaad",
-    feature3Desc: "Waxaa loo hagaajiyay aaladaha mobile-ka, oo ku habboon dhaqaalaha mobile-ka ee South Sudan.",
-    
-    feature4Title: "Lacag Badan",
-    feature4Desc: "Taageero SSP, USD, iyo lacagaha waaweyn oo leh beddelka waqtiga dhabta ah.",
-    
-    feature5Title: "Taageero 24/7",
-    feature5Desc: "Adeegga macaamiisha saacadaha oo dhan oo ku qoran Ingiriisi, Carabi, iyo luqadaha maxalliga ah.",
-    
-    feature6Title: "Kharash Yar",
-    feature6Desc: "Qiime tartan ah oo loogu talagalay ganacsiyada Afrika iyo ganacsatada.",
-    
-    // CTA
-    ctaTitle: "Ma Diyaar U Tahay Inaad Ganacsigaaga Beddesho?",
-    ctaSubtitle: "Ku soo biir kumaan ganacsi oo horey u isticmaalaya HubdexPay",
-    ctaButton: "Bilow Qaadashada Lacag Bixinta",
-    
-    // Footer
-    footerTagline: "Xoojinta ganacsiyada Afrika oo leh xalal lacag bixin oo fudud",
-    quickLinks: "Xiriiriyaha Degdegga ah",
-    legal: "Sharci",
-    privacyPolicy: "Qaanuunka Qarsoodi",
-    termsOfService: "Shuruudaha Adeega",
-    refundPolicy: "Qaanuunka Celinta",
-    followUs: "Nala Soco",
-    allRightsReserved: "Dhammaan xuquuqaha waa la ilaaliyay.",
-    
-    // Chatbot
-    chatbotTitle: "Taageerada Macaamiisha",
-    chatbotPlaceholder: "Qor fariintaada...",
-    send: "Dir",
-  },
   ar: {
     // Header (Arabic)
     home: "الرئيسية",
