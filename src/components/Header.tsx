@@ -2,8 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import logo from "@/assets/hubdexpay-logo-green.png";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Header = () => {
+  const { t } = useLanguage();
+  
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-lg">
       <div className="container mx-auto px-4 py-3">
@@ -14,36 +18,37 @@ const Header = () => {
           
           <nav className="hidden lg:flex items-center gap-8">
             <Link to="/" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              Home
+              {t("home")}
             </Link>
             <Link to="/about" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              About
+              {t("about")}
             </Link>
             <Link to="/services" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              Services
+              {t("services")}
             </Link>
             <Link to="/api-docs" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              API
+              {t("api")}
             </Link>
             <Link to="/pricing" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              Pricing
+              {t("pricing")}
             </Link>
             <Link to="/news" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              News
+              {t("news")}
             </Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
-              Contact
+              {t("contact")}
             </Link>
           </nav>
           
           <div className="flex items-center gap-4">
+            <LanguageSelector />
             <Button 
               size="lg"
-              className="bg-primary hover:bg-primary-dark text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 font-semibold px-8 transform hover:scale-105"
+              className="bg-primary hover:bg-primary-dark text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 font-semibold px-8 transform hover:scale-105 hidden md:flex"
               asChild
             >
               <a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer">
-                Become a Merchant
+                {t("becomeMerchant")}
               </a>
             </Button>
             <button className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors">
