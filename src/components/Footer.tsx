@@ -1,6 +1,6 @@
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/hubdexpay-logo.png";
+import logo from "@/assets/hubdexpay-logo-new.png";
 
 const Footer = () => {
   return (
