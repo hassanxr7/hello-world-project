@@ -1,4 +1,6 @@
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
+import logo from "@/assets/hubdexpay-logo.png";
 
 const Footer = () => {
   return (
@@ -6,34 +8,31 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold text-primary-foreground">H</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">
-                HUBDEX <span className="text-primary">PAY</span>
-              </span>
-            </div>
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="HubdexPay Logo" className="h-10 w-auto" />
+            </Link>
             <p className="text-muted-foreground text-sm">
-              Secure payment solutions for South Sudan's growing digital economy.
+              South Sudan's trusted payment gateway. Registered and compliant with local regulations.
             </p>
           </div>
           
           <div>
             <h3 className="font-semibold text-foreground mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#about" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#services" className="hover:text-primary transition-colors">Services</a></li>
-              <li><a href="#contact" className="hover:text-primary transition-colors">Contact</a></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/services" className="hover:text-primary transition-colors">Services</Link></li>
+              <li><Link to="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+              <li><Link to="/news" className="hover:text-primary transition-colors">News</Link></li>
+              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold text-foreground mb-4">Resources</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="https://nebdex.com/login" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Login</a></li>
-              <li><a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Register</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
+              <li><a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Register as Merchant</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">API Documentation</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Developer Portal</a></li>
             </ul>
           </div>
           
@@ -57,7 +56,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>© 2024 HubdexPay. All rights reserved. | Built for South Sudan</p>
+          <p>© 2025 HubdexPay Ltd. All rights reserved. | Registered Payment Gateway in South Sudan</p>
         </div>
       </div>
     </footer>
