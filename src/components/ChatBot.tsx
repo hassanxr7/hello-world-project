@@ -2,6 +2,8 @@ import { useState } from "react";
 import { MessageCircle, X, Send, Smile, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +26,7 @@ const ChatBot = () => {
     setIsOpen(!isOpen);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputMessage.trim()) {
       const newMessage = {
         id: messages.length + 1,
@@ -33,6 +35,20 @@ const ChatBot = () => {
         timestamp: new Date(),
       };
       setMessages([...messages, newMessage]);
+      
+      // Save to database
+      try {
+        const { error } = await supabase
+          .from("chat_messages")
+          .insert({
+            message: inputMessage,
+          });
+
+        if (error) throw error;
+      } catch (error: any) {
+        console.error("Error saving message:", error);
+      }
+      
       setInputMessage("");
 
       // Simulate bot response

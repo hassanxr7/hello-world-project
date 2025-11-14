@@ -22,6 +22,9 @@ const Header = () => {
             <Link to="/services" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
               Services
             </Link>
+            <Link to="/api-docs" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
+              API
+            </Link>
             <Link to="/pricing" className="text-foreground hover:text-primary transition-all font-medium text-base relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-primary after:transition-all">
               Pricing
             </Link>
