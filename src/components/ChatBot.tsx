@@ -1,25 +1,33 @@
 import { useState } from "react";
-import { MessageCircle, X, Send, Smile, Paperclip } from "lucide-react";
+import { MessageCircle, X, Send, Smile, Paperclip, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Message {
+  id: number;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
+}
+
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "👋 Hi! How can we help?",
+      text: "👋 Salam! Sidee ku caawino karaa HubdexPay? / Hi! How can I help you with HubdexPay?",
       sender: "bot",
       timestamp: new Date(),
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const quickReplies = [
-    "I have a question",
-    "Tell me more",
+    "What is HubdexPay?",
+    "How do I integrate the API?",
   ];
 
   const toggleChat = () => {
@@ -27,8 +35,8 @@ const ChatBot = () => {
   };
 
   const sendMessage = async () => {
-    if (inputMessage.trim()) {
-      const newMessage = {
+    if (inputMessage.trim() && !isLoading) {
+      const newMessage: Message = {
         id: messages.length + 1,
         text: inputMessage,
         sender: "user",
@@ -38,29 +46,60 @@ const ChatBot = () => {
       
       // Save to database
       try {
-        const { error } = await supabase
+        await supabase
           .from("chat_messages")
           .insert({
             message: inputMessage,
           });
-
-        if (error) throw error;
       } catch (error: any) {
         console.error("Error saving message:", error);
       }
       
+      const userInput = inputMessage;
       setInputMessage("");
+      setIsLoading(true);
 
-      // Simulate bot response
-      setTimeout(() => {
-        const botResponse = {
+      // Get AI response
+      try {
+        const { data, error } = await supabase.functions.invoke('chat-ai', {
+          body: {
+            messages: [
+              ...messages.map(m => ({
+                role: m.sender === "user" ? "user" : "assistant",
+                content: m.text
+              })),
+              {
+                role: "user",
+                content: userInput
+              }
+            ]
+          }
+        });
+
+        if (error) throw error;
+
+        const aiResponse = data.choices?.[0]?.message?.content || "Sorry, I couldn't process that. Please try again.";
+        
+        const botResponse: Message = {
           id: messages.length + 2,
-          text: "Thank you for your message! Our team will get back to you shortly.",
+          text: aiResponse,
           sender: "bot",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, botResponse]);
-      }, 1000);
+      } catch (error: any) {
+        console.error("AI Error:", error);
+        toast.error("Failed to get response. Please try again.");
+        const errorResponse: Message = {
+          id: messages.length + 2,
+          text: "I'm having trouble connecting right now. Please try again in a moment.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorResponse]);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -169,8 +208,9 @@ const ChatBot = () => {
                 placeholder="Type here and press enter.."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && !isLoading && sendMessage()}
                 className="flex-1 border-none bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary"
+                disabled={isLoading}
               />
               <button className="text-muted-foreground hover:text-foreground transition-colors">
                 <Smile className="w-5 h-5" />
@@ -179,8 +219,13 @@ const ChatBot = () => {
                 onClick={sendMessage}
                 size="icon"
                 className="bg-primary hover:bg-primary-dark"
+                disabled={isLoading}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
