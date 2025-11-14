@@ -1,46 +1,49 @@
 import { CreditCard, TrendingUp, Users, Shield, Zap, Globe } from "lucide-react";
 import { Card } from "@/components/ui/card";
-
-const features = [
-  {
-    icon: CreditCard,
-    title: "Payment Solution",
-    description: "Accept cards, mobile money, and bank transfers through one reliable platform and dashboard.",
-    color: "text-primary"
-  },
-  {
-    icon: TrendingUp,
-    title: "Growth Business",
-    description: "Boost conversion with seamless checkout, recurring billing, and intelligent fraud protection.",
-    color: "text-secondary"
-  },
-  {
-    icon: Users,
-    title: "Connected People",
-    description: "Connect customers, merchants, and partners—pay and get paid anywhere, anytime.",
-    color: "text-primary"
-  },
-  {
-    icon: Shield,
-    title: "Secure & Compliant",
-    description: "Bank-level security with PCI DSS compliance and advanced encryption for all transactions.",
-    color: "text-secondary"
-  },
-  {
-    icon: Zap,
-    title: "Instant Settlement",
-    description: "Fast payouts with real-time transaction monitoring and automated reconciliation.",
-    color: "text-primary"
-  },
-  {
-    icon: Globe,
-    title: "Built for South Sudan",
-    description: "Tailored for the South Sudanese market with local payment methods and currency support.",
-    color: "text-secondary"
-  }
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Features = () => {
+  const { t } = useLanguage();
+  
+  const features = [
+    {
+      icon: CreditCard,
+      title: t("feature1Title"),
+      description: t("feature1Desc"),
+      color: "text-primary"
+    },
+    {
+      icon: TrendingUp,
+      title: t("feature2Title"),
+      description: t("feature2Desc"),
+      color: "text-secondary"
+    },
+    {
+      icon: Users,
+      title: t("feature3Title"),
+      description: t("feature3Desc"),
+      color: "text-primary"
+    },
+    {
+      icon: Shield,
+      title: t("feature4Title"),
+      description: t("feature4Desc"),
+      color: "text-secondary"
+    },
+    {
+      icon: Zap,
+      title: t("feature5Title"),
+      description: t("feature5Desc"),
+      color: "text-primary"
+    },
+    {
+      icon: Globe,
+      title: t("feature6Title"),
+      description: t("feature6Desc"),
+      color: "text-secondary"
+    }
+  ];
+  
   return (
     <section id="services" className="py-24 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -49,11 +52,10 @@ const Features = () => {
             What we do
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Powering smart payments across{" "}
-            <span className="text-primary">South Sudan</span>
+            {t("featuresTitle")}
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Everything you need to accept payments and grow your business in one powerful platform
+            {t("featuresSubtitle")}
           </p>
         </div>
         

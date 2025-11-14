@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   id: number;
@@ -13,11 +14,12 @@ interface Message {
 }
 
 const ChatBot = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "👋 Salam! Sidee ku caawino karaa HubdexPay? / Hi! How can I help you with HubdexPay?",
+      text: t("chatbotTitle"),
       sender: "bot",
       timestamp: new Date(),
     },
@@ -132,7 +134,7 @@ const ChatBot = () => {
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Customer Support</h3>
+                <h3 className="font-semibold text-lg">{t("chatbotTitle")}</h3>
                 <p className="text-xs text-primary-foreground/80">We're here to help</p>
               </div>
             </div>
@@ -205,7 +207,7 @@ const ChatBot = () => {
               </button>
               <Input
                 type="text"
-                placeholder="Type here and press enter.."
+                placeholder={t("chatbotPlaceholder")}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && !isLoading && sendMessage()}

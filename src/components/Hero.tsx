@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-image.jpg";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Hero = () => {
+  const { t } = useLanguage();
+  
   return (
     <section id="home" className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-gradient-to-b from-background to-muted/20">
       {/* Decorative elements */}
@@ -18,13 +21,11 @@ const Hero = () => {
             </div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
-              The smart way to accept{" "}
-              <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">online payments.</span>
+              {t("heroTitle")}
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
-              Grow with a secure, compliant payment gateway built for South Sudan—fast onboarding, 
-              transparent pricing, and 24/7 support.
+              {t("heroSubtitle")}
             </p>
             
             <div className="flex flex-wrap gap-4">
@@ -34,7 +35,7 @@ const Hero = () => {
                 asChild
               >
                 <a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer">
-                  Open a Free Account
+                  {t("getStarted")}
                 </a>
               </Button>
               <Button 
@@ -44,7 +45,7 @@ const Hero = () => {
                 asChild
               >
                 <a href="#contact">
-                  Contact Sales
+                  {t("learnMore")}
                 </a>
               </Button>
             </div>

@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail, Phone } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const CTA = () => {
+  const { t } = useLanguage();
+  
   return (
     <section id="contact" className="py-24 relative overflow-hidden">
       {/* Background gradient */}
@@ -10,11 +13,10 @@ const CTA = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Ready to transform your{" "}
-            <span className="text-primary">payment experience?</span>
+            {t("ctaTitle")}
           </h2>
           <p className="text-xl text-muted-foreground">
-            Join hundreds of businesses across South Sudan using HubdexPay to grow their revenue
+            {t("ctaSubtitle")}
           </p>
           
           <div className="flex flex-wrap justify-center gap-4 pt-4">
@@ -24,7 +26,7 @@ const CTA = () => {
               asChild
             >
               <a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer">
-                Get Started Now
+                {t("ctaButton")}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
             </Button>
