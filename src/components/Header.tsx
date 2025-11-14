@@ -36,7 +36,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <Button 
               size="lg"
-              className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-primary-foreground shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all duration-300 font-semibold px-8 transform hover:scale-105"
+              className="bg-primary hover:bg-primary-dark text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 font-semibold px-8 transform hover:scale-105"
               asChild
             >
               <a href="https://nebdex.com/merchant/register" target="_blank" rel="noopener noreferrer">

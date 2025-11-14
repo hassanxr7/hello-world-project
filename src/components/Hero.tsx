@@ -3,23 +3,23 @@ import heroImage from "@/assets/hero-image.jpg";
 
 const Hero = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+    <section id="home" className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-gradient-to-b from-background to-muted/20">
       {/* Decorative elements */}
-      <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-20 left-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }} />
+      <div className="absolute top-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="inline-block">
-              <span className="text-sm font-semibold text-primary bg-primary/10 px-4 py-2 rounded-full">
+              <span className="text-sm font-semibold text-primary bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
                 Simple. Transparent. Secure
               </span>
             </div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
               The smart way to accept{" "}
-              <span className="text-primary">online payments.</span>
+              <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">online payments.</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
