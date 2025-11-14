@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
             <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <img src={logo} alt="HubdexPay Logo" className="h-10 w-auto" />
+              <img src={logo} alt="HubdexPay Logo" className="h-12 w-auto" />
             </Link>
             <p className="text-muted-foreground text-sm max-w-xs">
               South Sudan's trusted payment gateway. Registered and compliant with local regulations.
