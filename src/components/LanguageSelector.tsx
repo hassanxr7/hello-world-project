@@ -13,7 +13,6 @@ const LanguageSelector = () => {
 
   const languages = [
     { code: "en", name: "English", flag: "🇬🇧" },
-    { code: "so", name: "Somali", flag: "🇸🇴" },
     { code: "ar", name: "العربية", flag: "🇸🇩" },
   ];
 
@@ -32,10 +31,10 @@ const LanguageSelector = () => {
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
-            onClick={() => setLanguage(lang.code as "en" | "so" | "ar")}
+            onClick={() => setLanguage(lang.code as "en" | "ar")}
             className={language === lang.code ? "bg-accent" : ""}
           >
-            <span className="mr-2">{lang.flag}</span>
+            <span className={language === "ar" ? "ml-2" : "mr-2"}>{lang.flag}</span>
             {lang.name}
           </DropdownMenuItem>
         ))}

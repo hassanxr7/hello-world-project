@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { translations } from "@/i18n/translations";
 
-type Language = "en" | "so" | "ar";
+type Language = "en" | "ar";
 
 interface LanguageContextType {
   language: Language;
@@ -14,6 +14,8 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("language");
+    // If Somali was selected, default to English
+    if (saved === "so") return "en";
     return (saved as Language) || "en";
   });
 
