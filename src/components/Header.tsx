@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
-import logo from "@/assets/hubdexpay-logo-new.png";
+import logo from "@/assets/hubdexpay-logo-green.png";
 
 const Header = () => {
   return (
