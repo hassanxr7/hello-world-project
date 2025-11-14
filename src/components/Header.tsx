@@ -9,7 +9,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={logo} alt="HubdexPay Logo" className="h-16 md:h-16 w-auto" />
+            <img src={logo} alt="HubdexPay Logo" className="h-20 md:h-24 w-auto" />
           </Link>
           
           <nav className="hidden lg:flex items-center gap-8">
