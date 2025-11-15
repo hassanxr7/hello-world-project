@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Track page view start time
+let pageViewStartTime = Date.now();
+let currentPageUrl = window.location.href;
+
 // Generate or retrieve visitor ID from cookies
 export const getVisitorId = (): string => {
   const cookieName = "hubdexpay_visitor_id";
@@ -143,7 +147,54 @@ export const trackVisitor = async () => {
         .from("visitor_tracking")
         .insert(trackingData);
     }
+    
+    // Track individual page view
+    await trackPageView(visitorId, window.location.href);
   } catch (error) {
     console.error("Error tracking visitor:", error);
+  }
+};
+
+// Track individual page views
+export const trackPageView = async (visitorId: string, pageUrl: string) => {
+  try {
+    pageViewStartTime = Date.now();
+    currentPageUrl = pageUrl;
+    
+    await supabase.from("visitor_page_views").insert({
+      visitor_id: visitorId,
+      page_url: pageUrl,
+      page_title: document.title || null,
+      viewed_at: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error tracking page view:", error);
+  }
+};
+
+// Update time spent on page before leaving
+export const updatePageTimeSpent = async (visitorId: string) => {
+  try {
+    const timeSpent = Math.floor((Date.now() - pageViewStartTime) / 1000);
+    
+    if (timeSpent > 0) {
+      const { data: latestView } = await supabase
+        .from("visitor_page_views")
+        .select("id")
+        .eq("visitor_id", visitorId)
+        .eq("page_url", currentPageUrl)
+        .order("viewed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (latestView) {
+        await supabase
+          .from("visitor_page_views")
+          .update({ time_spent_seconds: timeSpent })
+          .eq("id", latestView.id);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating page time spent:", error);
   }
 };

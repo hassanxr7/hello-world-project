@@ -7,8 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, MessageSquare, FileText, Trash2, CheckCircle, Reply, Users, Bot, Settings } from "lucide-react";
+import { LogOut, MessageSquare, FileText, Trash2, CheckCircle, Reply, Users, Bot, Settings, Eye, Clock, Activity } from "lucide-react";
 import MessageReplyDialog from "@/components/MessageReplyDialog";
+import VisitorDetailsDialog from "@/components/VisitorDetailsDialog";
 
 interface ChatMessage {
   id: string;
@@ -35,6 +36,7 @@ interface VisitorData {
   id: string;
   visitor_id: string;
   page_url: string;
+  referrer: string | null;
   device_type: string;
   country: string | null;
   city: string | null;
@@ -50,11 +52,21 @@ interface VisitorData {
   last_active: string;
 }
 
+interface PageView {
+  id: string;
+  page_url: string;
+  page_title: string | null;
+  time_spent_seconds: number;
+  viewed_at: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [content, setContent] = useState<WebsiteContent[]>([]);
   const [visitors, setVisitors] = useState<VisitorData[]>([]);
+  const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
+  const [visitorPageViews, setVisitorPageViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyDialog, setReplyDialog] = useState({
     open: false,
@@ -62,6 +74,11 @@ const AdminDashboard = () => {
     messageName: "",
     messageEmail: "",
     messageContent: "",
+  });
+  const [visitorDialog, setVisitorDialog] = useState({
+    open: false,
+    visitorId: "",
+    referrer: null as string | null,
   });
 
   useEffect(() => {
@@ -121,6 +138,46 @@ const AdminDashboard = () => {
     } catch (error: any) {
       toast.error("Failed to fetch visitor data");
     }
+  };
+
+  const fetchVisitorPageViews = async (visitorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("visitor_page_views")
+        .select("*")
+        .eq("visitor_id", visitorId)
+        .order("viewed_at", { ascending: false });
+
+      if (error) throw error;
+      setVisitorPageViews(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch page views");
+    }
+  };
+
+  const getSessionDuration = (visitor: VisitorData): string => {
+    const created = new Date(visitor.created_at).getTime();
+    const lastActive = new Date(visitor.last_active).getTime();
+    const durationSeconds = Math.floor((lastActive - created) / 1000);
+    
+    if (durationSeconds < 60) return `${durationSeconds}s`;
+    if (durationSeconds < 3600) return `${Math.floor(durationSeconds / 60)}m`;
+    return `${Math.floor(durationSeconds / 3600)}h ${Math.floor((durationSeconds % 3600) / 60)}m`;
+  };
+
+  const isActiveNow = (lastActive: string): boolean => {
+    const lastActiveTime = new Date(lastActive).getTime();
+    const now = Date.now();
+    return (now - lastActiveTime) < 60000; // Active if last activity was within 1 minute
+  };
+
+  const openVisitorDetails = async (visitor: VisitorData) => {
+    setVisitorDialog({
+      open: true,
+      visitorId: visitor.visitor_id,
+      referrer: visitor.referrer,
+    });
+    await fetchVisitorPageViews(visitor.visitor_id);
   };
 
   const openReplyDialog = (message: ChatMessage) => {
@@ -325,19 +382,31 @@ const AdminDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Status</TableHead>
                           <TableHead>Visitor ID</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Location</TableHead>
-                          <TableHead>Device</TableHead>
-                          <TableHead>ISP / Timezone</TableHead>
-                          <TableHead>Pages</TableHead>
-                          <TableHead>Last Active</TableHead>
-                          <TableHead>First Visit</TableHead>
+                          <TableHead>Referrer</TableHead>
+                          <TableHead>Session</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {visitors.map((visitor) => (
                           <TableRow key={visitor.id}>
+                            <TableCell>
+                              {isActiveNow(visitor.last_active) ? (
+                                <Badge variant="default" className="flex items-center gap-1 w-fit bg-green-600">
+                                  <Activity className="w-3 h-3" />
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                                  <Clock className="w-3 h-3" />
+                                  Inactive
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="font-mono text-xs">
                               {visitor.visitor_id.substring(0, 20)}...
                             </TableCell>
@@ -372,27 +441,40 @@ const AdminDashboard = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">{visitor.device_type}</Badge>
+                              {visitor.referrer ? (
+                                <a
+                                  href={visitor.referrer}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline max-w-[200px] truncate block"
+                                  title={visitor.referrer}
+                                >
+                                  {new URL(visitor.referrer).hostname}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Direct</span>
+                              )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col gap-0.5">
-                                {visitor.isp && (
-                                  <span className="text-xs text-muted-foreground">{visitor.isp}</span>
-                                )}
-                                {visitor.timezone && (
-                                  <span className="text-xs text-muted-foreground font-mono">{visitor.timezone}</span>
-                                )}
-                                {!visitor.isp && !visitor.timezone && (
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                )}
+                              <div className="flex flex-col gap-1">
+                                <Badge variant="outline" className="w-fit">
+                                  {visitor.pages_visited} pages
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {getSessionDuration(visitor)}
+                                </span>
                               </div>
                             </TableCell>
-                            <TableCell>{visitor.pages_visited}</TableCell>
                             <TableCell>
-                              {new Date(visitor.last_active).toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(visitor.created_at).toLocaleString()}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openVisitorDetails(visitor)}
+                                className="flex items-center gap-1"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Journey
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -453,6 +535,14 @@ const AdminDashboard = () => {
         messageEmail={replyDialog.messageEmail}
         messageContent={replyDialog.messageContent}
         onReplyAdded={fetchMessages}
+      />
+      
+      <VisitorDetailsDialog
+        open={visitorDialog.open}
+        onOpenChange={(open) => setVisitorDialog({ ...visitorDialog, open })}
+        visitorId={visitorDialog.visitorId}
+        pageViews={visitorPageViews}
+        referrer={visitorDialog.referrer}
       />
     </div>
   );

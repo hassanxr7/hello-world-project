@@ -73,6 +73,33 @@ export type Database = {
           },
         ]
       }
+      visitor_page_views: {
+        Row: {
+          id: string
+          page_title: string | null
+          page_url: string
+          time_spent_seconds: number | null
+          viewed_at: string
+          visitor_id: string
+        }
+        Insert: {
+          id?: string
+          page_title?: string | null
+          page_url: string
+          time_spent_seconds?: number | null
+          viewed_at?: string
+          visitor_id: string
+        }
+        Update: {
+          id?: string
+          page_title?: string | null
+          page_url?: string
+          time_spent_seconds?: number | null
+          viewed_at?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       visitor_tracking: {
         Row: {
           bot_name: string | null
@@ -186,7 +213,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_visitor_session_duration: {
+        Args: { p_visitor_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
