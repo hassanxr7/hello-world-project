@@ -74,6 +74,11 @@ export const trackVisitor = async () => {
     let ipAddress = null;
     let country = null;
     let city = null;
+    let region = null;
+    let latitude = null;
+    let longitude = null;
+    let timezone = null;
+    let isp = null;
     
     try {
       const locationResponse = await supabase.functions.invoke('get-visitor-location', {
@@ -84,6 +89,11 @@ export const trackVisitor = async () => {
         ipAddress = locationResponse.data.ip;
         country = locationResponse.data.country;
         city = locationResponse.data.city;
+        region = locationResponse.data.region;
+        latitude = locationResponse.data.latitude;
+        longitude = locationResponse.data.longitude;
+        timezone = locationResponse.data.timezone;
+        isp = locationResponse.data.isp;
       }
     } catch (error) {
       console.error('Error fetching location:', error);
@@ -97,6 +107,11 @@ export const trackVisitor = async () => {
       ip_address: ipAddress,
       country: country,
       city: city,
+      region: region,
+      latitude: latitude,
+      longitude: longitude,
+      timezone: timezone,
+      isp: isp,
       device_type: deviceType,
       is_bot: isBot,
       bot_name: botName,

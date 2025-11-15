@@ -38,6 +38,11 @@ interface VisitorData {
   device_type: string;
   country: string | null;
   city: string | null;
+  region: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string | null;
+  isp: string | null;
   is_bot: boolean;
   bot_name: string | null;
   pages_visited: number;
@@ -324,6 +329,7 @@ const AdminDashboard = () => {
                           <TableHead>Type</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Device</TableHead>
+                          <TableHead>ISP / Timezone</TableHead>
                           <TableHead>Pages</TableHead>
                           <TableHead>Last Active</TableHead>
                           <TableHead>First Visit</TableHead>
@@ -346,10 +352,20 @@ const AdminDashboard = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {visitor.country && visitor.city ? (
-                                <div className="flex flex-col gap-1">
+                              {visitor.country ? (
+                                <div className="flex flex-col gap-0.5">
                                   <span className="text-sm font-medium">{visitor.country}</span>
-                                  <span className="text-xs text-muted-foreground">{visitor.city}</span>
+                                  {visitor.region && (
+                                    <span className="text-xs text-muted-foreground">{visitor.region}</span>
+                                  )}
+                                  {visitor.city && (
+                                    <span className="text-xs font-medium text-primary">{visitor.city}</span>
+                                  )}
+                                  {visitor.latitude && visitor.longitude && (
+                                    <span className="text-xs text-muted-foreground font-mono">
+                                      {visitor.latitude.toFixed(4)}, {visitor.longitude.toFixed(4)}
+                                    </span>
+                                  )}
                                 </div>
                               ) : (
                                 <span className="text-xs text-muted-foreground">Unknown</span>
@@ -357,6 +373,19 @@ const AdminDashboard = () => {
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline">{visitor.device_type}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-0.5">
+                                {visitor.isp && (
+                                  <span className="text-xs text-muted-foreground">{visitor.isp}</span>
+                                )}
+                                {visitor.timezone && (
+                                  <span className="text-xs text-muted-foreground font-mono">{visitor.timezone}</span>
+                                )}
+                                {!visitor.isp && !visitor.timezone && (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>{visitor.pages_visited}</TableCell>
                             <TableCell>
