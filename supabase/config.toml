@@ -1,1 +1,10 @@
 project_id = "smhvogfrdsplbbmcjsot"
+
+[functions.chat-ai]
+verify_jwt = true
+
+[functions.generate-logo]
+verify_jwt = false
+
+[functions.get-visitor-location]
+verify_jwt = false

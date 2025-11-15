@@ -36,6 +36,8 @@ interface VisitorData {
   visitor_id: string;
   page_url: string;
   device_type: string;
+  country: string | null;
+  city: string | null;
   is_bot: boolean;
   bot_name: string | null;
   pages_visited: number;
@@ -320,6 +322,7 @@ const AdminDashboard = () => {
                         <TableRow>
                           <TableHead>Visitor ID</TableHead>
                           <TableHead>Type</TableHead>
+                          <TableHead>Location</TableHead>
                           <TableHead>Device</TableHead>
                           <TableHead>Pages</TableHead>
                           <TableHead>Last Active</TableHead>
@@ -340,6 +343,16 @@ const AdminDashboard = () => {
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary">Human</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {visitor.country && visitor.city ? (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-sm font-medium">{visitor.country}</span>
+                                  <span className="text-xs text-muted-foreground">{visitor.city}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Unknown</span>
                               )}
                             </TableCell>
                             <TableCell>

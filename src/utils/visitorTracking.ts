@@ -70,11 +70,33 @@ export const trackVisitor = async () => {
     const { isBot, botName } = detectBot();
     const deviceType = getDeviceType();
     
+    // Get geolocation data
+    let ipAddress = null;
+    let country = null;
+    let city = null;
+    
+    try {
+      const locationResponse = await supabase.functions.invoke('get-visitor-location', {
+        body: {}
+      });
+      
+      if (locationResponse.data) {
+        ipAddress = locationResponse.data.ip;
+        country = locationResponse.data.country;
+        city = locationResponse.data.city;
+      }
+    } catch (error) {
+      console.error('Error fetching location:', error);
+    }
+    
     const trackingData = {
       visitor_id: visitorId,
       page_url: window.location.href,
       referrer: document.referrer || null,
       user_agent: navigator.userAgent,
+      ip_address: ipAddress,
+      country: country,
+      city: city,
       device_type: deviceType,
       is_bot: isBot,
       bot_name: botName,
