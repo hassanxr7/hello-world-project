@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, MessageSquare, FileText, Trash2, CheckCircle } from "lucide-react";
+import { LogOut, MessageSquare, FileText, Trash2, CheckCircle, Reply, Users, Bot } from "lucide-react";
+import MessageReplyDialog from "@/components/MessageReplyDialog";
 
 interface ChatMessage {
   id: string;
@@ -30,16 +31,37 @@ interface WebsiteContent {
   created_at: string;
 }
 
+interface VisitorData {
+  id: string;
+  visitor_id: string;
+  page_url: string;
+  device_type: string;
+  is_bot: boolean;
+  bot_name: string | null;
+  pages_visited: number;
+  created_at: string;
+  last_active: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [content, setContent] = useState<WebsiteContent[]>([]);
+  const [visitors, setVisitors] = useState<VisitorData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replyDialog, setReplyDialog] = useState({
+    open: false,
+    messageId: "",
+    messageName: "",
+    messageEmail: "",
+    messageContent: "",
+  });
 
   useEffect(() => {
     checkAuth();
     fetchMessages();
     fetchContent();
+    fetchVisitors();
   }, []);
 
   const checkAuth = async () => {
@@ -77,6 +99,31 @@ const AdminDashboard = () => {
     } catch (error: any) {
       toast.error("Failed to fetch content");
     }
+  };
+
+  const fetchVisitors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("visitor_tracking")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setVisitors(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch visitor data");
+    }
+  };
+
+  const openReplyDialog = (message: ChatMessage) => {
+    setReplyDialog({
+      open: true,
+      messageId: message.id,
+      messageName: message.name || "User",
+      messageEmail: message.email || "No email",
+      messageContent: message.message,
+    });
   };
 
   const markAsRead = async (id: string) => {
@@ -133,6 +180,10 @@ const AdminDashboard = () => {
               <MessageSquare className="w-4 h-4 mr-2" />
               Messages ({messages.filter(m => m.status === 'unread').length})
             </TabsTrigger>
+            <TabsTrigger value="visitors">
+              <Users className="w-4 h-4 mr-2" />
+              Visitors
+            </TabsTrigger>
             <TabsTrigger value="content">
               <FileText className="w-4 h-4 mr-2" />
               Content
@@ -176,11 +227,20 @@ const AdminDashboard = () => {
                           <TableCell>{new Date(msg.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openReplyDialog(msg)}
+                                title="Reply to message"
+                              >
+                                <Reply className="w-4 h-4 text-primary" />
+                              </Button>
                               {msg.status === 'unread' && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => markAsRead(msg.id)}
+                                  title="Mark as read"
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                 </Button>
@@ -189,6 +249,7 @@ const AdminDashboard = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => deleteMessage(msg.id)}
+                                title="Delete message"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
@@ -198,6 +259,98 @@ const AdminDashboard = () => {
                       ))}
                     </TableBody>
                   </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="visitors" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Visitor Tracking</CardTitle>
+                <CardDescription>Track website visitors and bot activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {visitors.length === 0 ? (
+                  <p className="text-muted-foreground">No visitor data yet</p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">Total Visitors</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">{visitors.length}</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">Unique Visitors</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">
+                            {new Set(visitors.map(v => v.visitor_id)).size}
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Bot className="w-4 h-4" />
+                            Bot Visits
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {visitors.filter(v => v.is_bot).length}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Visitor ID</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Device</TableHead>
+                          <TableHead>Pages</TableHead>
+                          <TableHead>Last Active</TableHead>
+                          <TableHead>First Visit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {visitors.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell className="font-mono text-xs">
+                              {visitor.visitor_id.substring(0, 20)}...
+                            </TableCell>
+                            <TableCell>
+                              {visitor.is_bot ? (
+                                <Badge variant="destructive" className="flex items-center gap-1 w-fit">
+                                  <Bot className="w-3 h-3" />
+                                  {visitor.bot_name || "Bot"}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">Human</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{visitor.device_type}</Badge>
+                            </TableCell>
+                            <TableCell>{visitor.pages_visited}</TableCell>
+                            <TableCell>
+                              {new Date(visitor.last_active).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(visitor.created_at).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -243,6 +396,16 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <MessageReplyDialog
+        open={replyDialog.open}
+        onOpenChange={(open) => setReplyDialog({ ...replyDialog, open })}
+        messageId={replyDialog.messageId}
+        messageName={replyDialog.messageName}
+        messageEmail={replyDialog.messageEmail}
+        messageContent={replyDialog.messageContent}
+        onReplyAdded={fetchMessages}
+      />
     </div>
   );
 };

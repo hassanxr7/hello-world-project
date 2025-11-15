@@ -41,6 +41,92 @@ export type Database = {
         }
         Relationships: []
       }
+      message_replies: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          message_id: string
+          reply_text: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          reply_text: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          reply_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_tracking: {
+        Row: {
+          bot_name: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          is_bot: boolean | null
+          last_active: string | null
+          page_url: string
+          pages_visited: number | null
+          referrer: string | null
+          session_duration: number | null
+          user_agent: string | null
+          visitor_id: string
+        }
+        Insert: {
+          bot_name?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_bot?: boolean | null
+          last_active?: string | null
+          page_url: string
+          pages_visited?: number | null
+          referrer?: string | null
+          session_duration?: number | null
+          user_agent?: string | null
+          visitor_id: string
+        }
+        Update: {
+          bot_name?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_bot?: boolean | null
+          last_active?: string | null
+          page_url?: string
+          pages_visited?: number | null
+          referrer?: string | null
+          session_duration?: number | null
+          user_agent?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       website_content: {
         Row: {
           created_at: string
