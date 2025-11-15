@@ -25,6 +25,11 @@ serve(async (req) => {
           ip: clientIp,
           country: 'Local',
           city: 'Local',
+          region: 'Local',
+          latitude: null,
+          longitude: null,
+          timezone: null,
+          isp: null,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -33,7 +38,10 @@ serve(async (req) => {
     }
 
     // Fetch geolocation data from ip-api.com (free, no API key needed)
-    const geoResponse = await fetch(`http://ip-api.com/json/${clientIp}?fields=status,country,city,query`);
+    // Using all available fields for maximum detail
+    const geoResponse = await fetch(
+      `http://ip-api.com/json/${clientIp}?fields=status,country,countryCode,region,regionName,city,lat,lon,timezone,isp,query`
+    );
     
     if (!geoResponse.ok) {
       throw new Error('Failed to fetch geolocation data');
@@ -41,7 +49,7 @@ serve(async (req) => {
 
     const geoData = await geoResponse.json();
     
-    console.log('Geolocation data:', geoData);
+    console.log('Detailed geolocation data:', geoData);
 
     if (geoData.status === 'success') {
       return new Response(
@@ -49,6 +57,11 @@ serve(async (req) => {
           ip: geoData.query || clientIp,
           country: geoData.country || 'Unknown',
           city: geoData.city || 'Unknown',
+          region: geoData.regionName || null,
+          latitude: geoData.lat || null,
+          longitude: geoData.lon || null,
+          timezone: geoData.timezone || null,
+          isp: geoData.isp || null,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -60,6 +73,11 @@ serve(async (req) => {
           ip: clientIp,
           country: 'Unknown',
           city: 'Unknown',
+          region: null,
+          latitude: null,
+          longitude: null,
+          timezone: null,
+          isp: null,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -74,6 +92,11 @@ serve(async (req) => {
         ip: 'unknown',
         country: 'Unknown',
         city: 'Unknown',
+        region: null,
+        latitude: null,
+        longitude: null,
+        timezone: null,
+        isp: null,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

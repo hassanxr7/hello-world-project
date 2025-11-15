@@ -83,11 +83,16 @@ export type Database = {
           id: string
           ip_address: string | null
           is_bot: boolean | null
+          isp: string | null
           last_active: string | null
+          latitude: number | null
+          longitude: number | null
           page_url: string
           pages_visited: number | null
           referrer: string | null
+          region: string | null
           session_duration: number | null
+          timezone: string | null
           user_agent: string | null
           visitor_id: string
         }
@@ -100,11 +105,16 @@ export type Database = {
           id?: string
           ip_address?: string | null
           is_bot?: boolean | null
+          isp?: string | null
           last_active?: string | null
+          latitude?: number | null
+          longitude?: number | null
           page_url: string
           pages_visited?: number | null
           referrer?: string | null
+          region?: string | null
           session_duration?: number | null
+          timezone?: string | null
           user_agent?: string | null
           visitor_id: string
         }
@@ -117,11 +127,16 @@ export type Database = {
           id?: string
           ip_address?: string | null
           is_bot?: boolean | null
+          isp?: string | null
           last_active?: string | null
+          latitude?: number | null
+          longitude?: number | null
           page_url?: string
           pages_visited?: number | null
           referrer?: string | null
+          region?: string | null
           session_duration?: number | null
+          timezone?: string | null
           user_agent?: string | null
           visitor_id?: string
         }
