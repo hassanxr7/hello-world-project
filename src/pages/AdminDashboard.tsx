@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, MessageSquare, FileText, Trash2, CheckCircle, Reply, Users, Bot } from "lucide-react";
+import { LogOut, MessageSquare, FileText, Trash2, CheckCircle, Reply, Users, Bot, Settings } from "lucide-react";
 import MessageReplyDialog from "@/components/MessageReplyDialog";
 
 interface ChatMessage {
@@ -166,10 +166,16 @@ const AdminDashboard = () => {
       <div className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">HubdexPay Admin Dashboard</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/admin/settings")}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
