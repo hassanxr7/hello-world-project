@@ -4,6 +4,7 @@ import Features from "@/components/Features";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
+import WelcomeNotice from "@/components/WelcomeNotice";
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
       <CTA />
       <Footer />
       <ChatBot />
+      <WelcomeNotice />
     </div>
   );
 };
