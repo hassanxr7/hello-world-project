@@ -181,6 +181,7 @@ export async function makeRig(opts: { settings?: (s: Settings) => void; contacts
   const settings = defaultSettings();
   settings.integrations.whatsapp.enabled = true;
   settings.permissions.approvedFolders = [{ label: 'downloads', path: 'C:\\Users\\Hassan\\Downloads' }, { label: 'documents', path: 'C:\\Users\\Hassan\\Documents' }];
+  settings.general.welcomeMessage = ''; // spec tests assert the short required greeting
   opts.settings?.(settings);
   const clock = { t: 1_800_000_000_000 };
   const memory = new MemoryStore(dir, keys);

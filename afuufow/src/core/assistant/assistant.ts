@@ -1,4 +1,4 @@
-import { FARIISO_RESPONSE, greetingPhrase } from '../../shared/phrases';
+import { FARIISO_RESPONSE, welcomePhrase } from '../../shared/phrases';
 import type { AssistantState, ChatTurn, Contact, PermissionGrant, ToolResult } from '../../shared/types';
 import type { Settings } from '../config/settings';
 import { LlmRouter, sentences } from '../llm/client';
@@ -806,7 +806,7 @@ export class Assistant {
     if (this.paused) return;
     if (this.d.presence().visitorPresent) return;
     if (this.d.greeting.shouldGreetOnActivation()) {
-      const g = greetingPhrase(this.d.memory.owner);
+      const g = welcomePhrase(this.d.memory.owner, this.d.settings().general.welcomeMessage);
       this.addTurn('assistant', g, 'system');
       await this.speakOnly(g);
       this.d.greeting.markGreeted();
@@ -820,7 +820,7 @@ export class Assistant {
   async onOwnerArrived(): Promise<void> {
     if (this.paused) return;
     if (this.d.greeting.shouldGreetOnFace()) {
-      const g = greetingPhrase(this.d.memory.owner);
+      const g = welcomePhrase(this.d.memory.owner, this.d.settings().general.welcomeMessage);
       this.addTurn('assistant', g, 'system');
       await this.speakOnly(g);
       this.d.greeting.markGreeted();

@@ -24,6 +24,13 @@ export function greetingPhrase(o: OwnerNames): string {
   return `Mudane ${o.greetingName}, ${o.nickname}, waan taaganahay.`;
 }
 
+/** The owner's own welcome text; empty falls back to the required short greeting. */
+export function welcomePhrase(o: OwnerNames, template: string): string {
+  const t = template.trim();
+  if (!t) return greetingPhrase(o);
+  return t.replace(/\{name\}/g, o.greetingName).replace(/\{nickname\}/g, o.nickname);
+}
+
 /** Response to “Fariiso.” — “Waan fadhiistay Boss. Maxaan qabtaa? Shaqo ii dir.” */
 export const FARIISO_RESPONSE = 'Waan fadhiistay Boss. Maxaan qabtaa? Shaqo ii dir.';
 

@@ -30,6 +30,9 @@ export function Settings() {
                 <option value="so">Soomaali ({L('caadi', 'default')})</option><option value="en">English</option>
               </select>
             </Field>
+            <Field label={L('Salaanta marka aan imaado ({name} = magaca, {nickname} = naanaysta)', 'Welcome message when I arrive ({name} = name, {nickname} = nickname; empty = short greeting)')}>
+              <textarea rows={5} value={s.general.welcomeMessage} onChange={(e) => void patchSettings({ general: { welcomeMessage: e.target.value } })} />
+            </Field>
           </div>
         </Card>
         <Card title={L('Bilaabista & gadaal', 'Startup & background')}>

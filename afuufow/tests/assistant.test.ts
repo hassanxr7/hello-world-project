@@ -35,6 +35,15 @@ describe('identity phrases', () => {
     await r.a.onOwnerArrived();
     expect(said(r).filter((x) => x.includes('waan taaganahay'))).toHaveLength(2);
   });
+  it('speaks the owner\'s own welcome message on arrival, with {name} filled in', async () => {
+    const { DEFAULT_WELCOME_MESSAGE } = await import('../src/core/config/settings');
+    const r = await makeRig({ settings: (s) => { s.general.welcomeMessage = DEFAULT_WELCOME_MESSAGE; } });
+    await r.a.onOwnerArrived();
+    expect(said(r)).toHaveLength(1);
+    expect(said(r)[0]).toMatch(/^Mudane Hassan Mohamed, si fiican ayaan kuu arkaa, kuna maqlayaa\./);
+    expect(said(r)[0]).toContain('Afuufow');
+    expect(said(r)[0]).toContain('afuufi lahaa');
+  });
   it('speaks the owner names stored in memory (persisted preference)', async () => {
     const r = await makeRig();
     r.memory.setOwner({ greetingName: 'Hassan M.', nickname: 'Boss' });

@@ -8,6 +8,10 @@ const Retention = z.object({
   snapshotDays: z.number().int().min(0).max(3650),
 });
 
+export const DEFAULT_WELCOME_MESSAGE =
+  'Mudane {name}, si fiican ayaan kuu arkaa, kuna maqlayaa. Waxaan ahay Afuufow, qofka kula hadlaya, maamulaha shirkaddaada. ' +
+  'Soo dhawoow, Mudane. Shaqo ayaan kaa sugayaa; i amar. Waxaan ahay Afuufow, ii tilmaam halka aan afuufi lahaa.';
+
 export const SettingsSchema = z.object({
   version: z.literal(1),
   setupComplete: z.boolean(),
@@ -16,6 +20,8 @@ export const SettingsSchema = z.object({
     uiLanguage: z.enum(['so', 'en']),
     /** Language the assistant speaks. Somali by default unless the owner asks otherwise. */
     speechLanguage: z.enum(['so', 'en']),
+    /** Spoken when the owner arrives or activates Afuufow. {name}=greeting name, {nickname}=nickname. Empty = the short default greeting. */
+    welcomeMessage: z.string().max(1000),
     startWithWindows: z.boolean(),
     startHidden: z.boolean(),
     pushToTalkShortcut: z.string(),
@@ -133,6 +139,7 @@ export function defaultSettings(): Settings {
       theme: 'dark',
       uiLanguage: 'so',
       speechLanguage: 'so',
+      welcomeMessage: DEFAULT_WELCOME_MESSAGE,
       startWithWindows: false,
       startHidden: true,
       pushToTalkShortcut: 'Control+Alt+Space',
