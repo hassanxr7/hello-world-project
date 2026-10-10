@@ -44,7 +44,12 @@ export class SttRouter {
 export function sttErrorMessage(e: unknown): { so: string; en: string } {
   const k = e instanceof SttError ? e.kind : 'other';
   switch (k) {
-    case 'auth': return { so: 'Furaha adeegga codka waa khaldan yahay; hubi Settings.', en: 'The speech service key was rejected; check Settings.' };
+    case 'auth': {
+      const missing = e instanceof Error && /not set/i.test(e.message);
+      return missing
+        ? { so: 'Furaha Azure Speech weli lama gelin (Settings → Isku-xirka).', en: 'The Azure Speech key is not set yet (Settings → Integrations).' }
+        : { so: 'Azure wuu diiday furaha. Hubi in furaha (KEY 1) iyo REGION-ka (tusaale westeurope) ay isku resource yihiin.', en: 'Azure rejected the key. Check that the key (KEY 1) and the region (e.g. westeurope) belong to the same Speech resource.' };
+    }
     case 'network': return { so: 'Internetka ma shaqeynayo; ma fahmi karo codka hadda.', en: 'No internet connection; speech recognition is unavailable right now.' };
     case 'quota': return { so: 'Xadka adeegga codka waa dhammaaday.', en: 'The speech service quota or rate limit was reached.' };
     case 'cloud_disabled': return { so: 'Aqoonsiga codka ee cloud-ka waa la xiray (Privacy).', en: 'Cloud speech recognition is turned off in Privacy settings.' };

@@ -294,6 +294,8 @@ export class Runtime {
     void this.scanSecurityLog();
     this.prune();
     this.timers.push(setInterval(() => this.prune(), 6 * 3600_000));
+    // companion: every 30 s the assistant may decide to start a short friendly chat (it checks presence, quiet time and limits itself)
+    this.timers.push(setInterval(() => void this.assistant.maybeStartConversation().catch(() => undefined), 30_000));
     this.refreshPermissionStatus();
 
     // resume the state the owner left, but only after setup was completed
@@ -338,6 +340,10 @@ export class Runtime {
       case 'draft': this.hub.send('draft', e.text); break;
       case 'notice': this.hub.send('notice', { level: e.level, so: e.so, en: e.en }); break;
       case 'visitors-changed': this.hub.send('visitors-changed', null); break;
+      case 'listen':
+        // reply window without the wake word; never while an unrecognised person is being questioned or a one-shot capture owns the mic
+        if (!this.visitorCtl && !this.oneShot) this.pipeline.openCommandWindow(e.seconds);
+        break;
     }
   }
 

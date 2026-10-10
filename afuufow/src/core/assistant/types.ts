@@ -29,7 +29,9 @@ export type AssistantEvent =
   | { type: 'pending'; pending: PendingInfo | null }
   | { type: 'draft'; text: string }
   | { type: 'notice'; level: 'info' | 'warn' | 'error'; so: string; en: string }
-  | { type: 'visitors-changed' };
+  | { type: 'visitors-changed' }
+  /** Keep the microphone open for a reply (no wake word) for this many seconds. */
+  | { type: 'listen'; seconds: number };
 
 export type SpeakerMatch = 'owner' | 'uncertain' | 'other' | 'unknown';
 

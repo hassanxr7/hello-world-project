@@ -106,10 +106,10 @@ export class VoicePipeline {
   }
 
   /** The owner/assistant asked to listen for a command now (after a wake greeting). */
-  openCommandWindow() {
+  openCommandWindow(seconds?: number) {
     if (!this.micEnabled) return;
     this.setMode('command');
-    this.commandDeadline = this.now() + this.settings().audio.commandWindowSec * 1000;
+    this.commandDeadline = this.now() + (seconds ?? this.settings().audio.commandWindowSec) * 1000;
   }
 
   private returnToIdle() {

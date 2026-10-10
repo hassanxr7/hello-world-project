@@ -35,6 +35,17 @@ export function Settings() {
             </Field>
           </div>
         </Card>
+        <Card title={L('Wada sheekaysi', 'Companion')}>
+          <div className="col">
+            <Check checked={s.companion.followUp} onChange={(v) => void patchSettings({ companion: { followUp: v } })}>{L('Kadib marka uu hadlo, dhegeyso jawaabtayda (ereyga toosinta looma baahna)', 'After it speaks, keep listening for my answer (no wake word needed)')}</Check>
+            <Check checked={s.companion.proactive} onChange={(v) => void patchSettings({ companion: { proactive: v } })}>{L('Naftiisa ha igala bilaabo sheeko iyo kaftan marka aan joogo', 'Start a chat or a joke on its own while I am around')}</Check>
+            <div className="grid g2">
+              <Field label={L('Aamusnaan ka hor (daqiiqo)', 'Quiet time before it speaks (min)')}><input type="number" min={1} value={s.companion.minIdleMin} onChange={(e) => void patchSettings({ companion: { minIdleMin: Number(e.target.value) } })} /></Field>
+              <Field label={L('Ugu badnaan saacaddiiba', 'Max per hour')}><input type="number" min={1} value={s.companion.maxPerHour} onChange={(e) => void patchSettings({ companion: { maxPerHour: Number(e.target.value) } })} /></Field>
+            </div>
+            <div className="small muted">{L('Waxay hadashaa kaliya marka maykarafoonka iyo isbeekarka furan yihiin, qof kale ma joogo, oo kamaraddu (ama hadalkaaga ugu dambeeyay) tilmaamayo inaad joogto. Haddii aanad jawaabin, way hakadaa. Ku dheh "jooji" markii ay hadasho si ay 45 daqiiqo u aamusto.', 'It only speaks when the microphone and speaker are on, nobody else is present, and the camera (or your last interaction) shows you are around. If you do not answer it backs off. Say "jooji" right after it speaks to keep it quiet for 45 minutes.')}</div>
+          </div>
+        </Card>
         <Card title={L('Bilaabista & gadaal', 'Startup & background')}>
           <div className="col">
             <Check checked={s.general.startWithWindows} onChange={(v) => void call('app.setLoginItem', v)}>{L('Bilow marka aan Windows galo', 'Start after I sign in to Windows')}</Check>

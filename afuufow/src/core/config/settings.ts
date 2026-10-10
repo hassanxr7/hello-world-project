@@ -44,6 +44,13 @@ export const SettingsSchema = z.object({
     bargeIn: z.boolean(),
     ttsVolume: z.number().min(0).max(1),
   }),
+  companion: z.object({
+    followUp: z.boolean(),
+    followUpSec: z.number().min(5).max(120),
+    proactive: z.boolean(),
+    minIdleMin: z.number().min(1).max(240),
+    maxPerHour: z.number().min(1).max(30),
+  }),
   providers: z.object({
     stt: z.object({
       primary: z.enum(['azure', 'openai', 'local']),
@@ -160,6 +167,7 @@ export function defaultSettings(): Settings {
       bargeIn: true,
       ttsVolume: 1,
     },
+    companion: { followUp: true, followUpSec: 20, proactive: true, minIdleMin: 4, maxPerHour: 5 },
     providers: {
       stt: {
         primary: 'azure',

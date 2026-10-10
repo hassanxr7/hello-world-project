@@ -3,6 +3,7 @@ import type { AssistantState, ChatTurn, Contact, PermissionGrant, ToolResult } f
 import type { Settings } from '../config/settings';
 import { LlmRouter, sentences } from '../llm/client';
 import { CloudDisabledError, type ChatMessage } from '../llm/providers';
+import { companionDecision } from './companion';
 import { PLAN_JSON_SCHEMA, PLANNER_BLOCKED, looksActionable, parsePlan, plannerMessages } from '../llm/planner';
 import { type Resolution, pickFromCandidates, resolveContact } from '../memory/contacts';
 import type { MemoryStore } from '../memory/memory';
@@ -75,6 +76,15 @@ export class Assistant {
   private pendingMessage: { contactId: string; message: string; at: number } | null = null;
   private lastStateEmitted: AssistantState | null = null;
   private now: () => number;
+  // companion behaviour (speaking first, keeping the conversation going)
+  private inflight = 0;
+  private lastOwnerAt = 0;
+  private lastProactiveAt = 0;
+  private proactiveTimes: number[] = [];
+  private unanswered = 0;
+  private snoozeUntil = 0;
+  private speechFailedAt = 0;
+  private proactiveCtl: AbortController | null = null;
 
   constructor(deps: AssistantDeps) {
     this.d = deps;
@@ -160,6 +170,7 @@ export class Assistant {
       await this.d.speech.speak(text, signal, this.lang());
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
+        this.speechFailedAt = this.now();
         this.d.emit({ type: 'notice', level: 'warn', so: 'Codka ma shaqeynayo; qoraalka ayaan ku tusay.', en: 'Speech output failed; showing text only: ' + (e as Error).message });
       }
     } finally {
@@ -193,6 +204,7 @@ export class Assistant {
   stopAll(reason = 'stop') {
     this.d.speech.stop();
     this.task?.ctl.abort();
+    this.proactiveCtl?.abort();
     this.clearPending();
     this.thinking = false;
     void reason;
@@ -216,12 +228,15 @@ export class Assistant {
     if (meta.source === 'voice' && this.d.presence().visitorPresent) return Promise.resolve(); // never obey an unrecognised person
     if (quick.intent.type === 'stop' && quick.intent.scope === 'auto') {
       this.addTurn('owner', t, meta.source);
+      // "stop" right after Afuufow spoke up on its own means "not now": stay quiet for a while
+      if (this.lastProactiveAt && this.now() - this.lastProactiveAt < 90_000) this.snoozeUntil = this.now() + 45 * 60_000;
       this.stopAll('voice-stop');
       this.d.emit({ type: 'notice', level: 'info', so: 'Waa la joojiyay.', en: 'Stopped.' });
       return Promise.resolve();
     }
 
-    const run = this.chain.then(() => this.process(t, meta)).catch(() => undefined);
+    this.inflight++;
+    const run = this.chain.then(() => this.process(t, meta)).catch(() => undefined).finally(() => this.inflight--);
     this.chain = run;
     return run;
   }
@@ -252,9 +267,11 @@ export class Assistant {
     }
 
     this.addTurn('owner', text, meta.source);
+    this.lastOwnerAt = this.now();
+    this.unanswered = 0;
 
     if (this.pending && this.pending.info.expiresAt < this.now()) this.clearPending();
-    if (this.pending && (await this.resolvePending(text))) return;
+    if (this.pending && (await this.resolvePending(text))) return this.maybeListen(meta);
 
     this.tainted = false;
     const parsed = parseCommand(text, this.parseCtx());
@@ -274,6 +291,15 @@ export class Assistant {
     } finally {
       this.endTask();
     }
+    this.maybeListen(meta);
+  }
+
+  /** Keep listening for a reply right after we spoke, so the owner can just answer like in a normal conversation. */
+  private maybeListen(meta: UtteranceMeta) {
+    const c = this.d.settings().companion;
+    if (!c.followUp || this.paused) return;
+    // after a voice exchange, or whenever we are waiting for an answer (yes/no, which contact, ...)
+    if (meta.source === 'voice' || this.pending) this.d.emit({ type: 'listen', seconds: c.followUpSec });
   }
 
   private beginTask(label: string, ctl: AbortController) {
@@ -777,6 +803,90 @@ export class Assistant {
     }
   }
 
+  // ------------------------------------------------------------------ companion: speaking first
+
+  private companionFacts() {
+    const st = this.d.settings();
+    const p = this.d.presence();
+    return {
+      now: this.now(),
+      settings: st.companion,
+      micOn: st.audio.micEnabled,
+      speakerOn: st.audio.speakerEnabled,
+      paused: this.paused,
+      busy: this.inflight > 0 || this.pending !== null || this.task !== null || this.thinking || this.speaking > 0 || this.proactiveCtl !== null,
+      visitorPresent: p.visitorPresent,
+      othersPresent: p.othersWithOwner || p.faceCount > 1,
+      cameraOn: st.camera.enabled,
+      ownerSeenByCamera: p.ownerPresent,
+      lastOwnerAt: this.lastOwnerAt,
+      lastProactiveAt: this.lastProactiveAt,
+      proactiveTimes: this.proactiveTimes,
+      unanswered: this.unanswered,
+      snoozeUntil: this.snoozeUntil,
+      speechFailedAt: this.speechFailedAt,
+    };
+  }
+
+  /**
+   * Called every ~30 s by the runtime. If the owner is around and it has been quiet for a while, say something short and
+   * friendly (a light joke or a question about the day), then listen for the answer. Never while anyone else is present.
+   */
+  async maybeStartConversation(): Promise<boolean> {
+    if (!companionDecision(this.companionFacts()).speak) return false;
+    const ctl = new AbortController();
+    this.proactiveCtl = ctl;
+    this.lastProactiveAt = this.now();
+    this.proactiveTimes = [...this.proactiveTimes.filter((t) => this.now() - t < 3600_000), this.now()];
+    this.unanswered++;
+    try {
+      const o = this.d.memory.owner;
+      const d = new Date(this.now());
+      const history: ChatMessage[] = this.d.memory
+        .recentTurns(6)
+        .filter((t) => t.role === 'owner' || t.role === 'assistant')
+        .map((t) => ({ role: t.role === 'owner' ? ('user' as const) : ('assistant' as const), content: t.text }));
+      const system = [
+        `You are Afuufow, the male personal AI assistant and friendly companion of ${o.fullName}. Address him as "Mudane ${o.greetingName}" or "${o.nickname}".`,
+        'Speak natural, warm, playful Somali. You are keeping him company like a good friend or colleague sitting next to him.',
+        'Never mention private details (health, money, passwords, messages). Never claim to have done any action.',
+      ].join('\n');
+      const cue = `[Internal cue, not from the owner] Local time ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}. He has been quiet for a while. Start a conversation yourself: ONE or TWO short sentences only, in Somali: a light joke, a friendly remark about the time of day, or a simple question about his day or work. Do not say you were told to speak.`;
+      let full = '';
+      const queue: Promise<void>[] = [];
+      const speakerOn = this.d.settings().audio.speakerEnabled;
+      for await (const sentence of sentences(this.d.llm.stream([{ role: 'system', content: system }, ...history, { role: 'user', content: cue }], { signal: ctl.signal, maxTokens: 90, temperature: 0.9 }))) {
+        full += (full ? ' ' : '') + sentence;
+        this.d.echo.noteSpeaking(sentence, 300 + sentence.length * 70);
+        if (speakerOn) {
+          this.speaking++;
+          this.pushState();
+          queue.push(
+            this.d.speech
+              .speak(sentence, ctl.signal, 'so')
+              .catch((e) => {
+                if ((e as Error).name !== 'AbortError') this.speechFailedAt = this.now();
+              })
+              .finally(() => {
+                this.speaking--;
+                if (this.speaking === 0) this.d.echo.speechEnded();
+                this.pushState();
+              }),
+          );
+        }
+      }
+      if (full) this.addTurn('assistant', full, 'system');
+      await Promise.all(queue);
+      if (full && !ctl.signal.aborted) this.d.emit({ type: 'listen', seconds: this.d.settings().companion.followUpSec });
+      return true;
+    } catch {
+      return false; // Ollama down etc.: stay quiet, never nag the owner with an error they did not trigger
+    } finally {
+      this.proactiveCtl = null;
+      this.pushState();
+    }
+  }
+
   private async runPlan(plan: NonNullable<ReturnType<typeof parsePlan>>, signal: AbortSignal) {
     if (plan.steps.length === 0 && plan.ask) {
       await this.say(plan.ask, plan.ask, signal);
@@ -807,6 +917,7 @@ export class Assistant {
   async onActivated(): Promise<void> {
     if (this.paused) return;
     if (this.d.presence().visitorPresent) return;
+    this.lastOwnerAt = this.now();
     if (this.d.greeting.shouldGreetOnActivation()) {
       const g = welcomePhrase(this.d.memory.owner, this.d.settings().general.welcomeMessage);
       this.addTurn('assistant', g, 'system');

@@ -136,7 +136,8 @@ describe('STT routing and privacy', () => {
   });
   it('error messages are in Somali and actionable', () => {
     expect(sttErrorMessage(new SttError('x', 'network')).so).toContain('Internetka');
-    expect(sttErrorMessage(new SttError('x', 'auth')).so).toContain('Furaha');
+    expect(sttErrorMessage(new SttError('Azure rejected the key (HTTP 401)', 'auth')).so).toContain('REGION');
+    expect(sttErrorMessage(new SttError('Azure Speech key is not set', 'auth')).so).toContain('lama gelin');
   });
 });
 
