@@ -743,7 +743,7 @@ export class Assistant {
       const msgs: ChatMessage[] = [{ role: 'system', content: this.systemPrompt() }, ...history, { role: 'user', content: text }];
       let full = '';
       const queue: Promise<void>[] = [];
-      for await (const s of sentences(this.d.llm.stream(msgs, { signal }))) {
+      for await (const s of sentences(this.d.llm.stream(msgs, { signal, maxTokens: 220 }))) {
         this.thinking = false;
         full += (full ? ' ' : '') + s;
         this.d.echo.noteSpeaking(s, 300 + s.length * 70);

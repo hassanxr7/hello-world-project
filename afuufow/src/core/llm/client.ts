@@ -33,12 +33,17 @@ export class LlmRouter implements LlmClient {
   /** Structured output (planner). Falls back to plain text parsing when the provider ignores the schema. */
   async completeJson(system: string, user: string, schema: object, signal?: AbortSignal): Promise<string> {
     let out = '';
-    for await (const t of this.stream([{ role: 'system', content: system }, { role: 'user', content: user }], { signal, jsonSchema: schema, temperature: 0.1 })) out += t;
+    for await (const t of this.stream([{ role: 'system', content: system }, { role: 'user', content: user }], { signal, jsonSchema: schema, temperature: 0.1, maxTokens: 400 })) out += t;
     return out;
   }
 
   ping(signal?: AbortSignal) {
     return this.provider().ping(signal);
+  }
+
+  /** Load the local model in the background so the first answer is not slow. */
+  warm(): Promise<void> {
+    return this.provider().warm?.() ?? Promise.resolve();
   }
 }
 

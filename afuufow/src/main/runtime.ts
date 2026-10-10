@@ -288,6 +288,7 @@ export class Runtime {
     this.vision.onEnroll((m) => this.onEnrollSamples(m));
 
     await this.ml.start().catch((e) => this.log.error('ML start', e));
+    void this.llm.warm().catch(() => undefined); // load the local model now so the first reply is not slow
     this.registerPowerEvents();
     this.visitorLog.addSession({ at: Date.now(), kind: this.startedInBackground ? 'signin' : 'app_start', source: 'app', detail: this.startedInBackground ? 'Afuufow started after Windows sign-in' : 'Afuufow started manually' });
     void this.scanSecurityLog();

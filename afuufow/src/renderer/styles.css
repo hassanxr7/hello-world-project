@@ -52,7 +52,14 @@ label.check { display: flex; gap: 8px; align-items: flex-start; cursor: pointer;
 .msgwrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .jump { position: absolute; right: 14px; bottom: 12px; border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
 .hero { grid-template-columns: 330px 1fr; gap: 16px; height: 100%; min-height: 0; }
-@media (max-width: 1000px) { .hero { grid-template-columns: 1fr; } }
+/* narrow windows (incl. 200% display scaling): orb on top, then a tall chat; the page itself scrolls */
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; }
+  .page.fit { overflow-y: auto; }
+  .page.fit > .hero { flex: none; height: auto; }
+  .hero > .col { overflow: visible; }
+  .chat { height: 70vh; min-height: 380px; }
+}
 .avatarBox { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }
 @media (max-height: 900px) { .avatarBox canvas { width: 190px !important; height: 190px !important; } }
 .chat { display: flex; flex-direction: column; min-height: 0; height: 100%; }

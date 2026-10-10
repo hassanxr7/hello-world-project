@@ -19,6 +19,8 @@ export interface LlmProvider {
   readonly isCloud: boolean;
   stream(messages: ChatMessage[], opts?: ChatOptions): AsyncGenerator<string>;
   ping(signal?: AbortSignal): Promise<{ ok: boolean; detail: string }>;
+  /** Optional: load the model into memory ahead of the first request. */
+  warm?(): Promise<void>;
 }
 
 export class CloudDisabledError extends Error {
@@ -81,6 +83,7 @@ export class OllamaProvider implements LlmProvider {
         model: this.model,
         messages,
         stream: true,
+        keep_alive: '30m', // Ollama unloads the model after 5 min by default; reloading a 3 GB model costs 10-30 s per reply
         ...(opts.jsonSchema ? { format: opts.jsonSchema } : {}),
         options: { temperature: opts.temperature ?? 0.4, ...(opts.maxTokens ? { num_predict: opts.maxTokens } : {}) },
       }),
@@ -97,6 +100,19 @@ export class OllamaProvider implements LlmProvider {
       if (j.error) throw new Error('Ollama: ' + j.error);
       if (j.message?.content) yield j.message.content;
       if (j.done) return;
+    }
+  }
+
+  async warm(): Promise<void> {
+    try {
+      await this.fetchFn(`${this.baseUrl.replace(/\/$/, '')}/api/generate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: this.model, keep_alive: '30m' }),
+        signal: AbortSignal.timeout(120_000),
+      });
+    } catch {
+      /* Ollama not running: the first real request reports it */
     }
   }
 
