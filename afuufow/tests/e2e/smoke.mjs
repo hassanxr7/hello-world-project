@@ -165,6 +165,16 @@ check('owner memory survives restart', mem.facts.some((f) => f.text === 'Boss li
 check('theme preference survives restart', snap2.settings.general.theme === 'light');
 await app2.close();
 
+// background start (what the Windows login entry does): setup is complete, so NO window may be shown
+const app3 = await electron.launch({ ...launchOpts(), args: [...launchOpts().args, '--background'] });
+await wait(6000);
+const visible = await app3.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((w) => w.isVisible()).length);
+const total = await app3.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
+check('--background start (as after Windows sign-in): runs with no visible window', visible === 0 && total >= 1, `visible=${visible} total=${total}`);
+const resumed = await app3.evaluate(async () => globalThis.process.pid > 0);
+check('background instance is alive and responsive', resumed === true);
+await app3.close();
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots: ${shots}`);
 process.exit(failed.length ? 1 : 0);
