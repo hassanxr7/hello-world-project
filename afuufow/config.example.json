@@ -1,0 +1,21 @@
+{
+  "_comment": "Example of %APPDATA%\\Afuufow\\data\\settings.json. Contains NO secrets: API keys are entered in the app and stored with Windows DPAPI. Every key is optional; missing keys use defaults.",
+  "setupComplete": true,
+  "general": { "theme": "dark", "uiLanguage": "so", "speechLanguage": "so", "startWithWindows": true, "startHidden": true, "pushToTalkShortcut": "Control+Alt+Space", "stopShortcut": "Control+Alt+Escape" },
+  "audio": { "wakeWordEnabled": true, "wakeWord": "Afuufow", "bargeIn": true },
+  "providers": {
+    "stt": { "primary": "azure", "fallback": "none", "azureRegion": "westeurope", "azureLanguage": "so-SO" },
+    "tts": { "primary": "azure", "fallback": "sapi", "azureRegion": "westeurope", "azureVoice": "so-SO-MuuseNeural" },
+    "llm": { "primary": "ollama", "ollamaBaseUrl": "http://127.0.0.1:11434", "ollamaModel": "gemma3:4b" }
+  },
+  "privacy": { "allowCloudStt": true, "allowCloudTts": true, "allowCloudLlm": false, "retention": { "historyDays": 30, "actionLogDays": 90, "visitorDays": 180, "snapshotDays": 30 } },
+  "camera": { "enabled": false, "matchThreshold": 0.62, "unknownCeiling": 0.45, "requireLiveness": true },
+  "visitors": { "enabled": false, "snapshot": "off", "saveAudio": false, "cooldownMin": 30 },
+  "permissions": {
+    "appPolicy": "any",
+    "approvedFolders": [{ "label": "downloads", "path": "C:\\Users\\<you>\\Downloads" }],
+    "messaging": { "mode": "explicit", "requirePresenceToSend": true },
+    "strongAuth": { "method": "pin", "ttlSec": 300 }
+  },
+  "integrations": { "searchEngine": "google", "browser": "default", "youtube": { "playIn": "app", "useApi": false }, "whatsapp": { "enabled": true, "mode": "web" } }
+}

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { ElectronBridge } from '../src/main/windows/platform';
 import { WindowsPlatform } from '../src/main/windows/platform';
 import { findFiles } from '../src/main/windows/findfiles';
-import { encodeCommand } from '../src/main/windows/ps';
+import { cleanPsError, encodeCommand } from '../src/main/windows/ps';
 import { SCRIPTS, withParams } from '../src/main/windows/scripts';
 import { tmpDir } from './helpers';
 
@@ -21,6 +21,17 @@ describe.skipIf(!PWSH)('PowerShell scripts parse without syntax errors', () => {
       expect(r.status).toBe(0);
     });
   }
+});
+
+describe('PowerShell error text', () => {
+  it('turns CLIXML noise into the readable error', () => {
+    const raw = '#< CLIXML\r\n<Objs Version="1.1.0.1"><Obj S="progress"><AV>Preparing modules for first use.</AV></Obj><S S="Error">Exception setting "Volume": "Retrieving the COM class factory for component with CLSID _x000D__x000A_</S><S S="Error">At line:1 char:1_x000D__x000A_</S></Objs>';
+    const out = cleanPsError(raw);
+    expect(out).toContain('Retrieving the COM class factory');
+    expect(out).not.toContain('<');
+    expect(out).not.toContain('Preparing modules');
+  });
+  it('leaves plain errors alone', () => expect(cleanPsError('boom\n')).toBe('boom'));
 });
 
 describe('PowerShell parameter safety', () => {

@@ -38,7 +38,7 @@ export const runPowerShell: RunPowerShell = (script, opts = {}) =>
       clearTimeout(timer);
       opts.signal?.removeEventListener('abort', onAbort);
       if (code === 0) resolve(out);
-      else reject(new Error(`PowerShell exited with ${code}: ${(err || out).trim().slice(0, 500)}`));
+      else reject(new Error(`PowerShell exited with ${code}: ${cleanPsError(err || out)}`));
     });
   });
 
@@ -50,4 +50,16 @@ export async function runJson<T>(run: RunPowerShell, script: string, opts?: { si
   } catch {
     throw new Error('unexpected PowerShell output: ' + out.slice(0, 200));
   }
+}
+
+/** Windows PowerShell wraps errors in CLIXML when stderr is redirected; keep only the human-readable messages. */
+export function cleanPsError(raw: string): string {
+  if (!raw.includes('CLIXML')) return raw.trim().slice(0, 500);
+  const msgs = [...raw.matchAll(/<S S="Error">([\s\S]*?)<\/S>/g)].map((m) => m[1]!);
+  const text = (msgs.length ? msgs.join('') : raw)
+    .replace(/_x000D__x000A_/g, '\n')
+    .replace(/_x000D_|_x000A_/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).join(' ').slice(0, 400);
 }

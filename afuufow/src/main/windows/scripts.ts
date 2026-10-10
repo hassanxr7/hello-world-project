@@ -8,6 +8,7 @@
 
 export const PS_PRELUDE = `
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 `;
@@ -37,6 +38,7 @@ if ($P.kind -eq 'uwp' -or $P.id -match '!' -or $P.id -notmatch '^[A-Za-z]:\\\\')
   waitForWindow: `
 $deadline = (Get-Date).AddMilliseconds([int]$P.timeoutMs)
 $needles = @($P.needles | ForEach-Object { $_.ToLowerInvariant() })
+$shell = $null
 while ((Get-Date) -lt $deadline) {
   $hit = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle } | Where-Object {
     $t = $_.MainWindowTitle.ToLowerInvariant(); $n = $_.ProcessName.ToLowerInvariant()
@@ -44,6 +46,14 @@ while ((Get-Date) -lt $deadline) {
     return $false
   } | Select-Object -First 1
   if ($hit) { ConvertTo-Json -Compress -InputObject ([pscustomobject]@{ title = $hit.MainWindowTitle; processName = $hit.ProcessName; pid = $hit.Id }); exit 0 }
+  # File Explorer folder windows all belong to one explorer.exe process, so ask the shell for its open folder windows
+  try {
+    if (-not $shell) { $shell = New-Object -ComObject Shell.Application }
+    foreach ($w in $shell.Windows()) {
+      $name = ([string]$w.LocationName).ToLowerInvariant()
+      if ($name) { foreach ($x in $needles) { if ($name -eq $x -or $name.Contains($x)) { ConvertTo-Json -Compress -InputObject ([pscustomobject]@{ title = [string]$w.LocationName; processName = 'explorer'; pid = 0 }); exit 0 } } }
+    }
+  } catch { }
   Start-Sleep -Milliseconds 250
 }
 'null'

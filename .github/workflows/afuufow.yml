@@ -72,6 +72,7 @@ jobs:
         run: node tests/e2e/smoke.mjs
         env: { SHOTS_DIR: '${{ runner.temp }}\shots' }
       - name: Silent uninstall
+        if: always()
         shell: pwsh
         run: |
           $u = Join-Path $env:AFUUFOW_DIR 'Uninstall Afuufow.exe'

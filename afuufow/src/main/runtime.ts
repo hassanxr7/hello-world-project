@@ -23,7 +23,6 @@ import { SttRouter, sttErrorMessage } from '../core/speech/stt/router';
 import { AzureTtsProvider } from '../core/speech/tts/azure';
 import { SpeechEngine } from '../core/speech/tts/engine';
 import { SapiTtsProvider } from '../core/speech/tts/sapi';
-import { matchWakeWord } from '../core/speech/wake';
 import { EncryptedBlobDir } from '../core/storage/encrypted';
 import { SECRET, SecretStore } from '../core/storage/secrets';
 import { ActionLog } from '../core/tools/actionlog';
@@ -479,9 +478,10 @@ export class Runtime {
       if ((e as Error).name === 'AbortError') return;
       const m = sttErrorMessage(e);
       this.notice('error', m.so, m.en);
+      // speak the Somali explanation at most once a minute so repeated failures do not nag
       if (Date.now() - this.lastSttErrAt > 60_000) {
         this.lastSttErrAt = Date.now();
-        void this.assistant.handle('', { source: 'voice' });
+        if (this.settings.get().audio.speakerEnabled) void this.speech.speak(m.so, undefined, 'so').catch(() => undefined);
       }
       return;
     }
@@ -500,8 +500,6 @@ export class Runtime {
     }
     const speaker = await this.identifySpeaker(pcm);
     // wake word + command in one breath: the parser strips the leading wake word
-    const m = matchWakeWord(text, this.settings.get().audio.wakeWord, this.settings.get().audio.wakeAliases);
-    void m;
     await this.assistant.handle(text, { source: 'voice', speaker });
   }
 
