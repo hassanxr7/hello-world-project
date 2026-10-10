@@ -127,6 +127,13 @@ describe('STT routing and privacy', () => {
     const none = new SttRouter(() => s, () => ({ azure: failing }));
     await expect(none.transcribe(new Int16Array(10))).rejects.toMatchObject({ kind: 'network' });
   });
+  it('reports "cloud disabled" (not "unavailable") when Somali needs cloud and the on-device fallback refuses Somali', async () => {
+    const s = defaultSettings(); // allowCloudStt is off by default
+    const { LocalSttProvider } = await import('../src/core/speech/stt/local');
+    const backend = { ready: () => true, transcribe: async () => ({ text: 'x', ms: 1 }), modelName: () => 'm' };
+    const router = new SttRouter(() => s, () => ({ azure: fake('azure', true, async () => 'cloud'), local: new LocalSttProvider(backend) }));
+    await expect(router.transcribe(new Int16Array(10))).rejects.toMatchObject({ kind: 'cloud_disabled' });
+  });
   it('error messages are in Somali and actionable', () => {
     expect(sttErrorMessage(new SttError('x', 'network')).so).toContain('Internetka');
     expect(sttErrorMessage(new SttError('x', 'auth')).so).toContain('Furaha');

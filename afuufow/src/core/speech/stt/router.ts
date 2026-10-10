@@ -31,8 +31,10 @@ export class SttRouter {
         return r;
       } catch (e) {
         if ((e as Error).name === 'AbortError') throw e;
-        lastErr = e instanceof SttError ? e : new SttError((e as Error).message, 'other');
-        errors.push(`${p.id}: ${lastErr.message}`);
+        const err = e instanceof SttError ? e : new SttError((e as Error).message, 'other');
+        errors.push(`${p.id}: ${err.message}`);
+        // a fallback saying "unavailable" must not hide why the primary provider was skipped or failed
+        if (!(lastErr && err.kind === 'unavailable')) lastErr = err;
       }
     }
     throw lastErr ?? new SttError('no speech recognition provider is configured', 'unavailable');
