@@ -90,6 +90,7 @@ export class Runtime {
 
   private dataDir: string;
   private micCapturing = false;
+  private captureWaiters: Array<(ok: boolean) => void> = [];
   private camCapturing = false;
   private micPermission = 'unknown';
   private camPermission = 'unknown';
@@ -430,8 +431,33 @@ export class Runtime {
     this.pushDevices();
   }
 
+  /** Turn the pipeline on and wait until the audio worker really holds the microphone (start() only sends the request). */
+  private async startCapture(): Promise<boolean> {
+    if (this.micCapturing) return true;
+    this.lastMicErr = null;
+    this.pipeline.setMicEnabled(true);
+    const live = new Promise<boolean>((resolve) => {
+      const timer = setTimeout(() => {
+        this.captureWaiters = this.captureWaiters.filter((w) => w !== done);
+        resolve(false);
+      }, 10_000);
+      const done = (ok: boolean) => {
+        clearTimeout(timer);
+        resolve(ok);
+      };
+      this.captureWaiters.push(done);
+    });
+    await this.audio.start(this.settings.get().audio.micDeviceId);
+    return live;
+  }
+
   private onAudioStatus(st: MediaStatus) {
     this.micCapturing = st.capturing;
+    if (st.capturing || st.error) {
+      const ws = this.captureWaiters;
+      this.captureWaiters = [];
+      for (const w of ws) w(st.capturing);
+    }
     if (st.error) {
       this.lastMicErr = st.error;
       const so = st.kind === 'blocked' ? 'Maykarafoonka waa la xiray: ka fur Windows Settings → Privacy → Microphone.' : st.kind === 'missing' ? 'Maykarafoon lama helin. Ku xir mid.' : st.kind === 'busy' ? 'Maykarafoonka barnaamij kale ayaa isticmaalaya.' : 'Maykarafoonka ma shaqeynayo.';
@@ -722,9 +748,10 @@ export class Runtime {
     if (!this.ml.getCaps().vad) throw new Error('Install the voice-activity model first (Setup → Models).');
     this.voiceEnroll = new VoiceEnrollment(6, 1.5);
     const wasOn = this.micCapturing;
-    if (!wasOn) {
-      this.pipeline.setMicEnabled(true);
-      await this.audio.start(this.settings.get().audio.micDeviceId);
+    if (!wasOn && !(await this.startCapture())) {
+      this.voiceEnroll = null;
+      this.pipeline.setMicEnabled(false);
+      throw new Error(this.lastMicErr ? `Microphone could not start: ${this.lastMicErr}` : 'Microphone did not start. Check Windows Settings → Privacy → Microphone.');
     }
     const prompts = ['Magacaygu waa Hassan Mohamed Mohamud.', 'Afuufow, Chrome fur.', 'Downloads-ka fur oo ii raadi file-ka invoice-ka.', 'Ii shid heesta aan jeclahay.', 'Codka hoos u dhig, kadibna jooji muuqaalka.', 'Fariiso, shaqo ii dir.'];
     void (async () => {
@@ -733,6 +760,10 @@ export class Runtime {
         this.hub.send('enroll', { kind: 'voice', progress: { total: this.voiceEnroll.count, target: 6, hintSo: `Dheh: “${prompts[this.voiceEnroll.count % prompts.length]}”`, hintEn: `Say: “${prompts[this.voiceEnroll.count % prompts.length]}”`, complete: false } });
         const pcm = await this.captureNext(20_000);
         if (!this.voiceEnroll) break;
+        if (!this.micCapturing) {
+          this.hub.send('enroll', { kind: 'voice', progress: { total: this.voiceEnroll.count, target: 6, hintSo: 'Maykarafoonka way joogsatay. Dib u bilow.', hintEn: 'The microphone stopped. Start again.', complete: false } });
+          break; // never spin without a live microphone
+        }
         i++;
         if (!pcm) continue;
         const emb = await this.ml.embed(pcm).catch(() => null);
@@ -772,9 +803,9 @@ export class Runtime {
   async calibrateWake(): Promise<string[]> {
     const heard: string[] = [];
     const wasOn = this.micCapturing;
-    if (!wasOn) {
-      this.pipeline.setMicEnabled(true);
-      await this.audio.start(this.settings.get().audio.micDeviceId);
+    if (!wasOn && !(await this.startCapture())) {
+      this.pipeline.setMicEnabled(false);
+      throw new Error(this.lastMicErr ? `Microphone could not start: ${this.lastMicErr}` : 'Microphone did not start. Check Windows Settings → Privacy → Microphone.');
     }
     try {
       for (let i = 0; i < 3; i++) {
