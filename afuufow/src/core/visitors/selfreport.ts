@@ -23,6 +23,7 @@ const NAME_PATTERNS: RegExp[] = [
   /\bi\s+am\s+([\p{L}][\p{L}'’-]*(?:\s+[\p{L}][\p{L}'’-]*){0,1})/iu,
 ];
 
+const NOT_A_NAME = new Set(['a', 'an', 'the', 'here', 'there', 'to', 'from', 'ok', 'okay', 'sorry', 'friend', 'sheeg', 'saaxiib', 'looking', 'waiting', 'just', 'only', 'not', 'new', 'with', 'for', 'at', 'in', 'on', 'so', 'very', 'really']);
 const STOP_AFTER = /\b(oo|iyo|waxaan|waan|and|because|from|hassan|boss)\b/i;
 
 export function extractSelfReportedName(text: string): string | null {
@@ -32,7 +33,8 @@ export function extractSelfReportedName(text: string): string | null {
       let n = m[1].trim();
       const cut = STOP_AFTER.exec(n);
       if (cut && cut.index > 0) n = n.slice(0, cut.index).trim();
-      if (n && n.length <= 40 && !/^(a|an|the|here|ok|sorry|friend|sheeg)$/i.test(n)) return n;
+      const first = n.split(/\s+/)[0]!.toLowerCase();
+      if (n && n.length <= 40 && !NOT_A_NAME.has(first)) return n;
     }
   }
   return null;

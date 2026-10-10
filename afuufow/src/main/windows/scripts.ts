@@ -27,10 +27,10 @@ ConvertTo-Json -InputObject @($apps) -Compress
 `,
 
   launchApp: `
-if ($P.kind -eq 'uwp' -or $P.id -match '!' -or $P.id -notmatch '^[A-Za-z]:\\\\') {
-  Start-Process -FilePath 'explorer.exe' -ArgumentList ('shell:AppsFolder\\' + $P.id)
-} else {
+if ($P.id -match '^[A-Za-z]:\\\\') {
   Start-Process -FilePath $P.id
+} else {
+  Start-Process -FilePath 'explorer.exe' -ArgumentList ('shell:AppsFolder\\' + $P.id)
 }
 '{"ok":true}'
 `,
@@ -42,7 +42,7 @@ $shell = $null
 while ((Get-Date) -lt $deadline) {
   $hit = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle } | Where-Object {
     $t = $_.MainWindowTitle.ToLowerInvariant(); $n = $_.ProcessName.ToLowerInvariant()
-    foreach ($x in $needles) { if ($t.Contains($x) -or $n.Contains($x) -or $x.Contains($n)) { return $true } }
+    foreach ($x in $needles) { if ($t.Contains($x) -or $n.Contains($x)) { return $true } }
     return $false
   } | Select-Object -First 1
   if ($hit) { ConvertTo-Json -Compress -InputObject ([pscustomobject]@{ title = $hit.MainWindowTitle; processName = $hit.ProcessName; pid = $hit.Id }); exit 0 }

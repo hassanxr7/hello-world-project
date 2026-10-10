@@ -25,6 +25,10 @@ export function makeSensitiveTools(s: Services): ToolDef<any>[] {
         return failed('Ma tirtiri karo galka oggolaanshaha laftiisa.', 'Refusing to delete an approved root folder.');
       }
       if (!s.platform.pathExists(input.path)) return failed('File-ka ma jiro.', 'File does not exist.');
+      const real = s.platform.realPath(input.path);
+      if (!approvedRoots(s).some((r) => isInside(s.platform.realPath(r.path), real))) {
+        return failed('File-kaas wuxuu ka baxsan yahay goobaha la oggolaaday (link/junction).', 'The file resolves outside the approved folders (link or junction).');
+      }
       await s.platform.recycle(input.path);
       return !s.platform.pathExists(input.path)
         ? ok('File-ka waxaa loo wareejiyay Recycle Bin.', 'Moved to the Recycle Bin.', 'path-missing', input.path)

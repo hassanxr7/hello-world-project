@@ -46,15 +46,19 @@ interface PendingState {
   info: PendingInfo;
   kind: 'confirm' | 'choose' | 'text';
   options?: Array<{ label: string; value: unknown }>;
-  onYes?: () => Promise<void>;
+  onYes?: (signal: AbortSignal) => Promise<void>;
   onNo?: () => Promise<void>;
-  onChoice?: (v: unknown) => Promise<void>;
-  onText?: (t: string) => Promise<void>;
+  onChoice?: (v: unknown, signal: AbortSignal) => Promise<void>;
+  onText?: (t: string, signal: AbortSignal) => Promise<void>;
   tries: number;
 }
 
-const YES = /^(haa|haye|haaye|ok|okay|sax|hubaal|yes|yeah|yep|dir|u dir|haa dir|waa hagaag|fuli|sii wad|ha)\b/i;
-const NO = /^(maya|no|nope|ha dirin|ha u dirin|jooji|tirtir|ilaali|cancel|ha samayn|ha fulin)\b/i;
+// A confirmation is YES only if the WHOLE utterance is an affirmative phrase and it contains no negation token.
+// Anything ambiguous ("ok but do not", "haa maya", "ha dirina") is treated as NO, never as permission.
+const YES_WHOLE = /^(haa|haye|haaye|ok|okay|sax|hubaal|yes|yeah|yep|dir|u dir|haa dir|haa u dir|waa hagaag|fuli|send|send it|confirm|sure)( boss)?$/;
+const NEGATION = /\b(maya|no|nope|not|dont|don't|never|ha|ma|jooji|sug|aamus|stop|tirtir|ilaali|cancel|wait|diid|ayaan)\b/;
+const isNo = (n: string) => NEGATION.test(n);
+const isYes = (n: string) => !isNo(n) && YES_WHOLE.test(n);
 const PENDING_TTL_MS = 60_000;
 
 export class Assistant {
@@ -209,6 +213,7 @@ export class Assistant {
 
     // Stop commands must act NOW, not wait in the queue behind the task they are meant to stop.
     const quick = parseCommand(t, this.parseCtx());
+    if (meta.source === 'voice' && this.d.presence().visitorPresent) return Promise.resolve(); // never obey an unrecognised person
     if (quick.intent.type === 'stop' && quick.intent.scope === 'auto') {
       this.addTurn('owner', t, meta.source);
       this.stopAll('voice-stop');
@@ -225,7 +230,7 @@ export class Assistant {
     const s = this.d.settings();
     return {
       wakeNames: [s.audio.wakeWord, ...s.audio.wakeAliases],
-      hasPendingMessage: this.pendingMessage !== null && this.now() - this.pendingMessage.at < 10 * 60_000,
+      hasPendingMessage: this.pendingMessage !== null && this.now() - this.pendingMessage.at < 3 * 60_000,
       folderAliases: Object.fromEntries(s.permissions.approvedFolders.map((f) => [f.label, [f.label]])),
     };
   }
@@ -296,24 +301,26 @@ export class Assistant {
     const n = normalizeText(t);
 
     if (pend.kind === 'confirm') {
-      if (NO.test(n)) {
+      if (isNo(n)) {
         this.clearPending();
         await pend.onNo?.();
         await this.say('Waa hagaag, ma fulin.', 'OK, I will not do it.');
         return true;
       }
-      if (YES.test(n) && n.split(' ').length <= 4) {
+      if (isYes(n)) {
         this.clearPending();
         const ctl = new AbortController();
         this.beginTask('confirmed', ctl);
         try {
-          await pend.onYes?.();
+          await pend.onYes?.(ctl.signal);
         } finally {
           this.endTask();
         }
         return true;
       }
-      return false; // something else: treat as a new command, drop the question
+      // something else: it is a new command, so the question is dropped (a later "ok" must not fire it)
+      this.clearPending();
+      return false;
     }
 
     if (pend.kind === 'choose') {
@@ -326,16 +333,22 @@ export class Assistant {
         const ctl = new AbortController();
         this.beginTask('choice', ctl);
         try {
-          await pend.onChoice?.(opts[i]!.value);
+          await pend.onChoice?.(opts[i]!.value, ctl.signal);
         } finally {
           this.endTask();
         }
         return true;
       }
-      if (NO.test(n)) {
+      if (isNo(n)) {
         this.clearPending();
         await this.say('Waa hagaag, waan joojiyay.', 'OK, cancelled.');
         return true;
+      }
+      // a clear, unrelated command is not an answer: drop the question and let it run
+      const pc = parseCommand(t, this.parseCtx());
+      if (pc.rule && pc.confidence >= 0.8 && pc.intent.type !== 'confirm' && pc.intent.type !== 'chat') {
+        this.clearPending();
+        return false;
       }
       pend.tries++;
       if (pend.tries >= 2) {
@@ -352,7 +365,7 @@ export class Assistant {
     const ctl = new AbortController();
     this.beginTask('answer', ctl);
     try {
-      await pend.onText?.(t);
+      await pend.onText?.(t, ctl.signal);
     } finally {
       this.endTask();
     }
@@ -376,16 +389,18 @@ export class Assistant {
         }
         case 'confirm': {
           const dec = out.decision;
+          // sensitive and injection-guarded confirmations must say exactly what will happen
+          const withSummary = !!out.summary && (!!dec.strong || this.tainted);
           this.setPending({
             kind: 'confirm',
-            promptSo: dec.so,
-            promptEn: dec.en,
-            onYes: async () => {
-              const r = await this.runTool(name, out.input, new AbortController().signal, { confirmed: true, fromPlanner: opts.fromPlanner });
-              if (r) await this.reportResult(r);
+            promptSo: withSummary ? `${dec.so} (${out.summary})` : dec.so,
+            promptEn: withSummary ? `${dec.en} (${out.summary})` : dec.en,
+            onYes: async (sig) => {
+              const r = await this.runTool(name, out.input, sig, { confirmed: true, fromPlanner: opts.fromPlanner });
+              if (r) await this.reportResult(r, { silent: dec.screenOnly });
             },
           });
-          await this.say(dec.so, dec.en, signal);
+          await this.say(withSummary ? `${dec.so} (${out.summary})` : dec.so, withSummary ? `${dec.en} (${out.summary})` : dec.en, signal);
           return null;
         }
         case 'auth': {
@@ -406,13 +421,18 @@ export class Assistant {
   }
 
   /** Speak the outcome honestly. Only verified results are announced as done. */
-  private async reportResult(r: ToolResult) {
+  private async reportResult(r: ToolResult, o: { silent?: boolean } = {}) {
     if (r.status === 'needs_input') {
       await this.say(r.so, r.en);
       return;
     }
     if (r.data && typeof r.data.text === 'string' && r.status === 'verified' && 'text' in r.data && !('files' in r.data) && !r.data.untrusted) {
       this.d.emit({ type: 'draft', text: r.data.text as string });
+    }
+    if (o.silent) {
+      // the owner chose "show on screen only": display, never speak
+      this.addTurn('assistant', this.pick(r.so, r.en), 'system');
+      return;
     }
     await this.say(r.so, r.en);
   }
@@ -450,8 +470,8 @@ export class Assistant {
         const r = await this.runTool('apps.open', { app: intent.app }, signal);
         if (r?.status === 'needs_input' && Array.isArray(r.data?.options)) {
           const options = (r.data!.options as string[]).map((o) => ({ label: o, value: o }));
-          this.setPending({ kind: 'choose', promptSo: r.so, promptEn: r.en, options, onChoice: async (v) => {
-            const rr = await this.runTool('apps.open', { app: v as string }, new AbortController().signal);
+          this.setPending({ kind: 'choose', promptSo: r.so, promptEn: r.en, options, onChoice: async (v, sig) => {
+            const rr = await this.runTool('apps.open', { app: v as string }, sig);
             if (rr) await this.reportResult(rr);
           } });
         }
@@ -510,8 +530,8 @@ export class Assistant {
         promptSo: r.so,
         promptEn: r.en,
         options: opts,
-        onChoice: async (id) => {
-          const rr = await this.runTool('youtube.play', { query, kind, videoId: id as string }, new AbortController().signal);
+        onChoice: async (id, sig) => {
+          const rr = await this.runTool('youtube.play', { query, kind, videoId: id as string }, sig);
           if (rr) await this.reportResult(rr);
         },
       });
@@ -540,7 +560,7 @@ export class Assistant {
       return;
     }
     if (!intent.contact) {
-      this.setPending({ kind: 'text', promptSo: 'Yaa u qorayaa?', promptEn: 'Who is it for?', onText: async (t) => this.whatsapp({ ...intent, contact: t }, new AbortController().signal) });
+      this.setPending({ kind: 'text', promptSo: 'Yaa u qorayaa?', promptEn: 'Who is it for?', onText: async (t, sig) => this.whatsapp({ ...intent, contact: t }, sig) });
       await this.say('Yaa u qorayaa?', 'Who is it for?', signal);
       return;
     }
@@ -555,13 +575,13 @@ export class Assistant {
       case 'ambiguous': {
         const options = res.candidates.map((c) => ({ label: `${c.displayName} (…${c.phone.slice(-3)})`, value: c.id }));
         const list = options.map((o, i) => `${i + 1}) ${o.label}`).join(', ');
-        this.setPending({ kind: 'choose', promptSo: `Yaa ka mid ah: ${list}?`, promptEn: `Which one: ${list}?`, options, onChoice: async (id) => this.continueMessage(this.contactById(id as string)!, intent, new AbortController().signal) });
+        this.setPending({ kind: 'choose', promptSo: `Yaa ka mid ah: ${list}?`, promptEn: `Which one: ${list}?`, options, onChoice: async (id, sig) => this.continueMessage(this.contactById(id as string)!, intent, sig) });
         await this.say(`Waxaan helay in ka badan hal qof: ${list}. Kee?`, `Several contacts match: ${list}. Which one?`, signal);
         return;
       }
       case 'uncertain': {
         const c = res.contact;
-        this.setPending({ kind: 'confirm', promptSo: `Ma ${c.displayName} baad ka dhigan tahay?`, promptEn: `Do you mean ${c.displayName}?`, onYes: async () => this.continueMessage(c, intent, new AbortController().signal) });
+        this.setPending({ kind: 'confirm', promptSo: `Ma ${c.displayName} baad ka dhigan tahay?`, promptEn: `Do you mean ${c.displayName}?`, onYes: async (sig) => this.continueMessage(c, intent, sig) });
         await this.say(`Ma ${c.displayName} baad ka dhigan tahay?`, `Do you mean ${c.displayName}?`, signal);
         return;
       }
@@ -572,7 +592,7 @@ export class Assistant {
 
   private async continueMessage(contact: Contact, intent: Extract<Intent, { type: 'whatsapp_message' }>, signal: AbortSignal) {
     if (!intent.message.trim()) {
-      this.setPending({ kind: 'text', promptSo: `Maxaan u qoraa ${contact.displayName}?`, promptEn: `What should I write to ${contact.displayName}?`, onText: async (t) => this.continueMessage(contact, { ...intent, message: t }, new AbortController().signal) });
+      this.setPending({ kind: 'text', promptSo: `Maxaan u qoraa ${contact.displayName}?`, promptEn: `What should I write to ${contact.displayName}?`, onText: async (t, sig) => this.continueMessage(contact, { ...intent, message: t }, sig) });
       await this.say(`Maxaan u qoraa ${contact.displayName}?`, `What should I write to ${contact.displayName}?`, signal);
       return;
     }
@@ -611,8 +631,8 @@ export class Assistant {
       kind: 'confirm',
       promptSo: so,
       promptEn: en,
-      onYes: async () => {
-        const r = await this.runTool('whatsapp.send', { contactId: contact.id, message, explicitSend: true }, new AbortController().signal);
+      onYes: async (sig) => {
+        const r = await this.runTool('whatsapp.send', { contactId: contact.id, message, explicitSend: true }, sig);
         await this.afterSend(r, contact, message);
       },
       onNo: async () => undefined,
@@ -622,6 +642,19 @@ export class Assistant {
 
   private async afterSend(r: ToolResult | null, contact: Contact, message: string) {
     if (!r) return;
+    if (r.status === 'needs_input' && r.data?.duplicate) {
+      this.setPending({
+        kind: 'confirm',
+        promptSo: r.so,
+        promptEn: r.en,
+        onYes: async (sig) => {
+          const rr = await this.runTool('whatsapp.send', { contactId: contact.id, message, explicitSend: true, allowDuplicate: true }, sig);
+          await this.afterSend(rr, contact, message);
+        },
+      });
+      await this.say(r.so, r.en);
+      return;
+    }
     if (r.status === 'verified' || r.status === 'unverified') {
       if (r.status === 'verified') this.pendingMessage = null;
       void message;
@@ -648,6 +681,10 @@ export class Assistant {
       case 'read_pending':
         return this.confirmSend(contact, pm.message, `Fariinta waxay tahay: ${pm.message}. Ma dirayaa?`, `The message reads: ${pm.message}. Shall I send it?`, signal);
       case 'send_pending': {
+        if (this.now() - pm.at > 60_000) {
+          // an old draft is never sent blind: read it back and ask
+          return this.confirmSend(contact, pm.message, `Fariintan waa mid hore: ${pm.message}. Weli ma dirayaa?`, `This draft is a while old: ${pm.message}. Send it now?`, signal);
+        }
         const r = await this.runTool('whatsapp.send', { contactId: contact.id, message: pm.message, explicitSend: true }, signal);
         return this.afterSend(r, contact, pm.message);
       }

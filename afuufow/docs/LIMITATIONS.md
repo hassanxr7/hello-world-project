@@ -1,5 +1,7 @@
 # Working features, verification status and known limitations
 
+**Latest verified Windows run:** GitHub Actions run `38008913350` (branch `claude/afuufow-windows-assistant-1ed2t8`, commit `9b40512`): typecheck, the full unit-test suite (including a syntax check of all 21 embedded PowerShell scripts under real Windows PowerShell 5.1), NSIS installer build (138 MB artifact `Afuufow-Setup-windows-x64`), silent install, **28/28 end-to-end checks against the installed app**, silent uninstall. A hosted runner has no microphone, speaker, camera, face, phone or logged-in browser, so everything involving real hardware or live online accounts is listed below as not verified.
+
 "**CI-Windows**" = verified by the GitHub Actions workflow on a real `windows-latest` runner against the **installed** app (`.github/workflows/afuufow.yml`; see the run log). "**Linux-e2e**" = real Electron app on Linux with a fake microphone/camera. "**Unit**" = automated tests of the OS-independent core. "**Not verified**" = implemented but never exercised against the real service/device in this repository; it may need adjustments on your machine.
 
 ## Installer and lifecycle
@@ -7,7 +9,7 @@
 |---|---|
 | NSIS per-user installer builds | **CI-Windows** |
 | Silent install: program files, ML native addon, Start-menu shortcut, Add/Remove entry | **CI-Windows** |
-| Silent uninstall removes program and registry entry | **CI-Windows** (see run log for the final run) |
+| Silent uninstall removes program and registry entry | **CI-Windows** |
 | Desktop shortcut, interactive installer pages, uninstall data-deletion prompt | Not verified (configured in `electron-builder.yml` / `installer/installer.nsh`) |
 | Start automatically after Windows sign-in (`openAtLogin`, `--background`, hidden window, tray) | Implemented; **not verified** across a real sign-out/sign-in (use the manual checklist) |
 | Tray icon, menu, global shortcuts | Implemented; **not verified** on Windows (headless runner has no tray) |
@@ -30,7 +32,7 @@
 | Feature | Status |
 |---|---|
 | Open an application and verify its window ("Notepad fur") | **CI-Windows** |
-| Open a folder and verify the Explorer window | Fixed after the first CI run (shell COM detection); see latest run |
+| Open a folder and verify the Explorer window ("Downloads-ka fur") | **CI-Windows** (first CI run exposed that process titles cannot see Explorer folder windows; fixed with Shell.Application detection) |
 | Screenshot saved and verified | **CI-Windows** |
 | Volume read/set/mute via Core Audio | Script parses; on the runner there is no audio device, so it failed honestly. **Not verified on real audio hardware.** |
 | Media keys, focus window, paste (Ctrl+V), UI Automation text, Windows OCR, Recycle Bin, winget, Windows Hello | Scripts syntax-checked on Windows PowerShell 5.1 in CI; **not executed** on real data. Windows Hello from a background process may not show its prompt; the PIN is the dependable path. |

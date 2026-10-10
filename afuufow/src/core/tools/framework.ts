@@ -24,7 +24,7 @@ export interface ToolDef<I = unknown> {
 
 export type ExecOutcome =
   | { kind: 'done'; result: ToolResult; record: ActionRecord }
-  | { kind: 'confirm'; decision: Extract<Decision, { kind: 'confirm' }>; tool: string; input: unknown }
+  | { kind: 'confirm'; decision: Extract<Decision, { kind: 'confirm' }>; tool: string; input: unknown; summary: string }
   | { kind: 'auth'; decision: Extract<Decision, { kind: 'auth' }>; tool: string; input: unknown }
   | { kind: 'denied'; result: ToolResult; record: ActionRecord };
 
@@ -90,7 +90,7 @@ export class Executor {
     }
     if (decision.kind === 'auth') return { kind: 'auth', decision, tool: name, input };
     if (decision.kind === 'confirm') {
-      if (!opts.confirmed) return { kind: 'confirm', decision, tool: name, input };
+      if (!opts.confirmed) return { kind: 'confirm', decision, tool: name, input, summary };
       decidedBy = decision.strong ? 'strong-auth' : 'owner-confirmation';
       if (decision.strong) this.hooks.onStrongUsed?.();
     } else {

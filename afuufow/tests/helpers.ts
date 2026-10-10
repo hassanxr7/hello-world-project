@@ -31,6 +31,8 @@ export class FakePlatform implements Platform {
     { name: 'Visual Studio Code', id: 'C:\\Code\\Code.exe', kind: 'exe' },
     { name: 'Notepad', id: 'notepad.exe', kind: 'exe' },
     { name: 'WhatsApp', id: 'wa', kind: 'uwp' },
+    { name: 'Microsoft Word', id: 'C:\\Office\\WINWORD.EXE', kind: 'exe' },
+    { name: 'WordPad', id: 'C:\\Win\\wordpad.exe', kind: 'exe' },
   ];
   launched: string[] = [];
   windowAppears = true;
@@ -53,6 +55,7 @@ export class FakePlatform implements Platform {
   async foregroundWindow() { return null; }
   knownFolder(l: string) { return `C:\\Users\\Hassan\\${l[0]!.toUpperCase()}${l.slice(1)}`; }
   pathExists(p: string) { return this.existing.has(p) || p.startsWith('C:\\Users\\Hassan\\') && !this.recycled.includes(p) && !p.endsWith('missing'); }
+  realPath(p: string) { return p; }
   async openPath(p: string) { this.opened.push(p); }
   async openUrl(u: string) { this.urls.push(u); }
   async findFiles(): Promise<FoundFile[]> { return this.files; }
@@ -97,11 +100,12 @@ export class FakeWhatsApp implements WhatsAppController {
   delivery: WaDelivery = 'sent';
   failSend = false;
   mangleComposer = false;
+  draftDelayMs = 0;
   showBubble = true;
   async status() { return this.statusValue; }
   async show() { /* noop */ }
   async openChat(phone: string) { this.chat = phone; return { ok: true }; }
-  async setDraft(text: string) { this.composer = this.mangleComposer ? text.toUpperCase() : text; return { ok: true, observed: this.composer }; }
+  async setDraft(text: string) { if (this.draftDelayMs) await new Promise((r) => setTimeout(r, this.draftDelayMs)); this.composer = this.mangleComposer ? text.toUpperCase() : text; return { ok: true, observed: this.composer }; }
   async clickSend() {
     if (this.failSend) return { ok: false };
     this.sent.push({ phone: this.chat!, text: this.composer });

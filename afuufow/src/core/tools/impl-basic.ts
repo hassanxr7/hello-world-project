@@ -9,6 +9,8 @@ const p = path.win32;
 /** Folder labels the owner can say, resolved to Windows known folders. */
 export const KNOWN_FOLDER_LABELS = ['downloads', 'documents', 'desktop', 'pictures', 'music', 'videos'] as const;
 
+const SAFE_OPEN_EXT = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf', 'csv', 'odt', 'ods', 'odp', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'mp3', 'wav', 'm4a', 'flac', 'mp4', 'mkv', 'avi', 'mov', 'webm']);
+
 export function approvedRoots(s: Services): Array<{ label: string; path: string }> {
   const out: Array<{ label: string; path: string }> = [];
   for (const f of s.settings().permissions.approvedFolders) out.push({ label: normalizeText(f.label), path: f.path });
@@ -52,14 +54,26 @@ export function makeBasicTools(s: Services): ToolDef<any>[] {
     timeoutMs: 25_000,
     async run(input: { app: string }, rt) {
       const settings = s.settings();
+      const apps = await s.platform.listApps(rt.signal);
+      const res = resolveApp(input.app, apps);
       if (settings.permissions.appPolicy === 'allowlist') {
+        // the allow-list is checked against the application that was actually resolved ("wordpad" must not pass for "Word")
         const allowed = settings.permissions.approvedApps.map(normalizeText);
-        if (!allowed.some((a) => normalizeText(input.app).includes(a) || a.includes(normalizeText(input.app)))) {
+        const okName = (name: string) => {
+          const n = normalizeText(name);
+          return allowed.some((a) => n === a || n.split(' ').includes(a));
+        };
+        const candidates = res.kind === 'found' ? [res.app] : res.kind === 'ambiguous' ? res.candidates : [];
+        const permitted = candidates.filter((c) => okName(c.name));
+        if (candidates.length > 0 && permitted.length === 0) {
+          return failed(`${input.app} liiska barnaamijyada la oggolaaday kuma jiro.`, `${input.app} is not on the approved applications list.`);
+        }
+        if (res.kind === 'found' && permitted.length === 0) return failed(`${input.app} liiska la oggolaaday kuma jiro.`, `${input.app} is not on the approved applications list.`);
+        if (res.kind === 'ambiguous') (res as { candidates: typeof candidates }).candidates = permitted;
+        if (res.kind === 'missing' && !allowed.some((a) => normalizeText(input.app).split(' ').includes(a))) {
           return failed(`${input.app} liiska barnaamijyada la oggolaaday kuma jiro.`, `${input.app} is not on the approved applications list.`);
         }
       }
-      const apps = await s.platform.listApps(rt.signal);
-      const res = resolveApp(input.app, apps);
       if (res.kind === 'missing') {
         const hint = res.suggestions.map((a) => a.name).join(', ');
         return failed(
@@ -135,10 +149,18 @@ export function makeBasicTools(s: Services): ToolDef<any>[] {
     async run(input: { path: string }, rt) {
       const allowed = approvedRoots(s).some((r) => isInside(r.path, input.path));
       if (!allowed) return failed('File-kaas ma ku jiro goob la oggolaaday.', 'File is outside the approved folders.');
-      if (/\.(exe|bat|cmd|ps1|vbs|js|msi|scr|lnk|com|jar|reg)$/i.test(input.path)) {
-        return failed('Ma furo faylal la fuliyo (exe/script) si toos ah.', 'Executable and script files are not opened automatically.');
+      // Windows ignores trailing dots/spaces ("evil.exe." runs as evil.exe), and has many executable-like types, so only
+      // an allow-list of document/media types is ever opened automatically.
+      const cleaned = input.path.replace(/[.\s]+$/g, '');
+      const ext = /\.([A-Za-z0-9]{1,5})$/.exec(cleaned)?.[1]?.toLowerCase() ?? '';
+      if (input.path !== cleaned || !SAFE_OPEN_EXT.has(ext)) {
+        return failed('Nooca file-kan si toos ah looma furo (kaliya dukumiinti/sawir/muuqaal/cod).', 'Only document, image, audio and video files are opened automatically.');
       }
       if (!s.platform.pathExists(input.path)) return failed('File-ka ma jiro.', 'File does not exist.');
+      const real = s.platform.realPath(input.path);
+      if (!approvedRoots(s).some((r) => isInside(s.platform.realPath(r.path), real))) {
+        return failed('File-kaas wuxuu ka baxsan yahay goobaha la oggolaaday (link/junction).', 'The file resolves outside the approved folders (link or junction).');
+      }
       await s.platform.openPath(input.path);
       const win = await s.platform.waitForWindow([p.basename(input.path)], 8_000, rt.signal);
       return win

@@ -43,7 +43,7 @@ export interface ToolRequest {
 
 export type Decision =
   | { kind: 'allow'; by: 'auto' | 'standing-permission' }
-  | { kind: 'confirm'; so: string; en: string; strong?: boolean }
+  | { kind: 'confirm'; so: string; en: string; strong?: boolean; screenOnly?: boolean }
   | { kind: 'auth'; level: 'presence' | 'strong'; so: string; en: string }
   | { kind: 'deny'; so: string; en: string };
 
@@ -98,7 +98,7 @@ function decideByRisk(ctx: PolicyContext, req: ToolRequest): Decision {
         return { kind: 'auth', level: 'presence', so: 'Macluumaadkan waa gaar; marka hore aqoonsi ii sii.', en: 'This is private; identity verification is required first.' };
       }
       if (ctx.otherPeoplePresent && !f.ownerRequestedAloud) {
-        return { kind: 'confirm', so: 'Qof kale ayaa jooga; ma tuso shaashadda kaliya?', en: 'Someone else is present; show on screen only?' };
+        return { kind: 'confirm', so: 'Qof kale ayaa jooga; ma tuso shaashadda kaliya?', en: 'Someone else is present; show on screen only?', screenOnly: true };
       }
       return { kind: 'allow', by: 'auto' };
     }

@@ -6,7 +6,7 @@ import { extractSelfReportedName, isDecline } from './selfreport';
 
 export interface VisitorIO {
   /** Speaks and resolves when playback has finished (so nothing is recorded before the notice ends). */
-  speak(text: string, signal: AbortSignal): Promise<void>;
+  speak(text: string, signal: AbortSignal): Promise<boolean | void>;
   /** Listens for the visitor's reply. null = nothing was said within the window. */
   listen(timeoutMs: number, signal: AbortSignal): Promise<{ text: string; audio?: Buffer } | null>;
   /** One still frame from the camera, or null if unavailable. */
@@ -56,8 +56,11 @@ export async function runVisitorFlow(io: VisitorIO, log: VisitorLog, inp: Visito
   };
 
   try {
-    await io.speak(visitorIntroPhrase(owner), signal);
-    await io.speak(notice, signal);
+    // Recording may start ONLY if both sentences were really spoken to the end (a TTS failure, a stop command or
+    // barge-in that cut the notice short means the visitor was not properly told, so nothing is asked or stored).
+    if ((await io.speak(visitorIntroPhrase(owner), signal)) === false) return log.add(base);
+    if ((await io.speak(notice, signal)) === false) return log.add(base);
+    throwIfAborted(signal);
     base.noticeSpokenAt = Date.now();
     base.disclosures = disclosures;
     throwIfAborted(signal);
@@ -81,16 +84,24 @@ export async function runVisitorFlow(io: VisitorIO, log: VisitorLog, inp: Visito
     base.selfReportedName = extractSelfReportedName(reply.text);
 
     const id = uid('m_');
+    const written: string[] = [];
     if (disclosures.includes('snapshot')) {
       const img = await io.snapshot();
       if (img) {
         await log.blobs.put(id + '_img', img);
+        written.push(id + '_img');
         base.snapshotId = id + '_img';
       }
     }
     if (disclosures.includes('audio') && reply.audio) {
       await log.blobs.put(id + '_aud', reply.audio);
+      written.push(id + '_aud');
       base.audioId = id + '_aud';
+    }
+    if (signal.aborted) {
+      // the owner returned (or the app paused) while the snapshot/audio was being handled: keep nothing
+      for (const w of written) log.blobs.delete(w);
+      throw new AbortError();
     }
     const ev = log.add(base);
     await io.speak(VISITOR_THANKS, signal).catch(() => undefined);
@@ -101,6 +112,8 @@ export async function runVisitorFlow(io: VisitorIO, log: VisitorLog, inp: Visito
       base.consent = base.noticeSpokenAt ? 'interrupted' : 'not_asked';
       base.transcript = null;
       base.selfReportedName = null;
+      base.snapshotId = null;
+      base.audioId = null;
       return log.add(base);
     }
     throw e;

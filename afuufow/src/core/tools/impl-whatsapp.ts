@@ -1,6 +1,6 @@
 import { z, ok, unverified, failed, needsInput, type ToolDef } from './framework';
 import type { Services } from './services';
-import { sleep } from '../util';
+import { sleep, throwIfAborted } from '../util';
 import type { Contact } from '../../shared/types';
 
 const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
@@ -76,6 +76,7 @@ export function makeWhatsAppTools(s: Services, getContact: (id: string) => Conta
       }
       const prep = await prepare(c, input.message, rt.signal);
       if (prep.err) return prep.err;
+      throwIfAborted(rt.signal); // a stop/cancel that arrived while the message was being typed must prevent the send
       const t0 = Date.now();
       rt.progress('Sending');
       const click = await s.whatsapp.clickSend(rt.signal);

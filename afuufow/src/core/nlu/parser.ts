@@ -133,7 +133,7 @@ function parseMessaging(text: string, toks: Tok[], ctx: ParseContext, body: stri
 
   // English forms: "send Ahmed a message: ..." / "message Ahmed ..." / "whatsapp Ahmed ..."
   const en = /^(?:please\s+)?(?:send|text|message|whatsapp|tell)\s+(?:a\s+(?:message|text)\s+to\s+)?([\p{L}][\p{L}'.]*(?:\s+[\p{L}][\p{L}'.]*)?)\s*(?:a\s+message|a\s+text)?\s*[:,]\s*(.+)$/isu.exec(body.trim());
-  if (en && !/^(chrome|youtube|google)$/i.test(en[1]!)) {
+  if (en && !/^(chrome|youtube|google)$/i.test(en[1]!) && !/^(me|us|him|her|them|you|it|from|about|to|the|a|an|my)\b/i.test(en[1]!)) {
     let msg = stripQuotes(en[2]!);
     const tt = tokenize(msg);
     const { cut, mode } = tailModifiers(tt);
@@ -157,9 +157,10 @@ function parseMessaging(text: string, toks: Tok[], ctx: ParseContext, body: stri
     // follow-ups on a pending message
     if (ctx.hasPendingMessage) {
       const n = toks.map((t) => t.n).join(' ');
-      if (/^(fariinta )?(ii )?akhri/.test(n) || /^read( it| the message)?/.test(n)) return fu('read_pending');
-      if (/^(ha dirin|ha u dirin|ha dirina|fariinta diyaari|diyaari|draft)/.test(n)) return fu('draft_pending');
-      if (/^(tirtir|ilaali|cancel|jooji fariinta|ha dirin fariinta)/.test(n)) return fu('cancel_pending');
+      // exact follow-up phrases only (anchored), so "read the screen" or "tirtir faylka" are never taken as message commands
+      if (/^(fariinta )?(ii )?akhri( fariinta| kan)?$/.test(n) || /^read( it| it back| the message)?$/.test(n)) return fu('read_pending');
+      if (/^(ha dirin|ha u dirin|ha dirina|ha u dirina|ha diri|fariinta diyaari( ha dirin)?|diyaari|draft( it)?|do not send|dont send)$/.test(n)) return fu('draft_pending');
+      if (/^(tirtir( fariinta)?|ilaali( fariinta)?|cancel( it| the message)?|jooji fariinta|ha dirin fariinta)$/.test(n)) return fu('cancel_pending');
       if (/^(dir|u dir|haa dir|haa u dir|send|send it|dir fariinta|fariinta dir)$/.test(n)) return fu('send_pending');
     }
     if (isWhatsApp && toks.some((t) => OPEN_VERBS.has(t.n))) {

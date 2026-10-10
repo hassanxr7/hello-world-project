@@ -461,12 +461,15 @@ export class Runtime {
 
   private async onUtterance(pcm: Int16Array, ctx: { fromWake: boolean; duringSpeech: boolean }) {
     if (this.oneShot) {
+      if (this.echo.isSpeaking()) return; // our own voice is not a reply
       const o = this.oneShot;
       this.oneShot = null;
       clearTimeout(o.timer);
       o.resolve(pcm);
       return;
     }
+    // while an unrecognised person is being questioned, nothing they say may stop speech or reach the assistant
+    if (this.visitorCtl) return;
     this.assistant.setListening(true);
     let text = '';
     try {
@@ -521,6 +524,7 @@ export class Runtime {
   /** Capture the next utterance as raw audio (visitor replies, enrollment, calibration). */
   private captureNext(timeoutMs: number, signal?: AbortSignal): Promise<Int16Array | null> {
     return new Promise((resolve) => {
+      this.oneShot?.resolve(null); // never leave an earlier waiter hanging or overwritten
       if (!this.settings.get().audio.micEnabled && !this.micCapturing) return resolve(null);
       const timer = setTimeout(() => {
         this.oneShot = null;
@@ -630,8 +634,15 @@ export class Runtime {
       const io: VisitorIO = {
         speak: async (text, signal) => {
           this.echo.noteSpeaking(text, 400 + text.length * 70);
-          await this.speech.speak(text, signal, 'so').catch(() => undefined);
+          const e0 = this.speech.epoch;
+          let ok = true;
+          try {
+            await this.speech.speak(text, signal, 'so');
+          } catch {
+            ok = false; // TTS failed: the visitor was NOT told anything
+          }
           this.echo.speechEnded();
+          return ok && !signal.aborted && this.speech.epoch === e0 && this.settings.get().audio.speakerEnabled;
         },
         listen: async (ms, signal) => {
           const pcm = await this.captureNext(ms, signal);

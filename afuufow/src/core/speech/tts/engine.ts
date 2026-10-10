@@ -29,6 +29,10 @@ export class SpeechEngine implements SpeechOut {
   private running = false;
   private cache = new Map<string, AudioClip>();
   private stopToken = 0;
+  /** Increments on every stop(): lets a caller detect that its utterance was cut off. */
+  get epoch() {
+    return this.stopToken;
+  }
 
   constructor(
     private settings: () => Settings,

@@ -28,6 +28,8 @@ export interface Platform {
   foregroundWindow(): Promise<WindowInfo | null>;
   knownFolder(label: string): string | null;
   pathExists(p: string): boolean;
+  /** Canonical path after resolving junctions/symlinks (for containment checks). */
+  realPath(p: string): string;
   openPath(p: string): Promise<void>;
   openUrl(url: string, browser: 'default' | 'chrome' | 'edge' | 'firefox'): Promise<void>;
   findFiles(query: string, roots: string[], limit: number, signal?: AbortSignal): Promise<FoundFile[]>;

@@ -60,6 +60,13 @@ export class WindowsPlatform implements Platform {
   pathExists(p: string): boolean {
     return fs.existsSync(p);
   }
+  realPath(p: string): string {
+    try {
+      return fs.realpathSync.native(p);
+    } catch {
+      return p;
+    }
+  }
   async openPath(p: string): Promise<void> {
     const err = await this.el.openPath(p);
     if (err) throw new Error(err);
