@@ -46,7 +46,7 @@ export function sttErrorMessage(e: unknown): { so: string; en: string } {
     case 'network': return { so: 'Internetka ma shaqeynayo; ma fahmi karo codka hadda.', en: 'No internet connection; speech recognition is unavailable right now.' };
     case 'quota': return { so: 'Xadka adeegga codka waa dhammaaday.', en: 'The speech service quota or rate limit was reached.' };
     case 'cloud_disabled': return { so: 'Aqoonsiga codka ee cloud-ka waa la xiray (Privacy).', en: 'Cloud speech recognition is turned off in Privacy settings.' };
-    case 'unavailable': return { so: 'Moodelka codka maxaliga ah lama rakibin.', en: 'The local speech model is not installed.' };
+    case 'unavailable': return { so: 'Soomaaliga ma fahmi karo iyada oo aan internet/cloud la isticmaalin (moodelka maxaliga ah aad buu u liita).', en: 'Somali needs the cloud recognizer (or the local model is missing); on-device Somali recognition is disabled because it measured unusable.' };
     default: return { so: 'Codka ma fahmin.', en: 'Speech recognition failed.' };
   }
 }

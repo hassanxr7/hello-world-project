@@ -95,6 +95,16 @@ describe('OpenAI-compatible STT', () => {
   });
 });
 
+describe('local (on-device) recognition policy', () => {
+  const backend = { ready: () => true, modelName: () => 'whisper-small', transcribe: async () => ({ text: 'hello', ms: 5 }) };
+  it('refuses Somali (measured WER ~100%, Arabic-script output) and serves English', async () => {
+    const { LocalSttProvider } = await import('../src/core/speech/stt/local');
+    const p = new LocalSttProvider(backend);
+    await expect(p.transcribe(new Int16Array(100), { language: 'so' })).rejects.toMatchObject({ kind: 'unavailable' });
+    expect((await p.transcribe(new Int16Array(100), { language: 'en' })).text).toBe('hello');
+  });
+});
+
 describe('STT routing and privacy', () => {
   const fake = (id: 'azure' | 'local', isCloud: boolean, impl: () => Promise<string>): SttProvider => ({
     id, isCloud,

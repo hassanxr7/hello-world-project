@@ -206,7 +206,8 @@ export class VoicePipeline {
       }
       if (sec > 6) return; // wake phrases are short; long speech is ordinary conversation
       const s = this.settings();
-      const text = await this.ml.transcribeLocal(pcm, s.general.speechLanguage);
+      // wake detection transcribes in English mode: "Afuufow" comes out in Latin letters that fuzzy matching can use
+      const text = await this.ml.transcribeLocal(pcm, 'en');
       const m = matchWakeWord(text, s.audio.wakeWord, s.audio.wakeAliases);
       if (m.matched) {
         this.ev.onWake(m.rest || null);

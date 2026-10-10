@@ -24,6 +24,8 @@ export default defineConfig({
   root: resolve(__dirname, 'src'),
   base: './',
   plugins: [react(), copyAssets()],
+  // never pick up a PostCSS/Tailwind config from a parent folder (this app lives inside another repository)
+  css: { postcss: {} },
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,

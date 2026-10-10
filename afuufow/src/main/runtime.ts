@@ -263,7 +263,8 @@ export class Runtime {
       kwsAccept: (f) => this.ml.kwsAccept(f),
       transcribeLocal: async (pcm, lang) => {
         if (s().audio.wakeEngine === 'cloud' && s().privacy.allowCloudStt) return (await this.sttRouter.transcribe(pcm, { prompt: BIAS_PROMPT })).text;
-        return this.ml.transcribeLocal(pcm, lang);
+        void lang;
+        return this.ml.transcribeLocal(pcm, 'en');
       },
       hasLocalAsr: () => (s().audio.wakeEngine === 'cloud' && s().privacy.allowCloudStt) || this.ml.hasLocalAsr(),
       hasKws: () => this.ml.hasKws(),
