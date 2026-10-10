@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { DeviceToggles } from '../components/Controls';
 import { Card } from '../components/ui';
@@ -17,15 +17,33 @@ export function Home() {
   const lv = useLevels();
   const [text, setText] = useState('');
   const [freeText, setFreeText] = useState('');
-  const end = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    end.current?.scrollIntoView({ behavior: 'smooth' });
+  const box = useRef<HTMLDivElement>(null);
+  const stick = useRef(true); // follow new messages only while the reader is at the bottom
+  const [away, setAway] = useState(false);
+  const toBottom = () => {
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+    stick.current = true;
+    setAway(false);
+  };
+  const onScroll = () => {
+    const el = box.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    stick.current = near;
+    setAway(!near);
+  };
+  // scrolls only the message list (never the page), and never pulls the reader down while they read older messages
+  useLayoutEffect(() => {
+    if (stick.current) toBottom();
+    else setAway(true);
   }, [turns.length, pending]);
   if (!snap) return null;
   const submit = () => {
     const v = text.trim();
     if (!v) return;
     setText('');
+    stick.current = true;
     void call('cmd.text', v);
   };
   const p = snap.presence;
@@ -62,7 +80,8 @@ export function Home() {
           <span className="spacer" />
           <span className="muted small">{t('home.try')}</span>
         </div>
-        <div className="msgs" aria-live="polite">
+        <div className="msgwrap">
+        <div className="msgs" aria-live="polite" ref={box} onScroll={onScroll}>
           {turns.length === 0 && <div className="muted">{L('Waxaan diyaar u ahay, Boss.', 'Ready when you are, Boss.')}</div>}
           {turns.map((m) => (
             <div key={m.id} className={`msg ${m.role}`}>
@@ -94,7 +113,8 @@ export function Home() {
               )}
             </div>
           )}
-          <div ref={end} />
+        </div>
+        {away && <button className="btn primary sm jump" onClick={toBottom}>↓ {L('Ugu dambeeyay', 'Latest')}</button>}
         </div>
         {task && (
           <div className="ask" style={{ borderColor: 'var(--warn)' }}>

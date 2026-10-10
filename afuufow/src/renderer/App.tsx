@@ -63,7 +63,7 @@ export function App() {
           <button className="btn sm ghost" onClick={() => void patchSettings({ general: { theme: snap.settings.general.theme === 'dark' ? 'light' : 'dark' } })} title={t('theme')}>{snap.settings.general.theme === 'dark' ? '☀' : '🌙'}</button>
           <button className="btn sm ghost" onClick={() => void patchSettings({ general: { uiLanguage: snap.settings.general.uiLanguage === 'so' ? 'en' : 'so' } })} title={t('language')}>{snap.settings.general.uiLanguage === 'so' ? 'EN' : 'SO'}</button>
         </div>
-        <div className="page">
+        <div className={page === 'home' ? 'page fit' : 'page'}>
           {page === 'home' && <Home />}
           {page === 'history' && <History />}
           {page === 'memory' && <Memory />}

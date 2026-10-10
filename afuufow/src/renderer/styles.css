@@ -45,9 +45,16 @@ label.check { display: flex; gap: 8px; align-items: flex-start; cursor: pointer;
 @keyframes pulse { 50% { opacity: .35; } }
 .toggle { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; user-select: none; }
 .toggle.on { border-color: var(--ok); } .toggle.warn { border-color: var(--err); }
-.hero { display: grid; grid-template-columns: 330px 1fr; gap: 16px; height: 100%; min-height: 0; }
+/* Home fills the window exactly: nothing but the message list scrolls, so the orb and the input never move */
+.page.fit { overflow: hidden; padding-bottom: 16px; display: flex; flex-direction: column; }
+.page.fit > .hero { flex: 1; height: auto; }
+.hero > .col { min-height: 0; overflow-y: auto; }
+.msgwrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.jump { position: absolute; right: 14px; bottom: 12px; border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+.hero { grid-template-columns: 330px 1fr; gap: 16px; height: 100%; min-height: 0; }
 @media (max-width: 1000px) { .hero { grid-template-columns: 1fr; } }
 .avatarBox { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }
+@media (max-height: 900px) { .avatarBox canvas { width: 190px !important; height: 190px !important; } }
 .chat { display: flex; flex-direction: column; min-height: 0; height: 100%; }
 .msgs { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 4px 10px; }
 .msg { max-width: 85%; padding: 9px 13px; border-radius: 14px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
