@@ -1,0 +1,91 @@
+name: Afuufow (test, build installer, test installed app)
+
+on:
+  push:
+    branches: ['claude/afuufow-**', 'main']
+    paths: ['afuufow/**', '.github/workflows/afuufow.yml']
+  pull_request:
+    paths: ['afuufow/**']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: afuufow
+
+jobs:
+  linux-tests:
+    name: Unit tests + Electron smoke test (Linux, xvfb)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: afuufow/package-lock.json }
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libgbm1 libasound2t64 libnss3 libgtk-3-0t64 || true
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: xvfb-run -a node tests/e2e/smoke.mjs
+        env: { SHOTS_DIR: '${{ runner.temp }}/shots' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: linux-ui-screenshots, path: '${{ runner.temp }}/shots', if-no-files-found: ignore }
+
+  windows:
+    name: Windows 10/11 build, installer, install, run, uninstall
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: afuufow/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Unit tests (PowerShell scripts are also syntax-checked with the real Windows PowerShell 5.1)
+        run: npm test
+        env: { AFUUFOW_PWSH: powershell.exe }
+      - name: Build installer (NSIS)
+        run: npm run dist:win:ci
+      - name: Installer file
+        shell: pwsh
+        run: |
+          Get-ChildItem release/*.exe | Select-Object Name, Length
+          (Get-FileHash release/Afuufow-Setup-*.exe -Algorithm SHA256) | Format-List
+      - name: Silent install (per-user)
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem release/Afuufow-Setup-*.exe).FullName
+          $dir = Join-Path $env:RUNNER_TEMP 'AfuufowInstalled'
+          $p = Start-Process -FilePath $installer -ArgumentList '/S', "/D=$dir" -Wait -PassThru
+          "installer exit code: $($p.ExitCode)"
+          Get-ChildItem $dir | Select-Object Name | Format-Table | Out-String | Write-Host
+          if (-not (Test-Path (Join-Path $dir 'Afuufow.exe'))) { throw 'Afuufow.exe was not installed' }
+          if (-not (Test-Path (Join-Path $dir 'resources/app.asar.unpacked/node_modules/sherpa-onnx-win-x64/sherpa-onnx.node'))) { throw 'ML native addon missing' }
+          $uninst = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' | Where-Object { $_.DisplayName -like 'Afuufow*' }
+          if (-not $uninst) { throw 'uninstall entry (Add/Remove Programs) was not created' }
+          $uninst | Select-Object DisplayName, DisplayVersion, UninstallString | Format-List
+          $startMenu = Get-ChildItem "$env:APPDATA\Microsoft\Windows\Start Menu\Programs" -Recurse -Filter 'Afuufow*.lnk' -ErrorAction SilentlyContinue
+          if (-not $startMenu) { throw 'Start Menu shortcut missing' }
+          $startMenu | Select-Object FullName | Format-List
+          "AFUUFOW_EXE=$dir\Afuufow.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "AFUUFOW_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Run the INSTALLED app end to end (real PowerShell automation, DPAPI, hidden workers, ML process)
+        run: node tests/e2e/smoke.mjs
+        env: { SHOTS_DIR: '${{ runner.temp }}\shots' }
+      - name: Silent uninstall
+        shell: pwsh
+        run: |
+          $u = Join-Path $env:AFUUFOW_DIR 'Uninstall Afuufow.exe'
+          $p = Start-Process -FilePath $u -ArgumentList '/S' -Wait -PassThru
+          "uninstaller exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 5
+          if (Test-Path (Join-Path $env:AFUUFOW_DIR 'Afuufow.exe')) { throw 'Afuufow.exe still present after uninstall' }
+          $left = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' | Where-Object { $_.DisplayName -like 'Afuufow*' }
+          if ($left) { throw 'uninstall registry entry still present' }
+          'uninstall verified'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: windows-screenshots, path: '${{ runner.temp }}\shots', if-no-files-found: ignore }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Afuufow-Setup-windows-x64
+          path: afuufow/release/Afuufow-Setup-*.exe

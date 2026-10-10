@@ -109,9 +109,11 @@ export interface IpcMethods {
   'visitors.deleteAll': () => void;
   'visitors.export': () => string;
   'visitors.report': () => void;
-  'face.enrollStart': () => void;
+  'face.enrollStart': (label?: string) => void;
   'face.enrollCancel': () => void;
   'face.enrollFinish': () => { matchThreshold: number; unknownCeiling: number };
+  'face.known': () => Array<{ id: string; label: string; samples: number }>;
+  'face.removeKnown': (id: string) => void;
   'face.delete': () => void;
   'voice.enrollStart': () => void;
   'voice.enrollCancel': () => void;

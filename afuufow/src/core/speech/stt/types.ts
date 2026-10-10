@@ -15,15 +15,7 @@ export interface SttProvider {
   readonly isCloud: boolean;
   /** One utterance of 16 kHz mono PCM -> text. */
   transcribe(pcm: Int16Array, opts: { signal?: AbortSignal; language?: string; prompt?: string }): Promise<SttResult>;
-  /** Streaming upload (audio is sent while the user is still speaking). Optional. */
-  openStream?(opts: { signal?: AbortSignal; language?: string }): SttStream;
   check(signal?: AbortSignal): Promise<{ ok: boolean; detail: string }>;
-}
-
-export interface SttStream {
-  push(pcm: Int16Array): void;
-  finish(): Promise<SttResult>;
-  abort(): void;
 }
 
 export class SttError extends Error {

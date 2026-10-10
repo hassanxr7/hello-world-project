@@ -110,7 +110,7 @@ export class WindowManager implements Hub {
         { label: t('Jooji hadalka / hawsha', 'Stop speaking / task'), click: () => rt.stopEverything() },
         { label: t('Ku hadal (push-to-talk)', 'Push to talk'), click: () => rt.pttToggle() },
         { type: 'separator' },
-        { label: t('Bilow marka Windows furmo', 'Start with Windows'), type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--background'] }) },
+        { label: t('Bilow marka Windows furmo', 'Start with Windows'), type: 'checkbox', checked: app.getLoginItemSettings({ args: ['--background'] }).openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--background'] }) },
         { type: 'separator' },
         { label: t('Ka bax Afuufow', 'Exit Afuufow'), click: () => app.quit() },
       ]),

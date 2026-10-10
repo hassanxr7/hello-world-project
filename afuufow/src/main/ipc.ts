@@ -103,7 +103,12 @@ export function registerIpc(rt: Runtime, log: Logger) {
     'visitors.deleteAll': () => rt.visitorLog.deleteAll(),
     'visitors.export': () => rt.visitorLog.exportAll(),
     'visitors.report': () => void rt.assistant.reportVisitors(true),
-    'face.enrollStart': () => rt.faceEnrollStart(),
+    'face.enrollStart': (label) => rt.faceEnrollStart(label),
+    'face.known': () => rt.faces.info().known,
+    'face.removeKnown': (id) => {
+      rt.faces.removeKnown(id);
+      void rt['pushTemplates']();
+    },
     'face.enrollCancel': () => rt.faceEnrollCancel(),
     'face.enrollFinish': () => rt.faceEnrollFinish(),
     'face.delete': () => rt.faceDelete(),

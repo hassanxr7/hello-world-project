@@ -1,0 +1,44 @@
+appId: com.afuufow.assistant
+productName: Afuufow
+copyright: Copyright (c) 2026 Hassan Mohamed Mohamud
+directories:
+  output: release
+  buildResources: resources
+files:
+  - dist/**/*
+  - resources/**/*
+  - package.json
+  - "!**/*.map"
+  - "!dist/eval/**"
+asar: true
+# native addons and the on-device ML worker must live outside the asar archive
+asarUnpack:
+  - "node_modules/sherpa-onnx-node/**"
+  - "node_modules/sherpa-onnx-win-x64/**"
+  - "dist/ml/**"
+extraMetadata:
+  main: dist/main/index.js
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+  # Set to false only for the Linux cross-build used in development (rcedit needs Windows/wine). Official builds run on windows-latest.
+  signAndEditExecutable: true
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Afuufow
+  uninstallDisplayName: Afuufow
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+  include: installer/installer.nsh
+  artifactName: Afuufow-Setup-${version}.${ext}

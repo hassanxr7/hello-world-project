@@ -1,10 +1,9 @@
-import { pcmToWav, wavHeader } from '../audio';
-import { type SttProvider, type SttResult, type SttStream, SttError } from './types';
+import { pcmToWav } from '../audio';
+import { type SttProvider, type SttResult, SttError } from './types';
 
 /**
  * Azure AI Speech, REST "short audio" API (<= 60 s per request, so-SO supported by Microsoft's language list).
  * https://learn.microsoft.com/azure/ai-services/speech-service/rest-speech-to-text-short
- * Streaming mode sends audio with chunked transfer encoding while the user is still talking.
  */
 export class AzureSttProvider implements SttProvider {
   readonly id = 'azure' as const;
@@ -57,63 +56,6 @@ export class AzureSttProvider implements SttProvider {
     } catch (e) {
       throw wrapNetwork(e);
     }
-  }
-
-  openStream(opts: { signal?: AbortSignal; language?: string } = {}): SttStream {
-    const lang = opts.language ?? this.defaultLanguage;
-    const t0 = Date.now();
-    const queue: Uint8Array[] = [wavHeader(0xffffffff)];
-    let wake: (() => void) | null = null;
-    let done = false;
-    const ctl = new AbortController();
-    opts.signal?.addEventListener('abort', () => ctl.abort(), { once: true });
-    const body = new ReadableStream<Uint8Array>({
-      async pull(c) {
-        for (;;) {
-          const next = queue.shift();
-          if (next) return c.enqueue(next);
-          if (done) return c.close();
-          await new Promise<void>((r) => (wake = r));
-        }
-      },
-    });
-    let started = 0;
-    const request = (async () => {
-      const res = await this.fetchFn(this.url(lang), {
-        method: 'POST',
-        headers: this.headers(),
-        body,
-        signal: ctl.signal,
-        // @ts-expect-error Node's fetch requires duplex for streamed request bodies
-        duplex: 'half',
-      });
-      started = Date.now();
-      return this.parse(res, lang, t0);
-    })();
-    request.catch(() => undefined);
-    return {
-      push: (pcm) => {
-        queue.push(new Uint8Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + pcm.byteLength)));
-        wake?.();
-      },
-      finish: async () => {
-        const tEnd = Date.now();
-        done = true;
-        wake?.();
-        try {
-          const r = await request;
-          void started;
-          return { ...r, latencyMs: Date.now() - tEnd };
-        } catch (e) {
-          throw wrapNetwork(e);
-        }
-      },
-      abort: () => {
-        done = true;
-        ctl.abort();
-        wake?.();
-      },
-    };
   }
 
   async check(signal?: AbortSignal) {

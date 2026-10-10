@@ -100,6 +100,7 @@ export class Runtime {
   private visitorCtl: AbortController | null = null;
   private visitorGate = new VisitorGate();
   private faceEnroll: FaceEnrollment | null = null;
+  private enrollLabel: string | null = null;
   private voiceEnroll: VoiceEnrollment | null = null;
   private enrollTempCamera = false;
   private authWaiter: ((ok: boolean) => void) | null = null;
@@ -652,7 +653,8 @@ export class Runtime {
 
   // ====================================================================== enrollment
 
-  async faceEnrollStart(): Promise<void> {
+  async faceEnrollStart(label?: string): Promise<void> {
+    this.enrollLabel = label?.trim() || null;
     this.faceEnroll = new FaceEnrollment(10, 2, true);
     this.enrollTempCamera = !this.camCapturing;
     await this.vision.setTemplates([], []);
@@ -677,9 +679,14 @@ export class Runtime {
   async faceEnrollFinish(): Promise<{ matchThreshold: number; unknownCeiling: number }> {
     if (!this.faceEnroll) throw new Error('no enrollment in progress');
     const r = this.faceEnroll.finish();
-    this.faces.setOwner(r.templates, r.lightingBuckets);
+    if (this.enrollLabel) {
+      // a separate enrollment of ANOTHER person (e.g. a visitor the owner chose to mark as known); thresholds are untouched
+      this.faces.addKnown(this.enrollLabel, r.templates);
+    } else {
+      this.faces.setOwner(r.templates, r.lightingBuckets);
+      this.settings.update({ camera: { matchThreshold: r.suggested.matchThreshold, unknownCeiling: r.suggested.unknownCeiling } });
+    }
     await this.faces.flush();
-    this.settings.update({ camera: { matchThreshold: r.suggested.matchThreshold, unknownCeiling: r.suggested.unknownCeiling } });
     await this.faceEnrollCancel();
     this.hub.send('snapshot', this.snapshot());
     return r.suggested;
@@ -687,6 +694,7 @@ export class Runtime {
 
   async faceEnrollCancel(): Promise<void> {
     this.faceEnroll = null;
+    this.enrollLabel = null;
     await this.vision.setEnroll(false);
     if (this.enrollTempCamera && !this.settings.get().camera.enabled) await this.vision.stop();
     else if (this.settings.get().camera.enabled) await this.pushTemplates();
@@ -997,7 +1005,7 @@ export class Runtime {
       if (['vad', 'kws'].includes(m.id)) add('model-' + m.id, m.title, m.installed, m.installed ? 'installed' : 'not installed', 'Setup → Moodellada → Soo deji.', 'Setup → Models → Download.');
     }
     add('mlcaps', 'On-device ML', this.ml.getCaps().vad, JSON.stringify(this.ml.getCaps()) + (this.ml.getLoadErrors().length ? ' errors: ' + this.ml.getLoadErrors().join('; ') : ''), 'Soo deji moodellada Setup-ka.', 'Download the models in Setup.');
-    add('startup', 'Starts with Windows', app.getLoginItemSettings().openAtLogin, app.getLoginItemSettings().openAtLogin ? 'enabled' : 'disabled', 'Fur “Bilow Windows-ka”.', 'Turn on “Start with Windows”.');
+    add('startup', 'Starts with Windows', app.getLoginItemSettings({ args: ['--background'] }).openAtLogin, app.getLoginItemSettings({ args: ['--background'] }).openAtLogin ? 'enabled' : 'disabled', 'Fur “Bilow Windows-ka”.', 'Turn on “Start with Windows”.');
     try {
       const r = await fetch('https://www.microsoft.com', { method: 'HEAD', signal: AbortSignal.timeout(6000) });
       add('internet', 'Internet', r.ok, `HTTP ${r.status}`, 'Hubi isku-xirka internetka.', 'Check your internet connection.');

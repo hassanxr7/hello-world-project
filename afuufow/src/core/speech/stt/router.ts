@@ -37,15 +37,6 @@ export class SttRouter {
     }
     throw lastErr ?? new SttError('no speech recognition provider is configured', 'unavailable');
   }
-
-  /** Streaming-capable primary provider (if any), honouring the privacy switch. */
-  streamingProvider(): SttProvider | null {
-    const s = this.settings();
-    const p = this.providers()[s.providers.stt.primary];
-    if (!p?.openStream) return null;
-    if (p.isCloud && !s.privacy.allowCloudStt) return null;
-    return p;
-  }
 }
 
 export function sttErrorMessage(e: unknown): { so: string; en: string } {

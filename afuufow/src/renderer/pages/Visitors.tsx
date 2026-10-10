@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SessionEvent, VisitorEvent } from '../../core/visitors/log';
+import { FaceStep } from '../components/FaceEnroll';
 import { Card, fmtTime } from '../components/ui';
 import { useL, useT } from '../i18n';
 import { call, useUi } from '../store';
@@ -14,6 +15,7 @@ export function Visitors() {
   const [ev, setEv] = useState<VisitorEvent[]>([]);
   const [ses, setSes] = useState<SessionEvent[]>([]);
   const [imgs, setImgs] = useState<Record<string, string | null>>({});
+  const [enrolling, setEnrolling] = useState<string | null>(null);
   const load = async () => {
     const r = await call('visitors.list');
     setEv(r.events);
@@ -36,6 +38,12 @@ export function Visitors() {
         <button className="btn" onClick={async () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([await call('visitors.export')], { type: 'application/json' })); a.download = 'afuufow-visitors.json'; a.click(); }}>{t('export')}</button>
         <button className="btn danger" onClick={() => confirm(L('Ma tirtirtaa dhammaan booqdayaasha iyo sawirradooda?', 'Delete all visitor events and snapshots?')) && void call('visitors.deleteAll')}>{L('Tirtir dhammaan', 'Delete all')}</button>
       </div>
+      {enrolling && (
+        <Card title={L(`Diiwaangelinta wajiga: ${enrolling}`, `Face enrollment: ${enrolling}`)} right={<button className="btn sm" onClick={() => setEnrolling(null)}>✕</button>}>
+          <div className="warnbox small" style={{ marginBottom: 8 }}>{L('Qofkani waa inuu jiraa oo oggolaado. Kadib, Afuufow ma weydiin doonto qofkan oo ma ahan booqde.', 'This person must be present and agree. Afterwards Afuufow will recognise them and will not treat them as a visitor.')}</div>
+          <FaceStep label={enrolling} onFinished={() => setEnrolling(null)} />
+        </Card>
+      )}
       {ev.length === 0 && <Card><div className="muted">{L('Booqdayaal lama diiwaangelin.', 'No visitor events recorded.')}</div></Card>}
       {ev.map((e) => (
         <Card key={e.id} title={fmtTime(e.at)} right={<span className={`tag ${consentTag(e.consent)}`}>{consentLabel(e.consent)}</span>}>
@@ -58,6 +66,7 @@ export function Visitors() {
               <div className="row">
                 <button className="btn sm" onClick={() => { const n = prompt(L('Qoraal ku dar', 'Add a note'), e.ownerNote ?? ''); if (n !== null) void call('visitors.note', { id: e.id, note: n }).then(load); }}>📝 {L('Qoraal', 'Note')}</button>
                 <button className="btn sm" onClick={() => { const n = prompt(L('Magaca qofka la yaqaan', 'Name of the known person'), e.markedKnownAs ?? e.selfReportedName ?? ''); if (n) void call('visitors.markKnown', { id: e.id, label: n }).then(load); }}>🏷 {L('U calaamadee la yaqaan', 'Mark as known')}</button>
+                {e.markedKnownAs && <button className="btn sm" onClick={() => setEnrolling(e.markedKnownAs)}>👤 {L('Diiwaangeli wajigooda (jooga)', 'Enroll their face (must be present)')}</button>}
                 <button className="btn sm danger" onClick={() => void call('visitors.delete', e.id).then(load)}>{t('delete')}</button>
               </div>
               {!e.reported && <span className="tag warn">{L('Wali lama sheegin', 'Not reported yet')}</span>}

@@ -13,11 +13,16 @@ const shots = process.env.SHOTS_DIR ?? mkdtempSync(join(tmpdir(), 'afu-shots-'))
 mkdirSync(shots, { recursive: true });
 
 const userData = mkdtempSync(join(tmpdir(), 'afu-e2e-'));
-const app = await electron.launch({
-  args: ['.', '--no-sandbox', '--password-store=basic', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--disable-gpu-sandbox'],
+// AFUUFOW_EXE = path of an INSTALLED Afuufow.exe (Windows CI). Otherwise the app is launched from this checkout.
+const isWin = process.platform === 'win32';
+const exe = process.env.AFUUFOW_EXE;
+const launchOpts = () => ({
+  ...(exe ? { executablePath: exe } : {}),
+  args: [...(exe ? [] : ['.']), ...(isWin ? [] : ['--no-sandbox', '--password-store=basic']), '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
   env: { ...process.env, AFUUFOW_USER_DATA: userData, AFUUFOW_TEST_PLAINTEXT_KEYSTORE: '1' },
-  timeout: 60_000,
+  timeout: 90_000,
 });
+const app = await electron.launch(launchOpts());
 app.process().stderr?.on('data', () => {});
 const page = await app.firstWindow();
 page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
@@ -57,15 +62,45 @@ await inv('contacts.upsert', { displayName: 'Ahmed Ali', aliases: ['Axmed'], pho
 await page.waitForTimeout(1000);
 
 // unknown commands are handled without crashing and an unavailable Windows feature is reported honestly
-await page.fill('input[placeholder^="Qor amar"]', 'Chrome fur');
-await page.keyboard.press('Enter');
-await page.waitForSelector('text=Cilad', { timeout: 15_000 }).catch(() => {});
-const actions = await inv('actions.get');
-check('a Windows-only action fails honestly on Linux and is logged (never claimed as done)', actions.some((a) => a.tool === 'apps.open' && a.status === 'failed'), JSON.stringify(actions[0]));
+if (!isWin) {
+  await page.fill('input[placeholder^="Qor amar"]', 'Chrome fur');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('text=Cilad', { timeout: 15_000 }).catch(() => {});
+  const actions = await inv('actions.get');
+  check('a Windows-only action fails honestly on Linux and is logged (never claimed as done)', actions.some((a) => a.tool === 'apps.open' && a.status === 'failed'), JSON.stringify(actions[0]));
+} else {
+  // REAL Windows automation through the real PowerShell adapter
+  await page.fill('input[placeholder^="Qor amar"]', 'Notepad fur');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('text=Waan furay', { timeout: 60_000 }).catch(() => {});
+  let actions = await inv('actions.get');
+  const np = actions.find((a) => a.tool === 'apps.open');
+  check('Windows: "Notepad fur" opens Notepad and is VERIFIED by seeing its window', !!np && np.status === 'verified', JSON.stringify(np));
+  await page.fill('input[placeholder^="Qor amar"]', 'Downloads-ka fur');
+  await page.keyboard.press('Enter');
+  await wait(8000);
+  actions = await inv('actions.get');
+  const fo = actions.find((a) => a.tool === 'folders.open');
+  check('Windows: "Downloads-ka fur" opens Explorer and verifies the window', !!fo && fo.status === 'verified', JSON.stringify(fo));
+  await page.fill('input[placeholder^="Qor amar"]', 'Screenshot qaad');
+  await page.keyboard.press('Enter');
+  await wait(6000);
+  actions = await inv('actions.get');
+  const sc = actions.find((a) => a.tool === 'screen.screenshot');
+  console.log('INFO screenshot action:', JSON.stringify(sc));
+  check('Windows: screenshot action completed with an honest status (verified or failed, never faked)', !!sc && ['verified', 'failed'].includes(sc.status));
+  await page.fill('input[placeholder^="Qor amar"]', 'Codka hoos u dhig');
+  await page.keyboard.press('Enter');
+  await wait(5000);
+  actions = await inv('actions.get');
+  console.log('INFO volume action:', JSON.stringify(actions.find((a) => a.tool === 'system.volume')));
+  const { execSync } = await import('node:child_process');
+  try { execSync('taskkill /F /IM notepad.exe /T', { stdio: 'ignore' }); execSync('taskkill /F /IM explorer.exe /FI "WINDOWTITLE eq Downloads"', { stdio: 'ignore' }); } catch {}
+}
 
 // ML process
 snap = await inv('app.snapshot');
-check('ML utility process starts (no models yet -> capabilities all off)', snap.mlCaps.vad === false);
+check('ML utility process starts (no models yet -> capabilities all off)', snap.mlCaps.vad === false, JSON.stringify(snap.loadErrors));
 await inv('models.download', 'vad');
 for (let i = 0; i < 60; i++) { snap = await inv('app.snapshot'); if (snap.mlCaps.vad) break; await wait(1000); }
 check('VAD model downloads, SHA-256 verifies, and the ML process loads it', snap.mlCaps.vad === true, JSON.stringify(snap.mlCaps) + ' ' + snap.loadErrors.join(';'));
@@ -114,7 +149,7 @@ check('light theme applies', (await page.evaluate(() => document.documentElement
 await app.close();
 
 // restart with the same profile: memory survives
-const app2 = await electron.launch({ args: ['.', '--no-sandbox', '--password-store=basic', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'], env: { ...process.env, AFUUFOW_USER_DATA: userData, AFUUFOW_TEST_PLAINTEXT_KEYSTORE: '1' }, timeout: 60_000 });
+const app2 = await electron.launch(launchOpts());
 const p2 = await app2.firstWindow();
 await p2.waitForSelector('text=Wada-hadalka', { timeout: 30_000 });
 const inv2 = (name, ...args) => p2.evaluate(([n, a]) => window.afuufow.invoke(n, ...a), [name, args]);
