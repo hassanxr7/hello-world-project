@@ -91,7 +91,8 @@ const LABEL_EN: Record<Category, string> = {
   unknown: 'an unknown action',
 };
 
-const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+// The Windows engine shows paths inside its -Command argument with doubled backslashes (C:\\\\Users\\\\x); both forms mean the same path
+const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/{2,}/g, '/').replace(/\/+$/, '').toLowerCase();
 
 /** Pulls the inner command out of a shell wrapper the engine used (bash -lc '...', powershell -Command "..."). */
 export function innerCommand(title: string): string {

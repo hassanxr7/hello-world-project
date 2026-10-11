@@ -29,6 +29,16 @@ describe('approval classifier: how much verification a command needs', () => {
     for (const kind of ['execute', 'read', 'search']) expect(classify({ title: t, kind }, ctx).action, kind).toBe('allow');
     expect(classify({ title: 'web_search: news', kind: 'fetch' }, ctx).action).toBe('ask');
   });
+  it('accepts the doubled backslashes the real Windows engine puts inside its -Command argument (observed in CI)', () => {
+    const dir = 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\afu-oi-install-2e6gwA\\my work';
+    const doubled = dir.replace(/\\/g, '\\\\');
+    const title = `"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-ChildItem '${doubled}'"`;
+    expect(classify({ title, kind: 'execute' }, { approvedFolders: [dir], webTainted: false }).action).toBe('allow');
+    expect(classify({ title: title.replace('my work', 'other'), kind: 'execute' }, { approvedFolders: [dir], webTainted: false }).action).toBe('ask');
+    // deleting with doubled backslashes inside the approved folder is a plain confirm, outside it is strong
+    const del = `"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Remove-Item -LiteralPath '${doubled}\\\\a.txt'"`;
+    expect(classify({ title: del, kind: 'execute' }, { approvedFolders: [dir], webTainted: false })).toMatchObject({ action: 'ask', level: 'confirm' });
+  });
   it('asks for the same listing outside approved folders, with variables, or with pipes/redirects', () => {
     expect(classify(exec(ps('Get-ChildItem C:\\Windows')), ctx).action).toBe('ask');
     expect(classify(exec(ps('Get-ChildItem $env:USERPROFILE')), ctx).action).toBe('ask');
