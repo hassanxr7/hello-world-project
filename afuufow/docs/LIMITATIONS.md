@@ -67,9 +67,9 @@ Full table in [INTERPRETER.md](INTERPRETER.md). In short:
 | Feature | Status |
 |---|---|
 | ACP client, risk classifier, approvals (yes / Hello+yes / refuse), stop/timeout, Somali results | **Unit** |
-| Real engine (pinned release, SHA-256 verified) with a scripted model: ask-before-every-command, "no" protects the file, "yes" runs, read-only listings without a question, stop, rejected API key explained, work folder with spaces | **Integration** (Linux locally; Windows in CI) |
+| Real engine (pinned release, SHA-256 verified) with a scripted model: ask-before-every-command, "no" protects the file, "yes" runs, read-only listings without a question, stop, rejected API key explained, work folder with spaces | **Integration** (Linux locally; **real Windows runner: passed**, GitHub Actions run #21) |
 | Quality of a real model's decisions, and how well it understands Somali | **Not measured** (no API key was available) |
-| Windows sandbox behaviour and the engine's Windows shell/command titles | **CI-Windows only**; not tried by hand |
+| Windows command titles (`pwsh.exe -Command …`, doubled backslashes, kind `search`) | **CI-Windows** (found and fixed two classifier bugs there); not tried by hand. Windows sandbox strength itself is not measured |
 | Browser via Playwright MCP | **Experimental, not verified**: the engine did not expose the MCP tools to the model in my test |
 | Engine network traffic beyond the model provider | **Not audited** (update check, plugins, apps, memories, sub-agents are switched off) |
 | Shell-command classification | Heuristic: cannot be complete; the default is to ask for everything and show the real command |
