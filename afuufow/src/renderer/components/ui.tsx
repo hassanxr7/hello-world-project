@@ -2,9 +2,9 @@ import { type ReactNode } from 'react';
 import { useL } from '../i18n';
 import { dismissNotice, useUi } from '../store';
 
-export function Card({ title, children, right }: { title?: string; children: ReactNode; right?: ReactNode }) {
+export function Card({ title, children, right, className }: { title?: string; children: ReactNode; right?: ReactNode; className?: string }) {
   return (
-    <div className="card">
+    <div className={className ? `card ${className}` : 'card'}>
       {(title || right) && (
         <div className="row" style={{ marginBottom: 10 }}>
           {title && <h2 style={{ margin: 0 }}>{title}</h2>}

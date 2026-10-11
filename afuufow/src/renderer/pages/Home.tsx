@@ -3,6 +3,7 @@ import { Avatar } from '../components/Avatar';
 import { DeviceToggles } from '../components/Controls';
 import { Card } from '../components/ui';
 import { useL, useT } from '../i18n';
+import { OPEN_HANDS_EVENT } from '../components/HandStage';
 import { call, useLevels, useUi } from '../store';
 
 export function Home() {
@@ -61,11 +62,14 @@ export function Home() {
             </div>
             <div className="row">
               <button className="btn danger" onClick={() => void call('cmd.stop')}>■ {t('stop')}</button>
+              {snap.settings.camera.handStage !== 'off' && (
+                <button className="btn" disabled={!snap.devices.cameraCapturing} onClick={() => window.dispatchEvent(new Event(OPEN_HANDS_EVENT))} title={snap.devices.cameraCapturing ? L('Muuji gacmaha AI', 'Show the AI hands') : L('Marka hore fur kamaradda', 'Turn the camera on first')}>🖐 {L('Gacmaha AI', 'AI hands')}</button>
+              )}
               <button className="btn" onClick={() => void call('cmd.pttToggle')} disabled={!snap.settings.audio.micEnabled} title="Ctrl+Alt+Space">🎙 {t('ptt')}</button>
             </div>
           </div>
         </Card>
-        <Card title={t('status.title')}>
+        <Card title={t('status.title')} className="statuscard">
           <div className="col small">
             <DeviceToggles />
             <div className="row"><span className="muted">{t('status.assurance')}:</span> <b>{t('assurance.' + snap.assurance)}</b></div>

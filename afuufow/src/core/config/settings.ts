@@ -111,6 +111,8 @@ export const SettingsSchema = z.object({
     requireLiveness: z.boolean(),
     stableFrames: z.number().int().min(1).max(30),
     greetingCooldownMin: z.number().min(1).max(1440),
+    /** Afuufow AI hands: 'auto' opens when an open hand is waved, 'manual' only from the button, 'off' never runs hand tracking. */
+    handStage: z.enum(['auto', 'manual', 'off']),
     leaveAfterSec: z.number().min(5).max(3600),
     presenceTtlSec: z.number().min(10).max(3600),
   }),
@@ -226,6 +228,7 @@ export function defaultSettings(): Settings {
       requireLiveness: true,
       stableFrames: 4,
       greetingCooldownMin: 30,
+      handStage: 'auto',
       leaveAfterSec: 90,
       presenceTtlSec: 120,
     },

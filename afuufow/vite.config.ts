@@ -11,7 +11,7 @@ function copyAssets(): Plugin {
       const out = resolve(__dirname, 'dist/renderer/workers');
       mkdirSync(out, { recursive: true });
       const models = resolve(__dirname, 'node_modules/@vladmandic/human/models');
-      const need = ['blazeface', 'facemesh', 'faceres', 'antispoof', 'liveness', 'iris'];
+      const need = ['blazeface', 'facemesh', 'faceres', 'antispoof', 'liveness', 'iris', 'handtrack', 'handlandmark-lite'];
       mkdirSync(resolve(out, 'models'), { recursive: true });
       for (const n of need) for (const ext of ['json', 'bin']) cpSync(resolve(models, `${n}.${ext}`), resolve(out, 'models', `${n}.${ext}`));
       const wasm = resolve(__dirname, 'node_modules/@tensorflow/tfjs-backend-wasm/dist');

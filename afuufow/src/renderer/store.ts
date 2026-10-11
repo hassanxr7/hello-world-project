@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { PendingInfo, TaskInfo } from '../core/assistant/types';
+import type { HandFrame } from '../core/vision/hands';
 import type { EnrollUpdate, Snapshot } from '../shared/ipc';
 import type { ActionRecord, AssistantState, ChatTurn } from '../shared/types';
 import { api } from './api';
@@ -50,9 +51,22 @@ export function useUi<T>(sel: (s: UiState) => T): T {
 }
 
 let nid = 1;
+const handSubs = new Set<(f: HandFrame) => void>();
+/** Hand frames arrive ~15 times a second; they bypass React state on purpose. */
+// test hook: feed hand frames straight into the UI (numbers only; it can do nothing but draw hands)
+(window as unknown as Record<string, unknown>).__afuHandFrame = (f: HandFrame) => handSubs.forEach((fn) => fn(f));
+
+export function subscribeHands(fn: (f: HandFrame) => void) {
+  handSubs.add(fn);
+  return () => {
+    handSubs.delete(fn);
+  };
+}
+
 export function notify(level: Notice['level'], so: string, en: string) {
+  // the same message shown again replaces the old one instead of piling up
   const n: Notice = { id: nid++, level, so, en };
-  set({ notices: [...state.notices.slice(-3), n] });
+  set({ notices: [...state.notices.filter((x) => x.so !== so || x.en !== en).slice(-2), n] });
   setTimeout(() => set({ notices: state.notices.filter((x) => x.id !== n.id) }), level === 'error' ? 9000 : 5000);
 }
 export const dismissNotice = (id: number) => set({ notices: state.notices.filter((n) => n.id !== id) });
@@ -72,6 +86,7 @@ export async function startStore() {
   api.on('pending', (p) => set({ pending: p }));
   api.on('draft', (d) => set({ draft: d }));
   api.on('notice', (n) => notify(n.level, n.so, n.en));
+  api.on('hands', (f) => handSubs.forEach((fn) => fn(f)));
   api.on('action', (a) => set({ actions: [a, ...state.actions.filter((x) => x.id !== a.id)].slice(0, 300) }));
   api.on('devices', (d) => state.snap && set({ snap: { ...state.snap, devices: d } }));
   api.on('presence', (p) => state.snap && set({ snap: { ...state.snap, presence: p } }));

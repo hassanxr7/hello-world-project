@@ -35,6 +35,18 @@ export function Settings() {
             </Field>
           </div>
         </Card>
+        <Card title={L('Gacmaha AI (kamarad)', 'AI hands (camera)')}>
+          <div className="col">
+            <Field label={L('Habka', 'Mode')}>
+              <select value={s.camera.handStage} onChange={(e) => void patchSettings({ camera: { handStage: e.target.value } })}>
+                <option value="auto">{L('Otomaatig: gacan furan oo la duulo ayaa furta', 'Automatic: waving an open hand opens it')}</option>
+                <option value="manual">{L('Badhan keliya (🖐 Gacmaha AI)', 'Button only (🖐 AI hands)')}</option>
+                <option value="off">{L('Dansan', 'Off')}</option>
+              </select>
+            </Field>
+            <div className="small muted">{L('Marka kamaraddu furan tahay oo aad gacanta furan u duusho, shaashadda ayaa weynaata oo gacmo AI ah ayaa muuqda oo dhaqdhaqaaqaaga raaca. Waxaa laga shaqeeyaa qalabkaaga gudihiisa; kaliya lambarro (21 dhibcood gacan kasta) ayaa ka baxa kamaradda, sawir ma kaydsan. Gacmaha ku nasan ama maqaarka ma furaan. Kamaradda waa inay furan tahay (Booqdayaal → kamarad).', 'With the camera on, waving an open hand enlarges the screen and shows AI hands that follow your hands. It runs on this computer; only numbers (21 points per hand) leave the camera page, nothing is saved. Resting or typing hands do not open it. The camera must be on.')}</div>
+          </div>
+        </Card>
         <Card title={L('Wada sheekaysi', 'Companion')}>
           <div className="col">
             <Check checked={s.companion.followUp} onChange={(v) => void patchSettings({ companion: { followUp: v } })}>{L('Kadib marka uu hadlo, dhegeyso jawaabtayda (ereyga toosinta looma baahna)', 'After it speaks, keep listening for my answer (no wake word needed)')}</Check>

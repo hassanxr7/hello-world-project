@@ -3,6 +3,7 @@ import type { PendingInfo, TaskInfo } from '../core/assistant/types';
 import type { ActionRecord, AssistantState, ChatTurn, Contact, PermissionGrant } from './types';
 import type { OwnerNames } from './phrases';
 import type { PresenceSnapshot } from '../core/vision/presence';
+import type { HandFrame } from '../core/vision/hands';
 import type { MemoryFact } from '../core/memory/memory';
 import type { SessionEvent, VisitorEvent } from '../core/visitors/log';
 
@@ -148,6 +149,8 @@ export interface IpcMethods {
   'models.status': () => ModelStatus[];
   'models.download': (id: string) => void;
   'models.remove': (id: string) => void;
+  /** The hand stage was opened/closed by hand (manual mode): hand tracking only runs while it is open. */
+  'hands.stage': (open: boolean) => void;
   'whatsapp.show': () => void;
   'whatsapp.logout': () => void;
   'data.deleteEverything': () => void;
@@ -163,6 +166,7 @@ export type IpcEvents = {
   action: ActionRecord;
   devices: DeviceStatus;
   presence: PresenceSnapshot;
+  hands: HandFrame;
   micLevel: number;
   ttsLevel: number;
   enroll: EnrollUpdate;

@@ -173,8 +173,9 @@ export class Assistant {
       await this.d.speech.speak(text, signal, this.lang());
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
+        const first = this.now() - this.speechFailedAt > 60_000; // tell the owner once a minute, not after every reply
         this.speechFailedAt = this.now();
-        this.d.emit({ type: 'notice', level: 'warn', so: 'Codka ma shaqeynayo; qoraalka ayaan ku tusay.', en: 'Speech output failed; showing text only: ' + (e as Error).message });
+        if (first) this.d.emit({ type: 'notice', level: 'warn', so: 'Codka ma shaqeynayo; qoraalka ayaan ku tusay.', en: 'Speech output failed; showing text only: ' + (e as Error).message });
       }
     } finally {
       this.speaking--;

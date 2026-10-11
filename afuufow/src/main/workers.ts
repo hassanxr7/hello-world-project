@@ -127,6 +127,8 @@ export class VisionBridge {
   private onFrameCb: (f: FrameObs) => void = () => undefined;
   private onStatusCb: (s: MediaStatus) => void = () => undefined;
   private onEnrollCb: (m: { samples: any[]; luminance: number; faceVisible: boolean }) => void = () => undefined;
+  private onHandsCb: (f: unknown) => void = () => undefined;
+  private handsWanted = false;
   private snaps = new Map<number, (d: string | null) => void>();
   private seq = 1;
   private devicesResolve: ((d: Array<{ id: string; label: string }>) => void) | null = null;
@@ -135,6 +137,7 @@ export class VisionBridge {
     const own = (e: Electron.IpcMainEvent) => !!this.win && e.sender === this.win.webContents;
     ipcMain.on('vision:frame', (e, f: FrameObs) => own(e) && this.onFrameCb(f));
     ipcMain.on('vision:status', (e, s: MediaStatus) => own(e) && this.onStatusCb(s));
+    ipcMain.on('vision:hands', (e, f) => own(e) && this.onHandsCb(f));
     ipcMain.on('vision:enrollSamples', (e, m) => own(e) && this.onEnrollCb(m));
     ipcMain.on('vision:snapshot', (e, m: { id: number; data: string | null }) => own(e) && this.snaps.get(m.id)?.(m.data));
     ipcMain.on('vision:devices', (e, d) => own(e) && this.devicesResolve?.(d));
@@ -143,6 +146,12 @@ export class VisionBridge {
   onFrame(cb: (f: FrameObs) => void) { this.onFrameCb = cb; }
   onStatus(cb: (s: MediaStatus) => void) { this.onStatusCb = cb; }
   onEnroll(cb: (m: { samples: any[]; luminance: number; faceVisible: boolean }) => void) { this.onEnrollCb = cb; }
+  onHands(cb: (f: unknown) => void) { this.onHandsCb = cb; }
+  /** Hand tracking runs in the camera worker only while wanted; the flag is remembered and re-sent whenever the camera starts. */
+  setHands(on: boolean) {
+    this.handsWanted = on;
+    if (this.win && !this.win.isDestroyed()) this.win.webContents.send('vision:handsSet', { on });
+  }
 
   private ensure(): BrowserWindow {
     if (this.win && !this.win.isDestroyed()) return this.win;
@@ -161,7 +170,10 @@ export class VisionBridge {
     w.webContents.send(channel, payload);
   }
 
-  async start(deviceId: string | null, fps: number) { await this.send('vision:start', { deviceId, fps }); }
+  async start(deviceId: string | null, fps: number) {
+    await this.send('vision:handsSet', { on: this.handsWanted });
+    await this.send('vision:start', { deviceId, fps });
+  }
   async stop() { if (this.win && !this.win.isDestroyed()) this.win.webContents.send('vision:stop'); }
   async setTemplates(owner: number[][], known: Array<{ id: string; templates: number[][] }>) { await this.send('vision:templates', { owner, known }); }
   async setEnroll(on: boolean) { await this.send('vision:enroll', { on }); }

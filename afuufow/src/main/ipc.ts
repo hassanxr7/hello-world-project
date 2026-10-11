@@ -126,6 +126,7 @@ export function registerIpc(rt: Runtime, log: Logger) {
     'auth.hello': () => rt.helloVerify(),
     'diag.run': () => rt.diagnostics(),
     'diag.test': (k) => rt.testProvider(k),
+    'hands.stage': (open) => rt.setHandStage(open),
     'agent.status': () => rt.agentStatus(),
     'agent.install': () => void rt.installAgent().catch((e) => log.warn('agent install: ' + (e as Error).message)),
     'agent.cancelInstall': () => rt.cancelAgentInstall(),

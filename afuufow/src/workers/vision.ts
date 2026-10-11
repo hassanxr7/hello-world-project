@@ -32,7 +32,7 @@ const config: Partial<Config> = {
     emotion: { enabled: false },
   },
   body: { enabled: false },
-  hand: { enabled: false },
+  hand: { enabled: false, rotation: true, maxDetected: 2, minConfidence: 0.4, landmarks: true, detector: { modelPath: 'handtrack.json' }, skeleton: { modelPath: 'handlandmark-lite.json' } },
   object: { enabled: false },
   gesture: { enabled: false },
   segmentation: { enabled: false },
@@ -46,6 +46,23 @@ let busy = false;
 let owner: number[][] = [];
 let known: Array<{ id: string; templates: number[][] }> = [];
 let enroll = false;
+// hand tracking (only numbers leave this page: 21 points per hand)
+const HAND_FPS = 15;
+let handsOn = false;
+let handModels = false;
+let handTimer: number | null = null;
+let lastHandCount = -1;
+let lastHandMs = 0;
+// read-only diagnostics for tests (nothing here leaves the page)
+(window as unknown as Record<string, unknown>).__vision = () => ({ handsOn, handModels, hasHuman: !!human, backend: human?.tf?.getBackend?.(), streaming: !!stream, busy, ready: video.readyState, handTimer: handTimer !== null, lastHandCount, lastHandMs, handCfg: human ? { en: human.config.hand.enabled, face: human.config.face.enabled, cache: human.config.cacheSensitivity } : null });
+
+/** One Human instance does both jobs; the two loops share `busy`, so each detect() runs alone with its own models switched on. */
+function mode(m: 'face' | 'hand') {
+  if (!human) return;
+  human.config.face.enabled = m === 'face';
+  human.config.hand.enabled = m === 'hand';
+  human.config.cacheSensitivity = m === 'face' ? 0 : 0.7; // hands move continuously: let Human track between detector runs
+}
 
 async function ensureHuman() {
   if (human) return human;
@@ -74,6 +91,7 @@ async function tick() {
   busy = true;
   try {
     const lm = luminance();
+    mode('face');
     const res = await human.detect(video);
     const faces: FaceObs[] = [];
     const samples: unknown[] = [];
@@ -112,6 +130,58 @@ async function tick() {
   }
 }
 
+async function startHands() {
+  if (!handsOn || !human || !stream) return;
+  if (!handModels) {
+    human.config.hand.enabled = true; // load() only fetches the models that are enabled
+    try {
+      await human.load();
+      handModels = true;
+    } catch (e) {
+      handsOn = false;
+      bridge().send('vision:status', { capturing: true, error: 'hand tracking could not load: ' + (e as Error).message });
+      return;
+    } finally {
+      human.config.hand.enabled = false;
+    }
+  }
+  if (handTimer === null) handTimer = window.setTimeout(() => void handTick(), 0);
+}
+
+function stopHands() {
+  if (handTimer !== null) clearTimeout(handTimer);
+  handTimer = null;
+  bridge().send('vision:hands', { ts: Date.now(), width: video.videoWidth || 640, height: video.videoHeight || 480, hands: [] });
+}
+
+async function handTick() {
+  handTimer = null;
+  if (!handsOn || !human || !stream) return;
+  if (!busy && video.readyState >= 2) {
+    busy = true;
+    try {
+      mode('hand');
+      const t0 = performance.now();
+      const res = await human.detect(video);
+      lastHandMs = Math.round(performance.now() - t0);
+      lastHandCount = res.hand.length;
+      bridge().send('vision:hands', {
+        ts: Date.now(),
+        width: video.videoWidth,
+        height: video.videoHeight,
+        hands: res.hand.map((h) => ({ label: h.label, score: h.score, keypoints: h.keypoints })),
+      });
+    } catch (e) {
+      handsOn = false;
+      bridge().send('vision:status', { capturing: true, error: 'hand tracking stopped: ' + (e as Error).message });
+    } finally {
+      busy = false;
+    }
+  }
+  // scheduled after the work finishes, so a slow machine simply runs at a lower frame rate
+  if (handsOn && stream) handTimer = window.setTimeout(() => void handTick(), 1000 / HAND_FPS);
+}
+
 async function start(m: { deviceId: string | null; fps: number }) {
   await stop();
   fps = m.fps;
@@ -124,6 +194,7 @@ async function start(m: { deviceId: string | null; fps: number }) {
     await ensureHuman();
     bridge().send('vision:status', { capturing: true, loading: false, backend: human!.tf.getBackend() });
     timer = window.setInterval(() => void tick(), Math.round(1000 / fps));
+    void startHands();
   } catch (e) {
     const err = e as DOMException;
     const kind = err.name === 'NotAllowedError' ? 'blocked' : err.name === 'NotFoundError' ? 'missing' : err.name === 'NotReadableError' ? 'busy' : 'error';
@@ -133,6 +204,7 @@ async function start(m: { deviceId: string | null; fps: number }) {
 }
 
 async function stop() {
+  stopHands();
   if (timer) clearInterval(timer);
   timer = null;
   stream?.getTracks().forEach((t) => t.stop()); // releases the camera: its hardware LED turns off
@@ -143,6 +215,11 @@ async function stop() {
 
 bridge().on('vision:start', (m) => void start(m));
 bridge().on('vision:stop', () => void stop());
+bridge().on('vision:handsSet', (m: { on: boolean }) => {
+  handsOn = m.on;
+  if (m.on) void startHands();
+  else stopHands();
+});
 bridge().on('vision:templates', (m: { owner: number[][]; known: Array<{ id: string; templates: number[][] }> }) => {
   owner = m.owner;
   known = m.known;

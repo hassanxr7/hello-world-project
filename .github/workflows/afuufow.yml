@@ -26,6 +26,8 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: xvfb-run -a node tests/e2e/smoke.mjs
+      - run: xvfb-run -a node tests/e2e/layout.mjs
+      - run: ONLY_SYNTH=1 xvfb-run -a node tests/e2e/hands.mjs
         env: { SHOTS_DIR: '${{ runner.temp }}/shots' }
       - uses: actions/upload-artifact@v4
         if: always()
@@ -70,6 +72,15 @@ jobs:
           "AFUUFOW_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Run the INSTALLED app end to end (real PowerShell automation, DPAPI, hidden workers, ML process)
         run: node tests/e2e/smoke.mjs
+        env: { SHOTS_DIR: '${{ runner.temp }}\shots' }
+      - name: Layout fits the window at 7 sizes (installed app)
+        run: node tests/e2e/layout.mjs
+        env: { SHOTS_DIR: '${{ runner.temp }}\shots' }
+      - name: AI hands - real hand model on a hand video (informational; shows whether hands are detected on Windows)
+        if: always()
+        continue-on-error: true
+        run: node tests/e2e/hands.mjs
+        timeout-minutes: 15
         env: { SHOTS_DIR: '${{ runner.temp }}\shots' }
       - name: Silent uninstall
         if: always()

@@ -69,3 +69,9 @@ Tick each box; write down what you saw. "Expected" is the pass condition. Tests 
 - [ ] "wakiilka: bixi biilka …". *Expected:* Hello/PIN required, then a yes; "maya" cancels. Say "jooji" mid-question: it counts as no and the task stops.
 - [ ] Say "haa" in a *stranger's* voice (voice ID on): it must not approve.
 - [ ] Press **Jooji** during a long task: the engine process disappears from Task Manager within seconds.
+
+## J. Layout and AI hands
+- [ ] Resize the window from very small to maximised: orb, chat and the message box are always visible without scrolling the page; only the message list scrolls, and a "jump to latest" button appears when scrolled up.
+- [ ] Camera on, wave an open hand: the window becomes a full-screen stage and glowing AI hands follow your hands (try two hands, fast and slow). Resting your hand or typing does not open it.
+- [ ] Esc or ✕ closes it; the 🖐 Gacmaha AI button opens it by hand; in Settings set the hand stage to manual/off and check it obeys.
+- [ ] Note CPU use with the stage open on your PC.

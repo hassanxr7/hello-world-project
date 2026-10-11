@@ -51,6 +51,7 @@ import { WhatsAppWeb } from './whatsapp/web';
 import { YouTubePlayer } from './youtube/player';
 
 export interface Hub {
+  isUiVisible(): boolean;
   send<K extends keyof IpcEvents>(name: K, payload: IpcEvents[K]): void;
   showMainWindow(): void;
   updateTray(): void;
@@ -298,6 +299,15 @@ export class Runtime {
 
     // ---- camera pipeline
     this.vision.onFrame((f) => this.onFrame(f));
+    this.vision.onHands((f) => {
+      const fr = f as IpcEvents['hands'];
+      this.handStats.frames++;
+      if (fr.hands.length) {
+        this.handStats.withHands++;
+        this.handStats.lastAt = Date.now();
+      }
+      this.hub.send('hands', fr);
+    });
     this.vision.onStatus((st) => this.onCameraStatus(st));
     this.vision.onEnroll((m) => this.onEnrollSamples(m));
 
@@ -329,10 +339,26 @@ export class Runtime {
 
   private applySettingsToCore(s: Settings) {
     this.presence?.configure(s.camera);
+    this.refreshHands();
     this.assurance?.configure({ presenceTtlMs: s.camera.presenceTtlSec * 1000, strongTtlMs: s.permissions.strongAuth.ttlSec * 1000 });
     if (this.audio) this.audio.volume = s.audio.ttsVolume;
     this.pipeline?.refresh();
     this.hub?.updateTray();
+  }
+
+  private handStageOpen = false;
+  private handStats = { frames: 0, withHands: 0, lastAt: 0 };
+
+  /** Hand tracking costs CPU, so it only runs when it can be seen: the window is on screen and (auto mode, or the stage is open). */
+  refreshHands() {
+    const mode = this.settings?.get().camera.handStage ?? 'off';
+    const want = mode === 'auto' ? true : mode === 'manual' ? this.handStageOpen : false;
+    this.vision?.setHands(want && !!this.hub?.isUiVisible());
+  }
+
+  setHandStage(open: boolean) {
+    this.handStageOpen = open;
+    this.refreshHands();
   }
 
   private prune() {
@@ -1126,6 +1152,11 @@ export class Runtime {
     if (s.agent.enabled) {
       const a = this.agentStatus();
       add('agent', 'Task agent (Open Interpreter)', a.installed && a.hasKey && a.cloudAllowed, a.installed ? `engine v${a.version}, ${a.provider}${a.hasKey ? '' : ', key missing'}${a.cloudAllowed ? '' : ', cloud AI not allowed'}` : 'engine not installed', 'Fur bogga Wakiilka oo rakib engine-ka, geli furaha API-ga.', 'Open the Agent page: install the engine and enter the API key.');
+    }
+    if (s.camera.handStage !== 'off') {
+      const h = this.handStats;
+      const running = this.camCapturing && h.frames > 0;
+      add('hands', 'AI hands (hand tracking)', this.camCapturing ? (running ? true : null) : null, this.camCapturing ? `${h.frames} frames processed, ${h.withHands} with a hand${h.lastAt ? `, last hand ${Math.round((Date.now() - h.lastAt) / 1000)} s ago` : ''}` : 'camera is off', 'Fur kamaradda oo gacanta ka hor kor u qaad; haddii 0 frame, hubi in WebGL shaqeynayo (Cilad-bixin → Camera).', 'Turn the camera on and raise a hand; if there are 0 frames check that WebGL works (Troubleshooting → Camera).');
     }
     const key = this.secrets.has(SECRET.azureSpeechKey);
     if (s.providers.stt.primary === 'azure' || s.providers.tts.primary === 'azure') {

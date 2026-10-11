@@ -23,6 +23,8 @@ Only what you switch on under *Privacy & Data* (all off by default):
 * **Cloud wake word** (off; strongly discouraged) → all nearby speech goes to the recogniser.
 Camera frames, face templates, voice templates, memory and visitor data are never uploaded.
 
+* **AI hands:** hand tracking runs inside the camera worker on this PC; only 21 landmark numbers per hand reach the window, they are drawn and discarded. No hand picture is stored or sent anywhere.
+
 ## Controls
 Pause the microphone/camera instantly (top bar, tray menu); retention periods; export (memory, visitors, action log) and delete (individual items or *Delete all my data*); revoke standing permissions; delete face/voice templates. The camera and microphone workers release the devices the moment you pause (Windows' own camera/microphone indicators go off).
 

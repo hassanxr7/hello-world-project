@@ -16,6 +16,11 @@ export class WindowManager implements Hub {
     this.rt = rt;
   }
 
+  /** The window is on screen (not hidden to the tray, not minimised). */
+  isUiVisible(): boolean {
+    return !!this.win && !this.win.isDestroyed() && this.win.isVisible() && !this.win.isMinimized();
+  }
+
   send<K extends keyof IpcEvents>(name: K, payload: IpcEvents[K]): void {
     if (this.win && !this.win.isDestroyed()) this.win.webContents.send('afu:event', name, payload);
   }
@@ -70,6 +75,11 @@ export class WindowManager implements Hub {
         w.hide();
       }
     });
+    const refresh = () => this.rt?.refreshHands();
+    w.on('show', refresh);
+    w.on('hide', refresh);
+    w.on('minimize', refresh);
+    w.on('restore', refresh);
     w.on('closed', () => (this.win = null));
     w.webContents.on('did-finish-load', () => {
       if (this.rt) w.webContents.send('afu:event', 'snapshot', this.rt.snapshot());

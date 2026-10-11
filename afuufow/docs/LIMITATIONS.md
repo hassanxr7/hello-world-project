@@ -83,6 +83,12 @@ Decision logic (when it may speak first, back-off, quiet, hourly cap, no strange
 * A photo or screen can sometimes fool any 2-D face recognition; a replayed video can fool the liveness check.
 * Browser-based integrations break when the sites change their pages.
 
+## AI hands
+* The hand model (Human `handtrack` + `handlandmark-lite`) is small: fast hand movement, gloves, dark or cluttered light and hands at the edge of the picture reduce accuracy. It is a visual effect, not a gesture-command system.
+* Auto-opening needs the camera on and an **open palm waved** sideways (so typing or a resting hand does not trigger it); otherwise use the 🖐 button.
+* Tested here with synthetic landmarks through the real UI and with the real model in Chromium; the real model inside the Electron app could not be shown to detect hands on the software-GL build machine. The Windows CI job runs it on a hand video and reports the result (informational). Treat real-camera hand detection as unverified until you try it on your PC.
+* It costs extra CPU/GPU while the camera is on in auto mode; set the hand stage to *manual* or *off* on weak PCs.
+
 ## Known gaps
 * No automatic updates (run the new installer).
 * English-only offline speech; Somali needs the cloud.

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AuthModal } from './components/AuthModal';
 import { Agent } from './pages/Agent';
 import { DeviceToggles } from './components/Controls';
+import { HandStage } from './components/HandStage';
 import { Toasts } from './components/ui';
 import { useL, useT } from './i18n';
 import { History } from './pages/History';
@@ -79,6 +80,7 @@ export function App() {
         </div>
       </div>
       <Toasts />
+      <HandStage />
       <AuthModal />
       <span style={{ display: 'none' }}>{L('', '')}</span>
     </div>
