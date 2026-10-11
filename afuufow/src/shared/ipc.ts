@@ -26,6 +26,20 @@ export interface ModelStatus {
   needed: string;
 }
 
+export interface AgentStatusInfo {
+  supported: boolean;
+  installed: boolean;
+  version: string | null;
+  pinnedVersion: string;
+  sizeMb: number;
+  binPath: string | null;
+  enabled: boolean;
+  provider: 'anthropic' | 'openai';
+  hasKey: boolean;
+  workDir: string;
+  cloudAllowed: boolean;
+}
+
 export interface DiagnosticItem {
   id: string;
   title: string;
@@ -126,6 +140,11 @@ export interface IpcMethods {
   'auth.hello': () => { available: boolean; result: string };
   'diag.run': () => DiagnosticItem[];
   'diag.test': (kind: 'stt' | 'tts' | 'llm' | 'whatsapp' | 'youtube' | 'speak') => { ok: boolean; detail: string };
+  'agent.status': () => AgentStatusInfo;
+  'agent.install': () => void;
+  'agent.cancelInstall': () => void;
+  'agent.remove': () => void;
+  'agent.test': () => { ok: boolean; detail: string };
   'models.status': () => ModelStatus[];
   'models.download': (id: string) => void;
   'models.remove': (id: string) => void;

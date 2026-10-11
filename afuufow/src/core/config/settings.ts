@@ -44,6 +44,19 @@ export const SettingsSchema = z.object({
     bargeIn: z.boolean(),
     ttsVolume: z.number().min(0).max(1),
   }),
+  agent: z.object({
+    /** Open Interpreter task agent. Off until the owner installs the engine and turns it on. */
+    enabled: z.boolean(),
+    provider: z.enum(['anthropic', 'openai']),
+    model: z.string().min(1),
+    /** Folder the agent works in. Empty = "Afuufow Workspace" in Documents. */
+    workDir: z.string(),
+    webSearch: z.boolean(),
+    /** Optional Playwright MCP browser (needs Node.js/npx). */
+    browser: z.boolean(),
+    maxMinutes: z.number().min(1).max(60),
+    maxApprovals: z.number().min(1).max(100),
+  }),
   companion: z.object({
     followUp: z.boolean(),
     followUpSec: z.number().min(5).max(120),
@@ -167,6 +180,7 @@ export function defaultSettings(): Settings {
       bargeIn: true,
       ttsVolume: 1,
     },
+    agent: { enabled: false, provider: 'anthropic', model: 'claude-sonnet-5-5', workDir: '', webSearch: false, browser: false, maxMinutes: 15, maxApprovals: 30 },
     companion: { followUp: true, followUpSec: 20, proactive: true, minIdleMin: 4, maxPerHour: 5 },
     providers: {
       stt: {

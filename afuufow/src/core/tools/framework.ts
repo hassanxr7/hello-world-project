@@ -4,10 +4,21 @@ import { AbortError, uid } from '../util';
 import { type Decision, type PolicyContext, type ToolMeta, type ToolRequest, decide } from '../permissions/policy';
 import type { ActionLog } from './actionlog';
 
+export interface ToolQuestion {
+  level: 'confirm' | 'strong';
+  so: string;
+  en: string;
+  /** What exactly will happen (the command), shown on screen. */
+  detailSo?: string;
+  detailEn?: string;
+}
+
 export interface ToolRuntime {
   signal: AbortSignal;
   /** Appends a note that is shown as "current task" progress. */
   progress(msg: string): void;
+  /** Ask the owner mid-run. Resolves true only for an explicit yes (after identity verification when level is strong). */
+  ask?(q: ToolQuestion): Promise<boolean>;
 }
 
 export interface ToolDef<I = unknown> {
@@ -33,6 +44,7 @@ export interface ExecOptions {
   confirmed?: boolean;
   fromPlanner?: boolean;
   onProgress?: (msg: string) => void;
+  ask?: (q: ToolQuestion) => Promise<boolean>;
 }
 
 export class ToolRegistry {
@@ -103,7 +115,7 @@ export class Executor {
     let result: ToolResult;
     try {
       result = await raceAbort(
-        tool.run(input, { signal: signalAny, progress: (m) => opts.onProgress?.(m) }),
+        tool.run(input, { signal: signalAny, progress: (m) => opts.onProgress?.(m), ask: opts.ask }),
         signalAny,
       );
     } catch (e) {
@@ -153,6 +165,7 @@ export const unverified = (so: string, en: string, why: string, data?: Record<st
   verification: { method: 'none', observed: why },
   data,
 });
+export const cancelled = (data?: Record<string, unknown>): ToolResult => ({ status: 'cancelled', so: 'Waa la joojiyay.', en: 'Cancelled.', data });
 export const failed = (so: string, en: string, data?: Record<string, unknown>): ToolResult => ({ status: 'failed', so, en, data });
 export const needsInput = (so: string, en: string, data?: Record<string, unknown>): ToolResult => ({ status: 'needs_input', so, en, data });
 

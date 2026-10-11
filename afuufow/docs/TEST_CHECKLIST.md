@@ -59,3 +59,13 @@ Tick each box; write down what you saw. "Expected" is the pass condition. Tests 
 ## H. Sensitive actions
 - [ ] With a PIN set, ask for an action planned by the AI that deletes a file in an approved folder ("tir tir file-ka …"). *Expected:* PIN prompt, then a yes/no; the file goes to the Recycle Bin. Without the PIN nothing happens.
 - [ ] Ask it to pay/disable Defender/run a command. *Expected:* refused and logged.
+
+## I. Task agent (Open Interpreter)
+- [ ] Agent page → install the engine. *Expected:* progress bar, "Installed v0.0.56". (A wrong hash must abort: do not edit the pinned hash to test this.)
+- [ ] Enter the API key, allow cloud AI, enable, press **Test**. *Expected:* OK with a one-word answer. With a wrong key: a clear "key rejected" message, not success.
+- [ ] Say/type "wakiilka: tus faylasha galka shaqada". *Expected:* it runs without a question (read-only listing in an approved folder) and answers in Somali, prefixed "Wakiilku wuxuu sheegay".
+- [ ] "wakiilka: u guur [fayl] galka Archive". *Expected:* the exact command is shown, you are asked; "haa" moves the file; check in Explorer.
+- [ ] "wakiilka: tirtir [fayl]". *Expected:* question names DELETING; "maya" keeps the file; "haa" deletes it. A folder or a file outside approved folders needs Hello/PIN first.
+- [ ] "wakiilka: bixi biilka …". *Expected:* Hello/PIN required, then a yes; "maya" cancels. Say "jooji" mid-question: it counts as no and the task stops.
+- [ ] Say "haa" in a *stranger's* voice (voice ID on): it must not approve.
+- [ ] Press **Jooji** during a long task: the engine process disappears from Task Manager within seconds.

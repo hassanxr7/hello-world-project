@@ -1,5 +1,6 @@
 import type { Settings } from '../config/settings';
 import type { MemoryStore } from '../memory/memory';
+import type { AgentRunner } from '../agent/runner';
 import type { LlmClient, Platform, WhatsAppController, YouTubeController } from '../platform';
 
 export interface Services {
@@ -9,6 +10,8 @@ export interface Services {
   llm: LlmClient;
   memory: MemoryStore;
   settings: () => Settings;
+  /** Open Interpreter task agent (optional: absent in tests / when not installed). */
+  agent?: AgentRunner;
   /** Folder for screenshots (Pictures\Afuufow) */
   screenshotDir: string;
   /** Short-lived per-process state shared by tools. */

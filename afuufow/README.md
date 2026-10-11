@@ -11,6 +11,8 @@ Afuufow is a male Somali-speaking personal assistant for **Hassan Mohamed Mohamu
 * **WhatsApp:** resolves approved contacts and aliases, asks when several match, separates **draft / send / read-back**, optional fast-send for approved contacts, verifies the message appeared in the chat and reports the real status (*sent*, *delivered*, *read* only when WhatsApp shows it).
 * **Face recognition (optional):** guided enrollment, thresholds with an honest "uncertain" zone, lighting feedback, liveness check, local processing only, no video stored.
 * **Unknown people:** fixed Somali questions, consent notice spoken first, self-reported answers stored separately from camera observations and Windows unlock events; report to you only after your identity is verified.
+* **Task agent (optional):** hand multi-step computer jobs (sort/rename many files, scripts, research) to the **Open Interpreter** engine with *“wakiilka: …”*; **every command it wants to run is shown to you first**, deleting/messaging/payments need Windows Hello/PIN too, and it answers in Somali. Off until you install and enable it. See [docs/INTERPRETER.md](docs/INTERPRETER.md) and the [demo transcript](docs/DEMO_AGENT_TRANSCRIPT.md).
+* **Companion mode:** it can start a short friendly chat on its own while you are around and keeps listening for your answer without the wake word.
 * **Memory:** encrypted; verified owner facts kept apart from anything others say; view/correct/export/delete; retention periods.
 * **Privacy controls:** everything cloud is off until you allow it; instant mic/camera pause; secrets in Windows DPAPI.
 
@@ -28,7 +30,7 @@ npm run dist:win    # installer (Windows)
 Layout: `src/core` (pure logic, tested) · `src/main` (Electron runtime, Windows adapter, drivers) · `src/workers` (hidden mic/camera pages) · `src/ml` (on-device ML process) · `src/renderer` (UI) · `tests` (unit + e2e) · `docs`.
 
 ## Documents
-[Architecture](docs/ARCHITECTURE.md) · [Privacy and data](docs/PRIVACY_AND_DATA.md) · [Hardware, internet, costs](docs/HARDWARE_AND_COSTS.md) · [Speech evaluation (measured)](docs/SPEECH_EVALUATION.md) · [Manual test checklist](docs/TEST_CHECKLIST.md) · [Build/update/uninstall](docs/BUILD.md) · [Reference project analysis](docs/REFERENCE_MAYA.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Architecture](docs/ARCHITECTURE.md) · [Privacy and data](docs/PRIVACY_AND_DATA.md) · [Hardware, internet, costs](docs/HARDWARE_AND_COSTS.md) · [Speech evaluation (measured)](docs/SPEECH_EVALUATION.md) · [Manual test checklist](docs/TEST_CHECKLIST.md) · [Build/update/uninstall](docs/BUILD.md) · [Task agent (Open Interpreter)](docs/INTERPRETER.md) · [Reference project analysis](docs/REFERENCE_MAYA.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## Important honesty notes
 * Afuufow is an ordinary desktop program. It **cannot** monitor before Windows sign-in, bypass or replace the lock screen, or act as a Windows credential.

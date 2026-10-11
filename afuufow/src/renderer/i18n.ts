@@ -8,6 +8,7 @@ export const D: Dict = {
   'nav.history': { so: 'Taariikh & Ficillo', en: 'History & Actions' },
   'nav.memory': { so: 'Milkiilaha & Xusuusta', en: 'Owner & Memory' },
   'nav.visitors': { so: 'Booqdayaal', en: 'Visitors' },
+  'nav.agent': { so: 'Wakiilka (Agent)', en: 'Task agent' },
   'nav.integrations': { so: 'Isku-xirka', en: 'Integrations' },
   'nav.permissions': { so: 'Ogolaansho', en: 'Permissions' },
   'nav.privacy': { so: 'Qarsoodi & Xog', en: 'Privacy & Data' },

@@ -16,6 +16,7 @@ Afuufow is MIT-licensed (see `LICENSE`). It bundles or downloads the following. 
 | OpenAI Whisper weights (sherpa-onnx conversions) | MIT | optional English/offline recognition (downloaded on request) |
 | Google FLEURS | CC-BY-4.0 | evaluation data (not shipped) |
 | electron-builder / NSIS | MIT / zlib | installer |
+| **Open Interpreter** (`openinterpreter/openinterpreter`, release `rust-v0.0.56`; a fork of OpenAI Codex, which includes code derived from Ratatui, MIT) | **Apache-2.0** (`LICENSE`; copyright notice in its `NOTICE`, kept in `docs/licenses/OPEN_INTERPRETER_NOTICE.txt`) | optional task agent. Not bundled or modified: Afuufow downloads the official release on request (pinned SHA-256) and runs it as a separate process over ACP; see `docs/INTERPRETER.md` |
 
 Ideas (not code) from Maya AI 1.2 by Taha: see `docs/REFERENCE_MAYA.md`.
 Model licences should be re-checked at the download sources before redistribution.

@@ -27,6 +27,7 @@ export type Intent =
   | { type: 'visitor_report' }
   | { type: 'remember'; text: string }
   | { type: 'set_language'; language: 'so' | 'en' }
+  | { type: 'agent_task'; goal: string }
   | { type: 'confirm'; yes: boolean }
   | { type: 'chat'; text: string };
 

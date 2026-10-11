@@ -19,6 +19,7 @@ import { AbortError, uid } from '../util';
 import { GreetingPolicy, type PresenceSnapshot } from '../vision/presence';
 import { buildVisitorReport } from '../visitors/report';
 import type { VisitorLog } from '../visitors/log';
+import type { ToolQuestion } from '../tools/framework';
 import type { AssistantEvent, PendingInfo, SpeechOut, TaskInfo, UtteranceMeta } from './types';
 
 export interface AssistantDeps {
@@ -85,6 +86,8 @@ export class Assistant {
   private snoozeUntil = 0;
   private speechFailedAt = 0;
   private proactiveCtl: AbortController | null = null;
+  /** A question asked by a running tool (the agent) that is waiting for the owner's yes/no. It must bypass the command queue. */
+  private liveAsk: { resolve: (yes: boolean) => void } | null = null;
 
   constructor(deps: AssistantDeps) {
     this.d = deps;
@@ -205,6 +208,7 @@ export class Assistant {
     this.d.speech.stop();
     this.task?.ctl.abort();
     this.proactiveCtl?.abort();
+    this.liveAsk?.resolve(false);
     this.clearPending();
     this.thinking = false;
     void reason;
@@ -234,6 +238,8 @@ export class Assistant {
       this.d.emit({ type: 'notice', level: 'info', so: 'Waa la joojiyay.', en: 'Stopped.' });
       return Promise.resolve();
     }
+
+    if (this.liveAsk) return this.answerLiveAsk(t, meta);
 
     this.inflight++;
     const run = this.chain.then(() => this.process(t, meta)).catch(() => undefined).finally(() => this.inflight--);
@@ -398,6 +404,65 @@ export class Assistant {
     return true;
   }
 
+  // ------------------------------------------------------------------ questions asked by a running tool (the agent)
+
+  /**
+   * Asks the owner a yes/no question while a tool is still running (the Open Interpreter agent asks before every command).
+   * Strong-level questions first require Windows Hello / PIN. Any failure, timeout, stop or unclear answer is a NO.
+   */
+  private async askOwner(q: ToolQuestion, signal: AbortSignal): Promise<boolean> {
+    if (signal.aborted || this.liveAsk) return false;
+    if (q.level === 'strong' && !this.d.assurance.atLeast('strong')) {
+      await this.say('Tallaabadan waxay u baahan tahay Windows Hello ama PIN-kaaga.', 'This step needs Windows Hello or your PIN.', signal);
+      const ok = await this.d.requestStrongAuth(this.pick(q.so, q.en));
+      if (!ok || signal.aborted) return false;
+      this.d.assurance.strongVerified();
+    }
+    const detail = this.pick(q.detailSo ?? '', q.detailEn ?? '');
+    if (detail) this.addTurn('system', detail, 'system');
+    let timer: NodeJS.Timeout | undefined;
+    const answer = new Promise<boolean>((resolve) => {
+      this.liveAsk = { resolve };
+      timer = setTimeout(() => resolve(false), 120_000); // no answer = no
+      signal.addEventListener('abort', () => resolve(false), { once: true });
+    });
+    this.setPending({ kind: 'confirm', promptSo: q.so, promptEn: q.en, onYes: async () => undefined, onNo: async () => undefined });
+    void this.speakOnly(this.pick(q.so, q.en), signal).then(() => {
+      // the owner answers right after the question, without the wake word
+      if (this.liveAsk) this.d.emit({ type: 'listen', seconds: Math.max(20, this.d.settings().companion.followUpSec) });
+    });
+    try {
+      const yes = await answer;
+      if (yes && q.level === 'strong') this.d.assurance.consumeStrong();
+      return yes && !signal.aborted;
+    } finally {
+      if (timer) clearTimeout(timer);
+      this.liveAsk = null;
+      this.clearPending();
+    }
+  }
+
+  private answerLiveAsk(text: string, meta: UtteranceMeta): Promise<void> {
+    const la = this.liveAsk!;
+    if (meta.source === 'voice') {
+      if (this.d.echo.isEcho(text) || this.d.presence().visitorPresent) return Promise.resolve();
+      if (meta.speaker === 'other' && this.d.settings().voiceId.enabled) return Promise.resolve(); // only the owner can approve
+    }
+    const n = normalizeText(text);
+    this.addTurn('owner', text, meta.source);
+    if (isNo(n)) {
+      this.liveAsk = null;
+      la.resolve(false);
+    } else if (isYes(n)) {
+      this.liveAsk = null;
+      la.resolve(true);
+    } else {
+      // unclear: never treated as permission; keep waiting
+      this.addTurn('assistant', this.pick('Fadlan ku jawaab "haa" ama "maya" (ama "jooji").', 'Please answer "yes" or "no" (or "stop").'), 'system');
+    }
+    return Promise.resolve();
+  }
+
   // ------------------------------------------------------------------ tool running
 
   /**
@@ -406,7 +471,7 @@ export class Assistant {
    */
   private async runTool(name: string, input: unknown, signal: AbortSignal, opts: { confirmed?: boolean; fromPlanner?: boolean } = {}): Promise<ToolResult | null> {
     for (let attempt = 0; attempt < 3; attempt++) {
-      const out: ExecOutcome = await this.executor.execute(name, input, signal, { ...opts, onProgress: (m) => this.progress(m) });
+      const out: ExecOutcome = await this.executor.execute(name, input, signal, { ...opts, onProgress: (m) => this.progress(m), ask: (q) => this.askOwner(q, signal) });
       switch (out.kind) {
         case 'done':
         case 'denied': {
@@ -532,6 +597,8 @@ export class Assistant {
         return this.whatsapp(intent, signal);
       case 'message_followup':
         return this.messageFollowup(intent.action, signal);
+      case 'agent_task':
+        return this.simple('agent.task', { goal: intent.goal }, signal);
       case 'remember':
         return this.remember(intent.text, signal);
       case 'visitor_report':

@@ -62,6 +62,21 @@
 | Unknown-person flow: exact Somali wording, notice before recording, decline/silence/interruption, self-reported storage, optional disclosed snapshot/audio, separate Windows events, report only after verification and not aloud when others are present | **Unit** |
 | Windows lock/unlock events | `powerMonitor` events while Afuufow runs; Security-log import needs elevation and usually reports unavailable |
 
+## Task agent (Open Interpreter)
+Full table in [INTERPRETER.md](INTERPRETER.md). In short:
+| Feature | Status |
+|---|---|
+| ACP client, risk classifier, approvals (yes / Hello+yes / refuse), stop/timeout, Somali results | **Unit** |
+| Real engine (pinned release, SHA-256 verified) with a scripted model: ask-before-every-command, "no" protects the file, "yes" runs, read-only listings without a question, stop, rejected API key explained, work folder with spaces | **Integration** (Linux locally; Windows in CI) |
+| Quality of a real model's decisions, and how well it understands Somali | **Not measured** (no API key was available) |
+| Windows sandbox behaviour and the engine's Windows shell/command titles | **CI-Windows only**; not tried by hand |
+| Browser via Playwright MCP | **Experimental, not verified**: the engine did not expose the MCP tools to the model in my test |
+| Engine network traffic beyond the model provider | **Not audited** (update check, plugins, apps, memories, sub-agents are switched off) |
+| Shell-command classification | Heuristic: cannot be complete; the default is to ask for everything and show the real command |
+
+## Companion mode
+Decision logic (when it may speak first, back-off, quiet, hourly cap, no strangers) is **unit-tested**; the Somali quality of jokes depends on the chosen AI model (small local models are weak). Not tested with a real microphone.
+
 ## Boundaries that cannot be changed by software like this
 * No monitoring before Windows sign-in; no lock-screen bypass or replacement; face/voice are not Windows credentials.
 * Windows ships no offline Somali voice.

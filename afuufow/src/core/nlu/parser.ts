@@ -241,6 +241,12 @@ export function parseCommand(text: string, ctx: ParseContext = DEFAULT_CTX): Par
   // 2. Sit
   if (['fariiso', 'fadhiiso', 'fariisaw'].includes(first) && toks.length <= 3) return R({ type: 'greet_sit' }, 0.99);
 
+  // 2b. Delegate a multi-step computer task to the Open Interpreter agent: "wakiilka: ...", "agent: ...", "open interpreter ..."
+  {
+    const skip = first === 'open' && words[1] === 'interpreter' ? 2 : ['wakiil', 'wakiilka', 'agent', 'interpreter'].includes(first) ? 1 : 0;
+    if (skip > 0 && toks.length > skip) return R({ type: 'agent_task', goal: original.slice(toks[skip]!.start).replace(/^[:,\s]+/, '') }, 0.95);
+  }
+
   // 3. Language switch
   if (/ku hadal|speak|hadal/.test(joined) && detectLangWord(toks)) {
     const l = detectLangWord(toks);

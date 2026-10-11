@@ -3,7 +3,7 @@ import { Card, Check, Field } from '../components/ui';
 import { useL, useT } from '../i18n';
 import { call, notify, patchSettings, useUi } from '../store';
 
-function SecretInput({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
+export function SecretInput({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
   const snap = useUi((s) => s.snap)!;
   const L = useL();
   const [v, setV] = useState('');

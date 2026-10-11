@@ -17,6 +17,7 @@ export function Home() {
   const lv = useLevels();
   const [text, setText] = useState('');
   const [freeText, setFreeText] = useState('');
+  const [agentMode, setAgentMode] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true); // follow new messages only while the reader is at the bottom
   const [away, setAway] = useState(false);
@@ -44,7 +45,7 @@ export function Home() {
     if (!v) return;
     setText('');
     stick.current = true;
-    void call('cmd.text', v);
+    void call('cmd.text', agentMode && !/^(wakiil|agent|interpreter)/i.test(v) ? 'wakiilka: ' + v : v);
   };
   const p = snap.presence;
   const presenceLabel = p.visitorPresent ? t('presence.visitor') : p.ownerPresent ? t('presence.owner') : p.uncertain ? t('presence.uncertain') : t('presence.none');
@@ -136,6 +137,9 @@ export function Home() {
         )}
         <div className="composer">
           <input type="text" value={text} placeholder={t('type')} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} aria-label={t('type')} />
+          {snap.settings.agent.enabled && (
+            <button className={`btn ${agentMode ? 'primary' : ''}`} onClick={() => setAgentMode(!agentMode)} title={L('Wakiilka: hawl adag u dir (Open Interpreter)', 'Task agent: send as a bigger job (Open Interpreter)')} aria-pressed={agentMode}>🛠 {L('Wakiil', 'Agent')}</button>
+          )}
           <button className="btn primary" onClick={submit}>{t('send')}</button>
         </div>
       </div>

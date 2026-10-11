@@ -175,7 +175,7 @@ export interface Rig {
   services: Services;
 }
 
-export async function makeRig(opts: { settings?: (s: Settings) => void; contacts?: boolean } = {}): Promise<Rig> {
+export async function makeRig(opts: { settings?: (s: Settings) => void; contacts?: boolean; agent?: import('../src/core/agent/runner').AgentRunner } = {}): Promise<Rig> {
   const dir = tmpDir();
   const keys = testKeys();
   const settings = defaultSettings();
@@ -209,7 +209,7 @@ export async function makeRig(opts: { settings?: (s: Settings) => void; contacts
   memory.upsertContact({ displayName: 'Stranger Sam', aliases: [], phone: '252644444444', approved: false, fastSend: false });
 
   const services: Services = {
-    platform, youtube: yt, whatsapp: wa, llm, memory, settings: () => settings,
+    platform, youtube: yt, whatsapp: wa, llm, memory, settings: () => settings, agent: opts.agent,
     screenshotDir: 'C:\\Users\\Hassan\\Pictures\\Afuufow', state: { lastDraft: '', lastSent: null },
   };
   const registry = buildRegistry(services, (id) => memory.contacts.find((c) => c.id === id));

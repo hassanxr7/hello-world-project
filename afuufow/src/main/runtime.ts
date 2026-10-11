@@ -37,6 +37,7 @@ import { uid } from '../core/util';
 import type { DeviceStatus, DiagnosticItem, EnrollUpdate, IpcEvents, Snapshot } from '../shared/ipc';
 import { DpapiKeyProvider, safeStorageCipher } from './keys';
 import type { Logger } from './logger';
+import { EngineManager, OpenInterpreterRunner } from './interpreter/engine';
 import { MlClient } from './ml-client';
 import { MODELS, ModelManager } from './models';
 import { SettingsStore } from './settings-store';
@@ -73,6 +74,9 @@ export class Runtime {
   readonly faces: FaceStore;
   readonly voice: VoiceStore;
   readonly models: ModelManager;
+  readonly engine: EngineManager;
+  private agentRunner!: OpenInterpreterRunner;
+  private agentInstall: AbortController | null = null;
   readonly ml: MlClient;
   readonly audio = new AudioBridge();
   readonly vision = new VisionBridge();
@@ -132,6 +136,7 @@ export class Runtime {
     this.faces = new FaceStore(this.dataDir, keys);
     this.voice = new VoiceStore(this.dataDir, keys);
     this.models = new ModelManager(path.join(userData, 'models'));
+    this.engine = new EngineManager(path.join(userData, 'interpreter'));
     this.assurance = new AssuranceManager({ presenceTtlMs: 120_000, voiceTtlMs: 60_000, strongTtlMs: 300_000 });
     this.presence = new PresenceTracker(this.settings.get().camera);
     this.ml = new MlClient(this.models, log, () => this.settings.get().providers.stt.localModel.replace('whisper-', '') as 'small', () => this.settings.get().audio.vadThreshold, () => this.hub.send('snapshot', this.snapshot()));
@@ -204,6 +209,15 @@ export class Runtime {
       screenshotDir: path.join(app.getPath('pictures'), 'Afuufow'),
       state: { lastDraft: '', lastSent: null },
     };
+    this.agentRunner = new OpenInterpreterRunner({
+      mgr: this.engine,
+      settings: () => this.settings.get(),
+      secret: (n) => this.secrets.get(n) ?? undefined,
+      documentsDir: () => app.getPath('documents'),
+      ownerName: () => this.memory.owner.fullName,
+      log: { info: (m) => this.log.info(m), warn: (m) => this.log.warn(m) },
+    });
+    this.services.agent = this.agentRunner;
     const registry = buildRegistry(this.services, (id) => this.memory.contacts.find((c) => c.id === id));
 
     // ---- speech out
@@ -990,6 +1004,73 @@ export class Runtime {
 
   // ====================================================================== models
 
+  // ====================================================================== Open Interpreter agent
+
+  agentStatus() {
+    const e = this.engine.status();
+    const s = this.settings.get().agent;
+    return {
+      ...e,
+      enabled: s.enabled,
+      provider: s.provider,
+      hasKey: this.secrets.has(s.provider === 'anthropic' ? 'anthropic.key' : 'openai.key'),
+      workDir: this.agentRunner.workDir(),
+      cloudAllowed: this.settings.get().privacy.allowCloudLlm,
+    };
+  }
+
+  async installAgent() {
+    if (this.agentInstall) throw new Error('already installing');
+    const ctl = new AbortController();
+    this.agentInstall = ctl;
+    let last = 0;
+    try {
+      await this.engine.install((received, total) => {
+        const now = Date.now();
+        if (now - last > 250) {
+          last = now;
+          this.hub.send('download', { id: 'interpreter', received, total, done: false });
+        }
+      }, ctl.signal);
+      this.hub.send('download', { id: 'interpreter', received: 1, total: 1, done: true });
+      this.hub.send('snapshot', this.snapshot());
+    } catch (e) {
+      this.hub.send('download', { id: 'interpreter', received: 0, total: 1, done: true, error: (e as Error).message });
+      throw e;
+    } finally {
+      this.agentInstall = null;
+    }
+  }
+
+  cancelAgentInstall() {
+    this.agentInstall?.abort();
+  }
+
+  removeAgent() {
+    this.engine.remove();
+    this.hub.send('snapshot', this.snapshot());
+  }
+
+  /** Real round trip: starts the engine, sends a one-word request, refuses every command. Costs a few tokens. */
+  async testAgent(): Promise<{ ok: boolean; detail: string }> {
+    const st = await this.agentRunner.status();
+    if (!st.ready) return { ok: false, detail: st.detail };
+    if (!this.settings.get().privacy.allowCloudLlm) return { ok: false, detail: 'Cloud AI is disabled in Privacy settings.' };
+    try {
+      const out = await this.agentRunner.runWith('Reply with the single Somali word "tayyar". Do not run any command.', {
+        signal: AbortSignal.timeout(90_000),
+        onProgress: () => undefined,
+        ask: async () => false,
+        timeoutMs: 90_000,
+        maxApprovals: 1,
+      });
+      if (out.status === 'completed' && out.text) return { ok: true, detail: `engine answered: ${out.text.slice(0, 80)}` };
+      return { ok: false, detail: out.error ?? out.status };
+    } catch (e) {
+      return { ok: false, detail: (e as Error).message };
+    }
+  }
+
   async downloadModel(id: string) {
     const last = this.downloads.get(id) ?? 0;
     void last;
@@ -1042,6 +1123,10 @@ export class Runtime {
     const cams = await this.vision.devices().catch(() => []);
     add('camera', 'Camera', cams.length > 0, cams.length ? `${cams.length} camera(s)` : 'No camera found', 'Ku xir kamarad oo hubi Privacy → Camera.', 'Connect a camera and check Privacy → Camera.');
     add('camperm', 'Camera permission', this.camPermission === 'granted' || this.camPermission === 'unknown' ? true : false, this.camPermission, 'Windows Settings → Privacy → Camera.', 'Windows Settings → Privacy → Camera.');
+    if (s.agent.enabled) {
+      const a = this.agentStatus();
+      add('agent', 'Task agent (Open Interpreter)', a.installed && a.hasKey && a.cloudAllowed, a.installed ? `engine v${a.version}, ${a.provider}${a.hasKey ? '' : ', key missing'}${a.cloudAllowed ? '' : ', cloud AI not allowed'}` : 'engine not installed', 'Fur bogga Wakiilka oo rakib engine-ka, geli furaha API-ga.', 'Open the Agent page: install the engine and enter the API key.');
+    }
     const key = this.secrets.has(SECRET.azureSpeechKey);
     if (s.providers.stt.primary === 'azure' || s.providers.tts.primary === 'azure') {
       add('azurekey', 'Azure Speech key', key, key ? 'stored in Windows data protection' : 'not set', 'Gali furaha Azure Speech (Settings → Isku-xirka).', 'Enter your Azure Speech key (Settings → Integrations).');

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AuthModal } from './components/AuthModal';
+import { Agent } from './pages/Agent';
 import { DeviceToggles } from './components/Controls';
 import { Toasts } from './components/ui';
 import { useL, useT } from './i18n';
@@ -17,7 +18,7 @@ import { call, patchSettings, startStore, useUi } from './store';
 
 const PAGES = [
   ['home', '🏠', 'nav.home'], ['history', '🕘', 'nav.history'], ['memory', '🧠', 'nav.memory'], ['visitors', '👁', 'nav.visitors'],
-  ['integrations', '🔌', 'nav.integrations'], ['permissions', '🛡', 'nav.permissions'], ['privacy', '🔒', 'nav.privacy'], ['setup', '🧭', 'nav.setup'], ['help', '🩺', 'nav.help'], ['settings', '⚙', 'nav.settings'],
+  ['agent', '🛠', 'nav.agent'], ['integrations', '🔌', 'nav.integrations'], ['permissions', '🛡', 'nav.permissions'], ['privacy', '🔒', 'nav.privacy'], ['setup', '🧭', 'nav.setup'], ['help', '🩺', 'nav.help'], ['settings', '⚙', 'nav.settings'],
 ] as const;
 
 export function App() {
@@ -68,6 +69,7 @@ export function App() {
           {page === 'history' && <History />}
           {page === 'memory' && <Memory />}
           {page === 'visitors' && <Visitors />}
+          {page === 'agent' && <Agent />}
           {page === 'integrations' && <Integrations />}
           {page === 'permissions' && <Permissions />}
           {page === 'privacy' && <Privacy />}
