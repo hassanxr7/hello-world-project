@@ -142,7 +142,7 @@ export class EngineManager {
 // ---------------------------------------------------------------------------- process
 
 /** Only what the engine needs: the owner's other environment variables (and any secrets in them) are not passed on. */
-const ENV_ALLOW = ['PATH', 'Path', 'PATHEXT', 'SystemRoot', 'SYSTEMROOT', 'ComSpec', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP', 'USERNAME', 'COMPUTERNAME', 'OS', 'PROCESSOR_ARCHITECTURE', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'ProgramData', 'windir', 'HOME', 'LANG', 'SHELL', 'TERM'];
+const ENV_ALLOW = ['PATH', 'Path', 'PATHEXT', 'SystemRoot', 'SYSTEMROOT', 'ComSpec', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP', 'USERNAME', 'COMPUTERNAME', 'OS', 'PROCESSOR_ARCHITECTURE', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'ProgramData', 'CommonProgramFiles', 'ALLUSERSPROFILE', 'PUBLIC', 'SystemDrive', 'USERDOMAIN', 'PSModulePath', 'NUMBER_OF_PROCESSORS', 'windir', 'HOME', 'LANG', 'SHELL', 'TERM'];
 
 export function engineEnv(base: NodeJS.ProcessEnv, extra: Record<string, string>): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
