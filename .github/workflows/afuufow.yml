@@ -43,10 +43,6 @@ jobs:
       - name: Unit tests (PowerShell scripts are also syntax-checked with the real Windows PowerShell 5.1)
         run: npm test
         env: { AFUUFOW_PWSH: powershell.exe }
-      - name: Open Interpreter engine - real pinned release on Windows (download, SHA-256, tar.exe, ACP, approvals)
-        run: npx vitest run tests/interpreter-install.test.ts
-        env: { AFU_ENGINE_INSTALL: '1' }
-        timeout-minutes: 20
       - name: Build installer (NSIS)
         run: npm run dist:win:ci
       - name: Installer file
@@ -94,3 +90,8 @@ jobs:
         with:
           name: Afuufow-Setup-windows-x64
           path: afuufow/release/Afuufow-Setup-*.exe
+      - name: Open Interpreter engine - real pinned release on Windows (download, SHA-256, tar.exe, ACP, approvals)
+        if: always()
+        run: npx vitest run tests/interpreter-install.test.ts
+        env: { AFU_ENGINE_INSTALL: '1' }
+        timeout-minutes: 20

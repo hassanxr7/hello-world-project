@@ -155,7 +155,7 @@ describe.skipIf(!RUN)('Open Interpreter: pinned install and runner (real engine)
     script = [{ tool: isWin ? `Get-ChildItem '${work}'` : `ls '${work}'` }, { text: 'Faylasha waa la arkay.' }];
     const asked: string[] = [];
     const out = await makeRunner().runWith('liis faylasha', { signal: new AbortController().signal, onProgress: () => undefined, ask: ask(false, asked) as any, timeoutMs: 120_000, maxApprovals: 5 });
-    expect(asked).toHaveLength(0);
+    expect(asked, 'the engine asked about a plain listing: ' + JSON.stringify(asked)).toHaveLength(0);
     expect(out.stats.autoAllowed).toBe(1);
   }, 180_000);
 
