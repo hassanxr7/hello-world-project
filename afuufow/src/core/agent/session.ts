@@ -1,5 +1,5 @@
 import { type AcpTransport, AcpClient, type PermissionRequest, type ToolCallInfo } from './acp';
-import { type Category, type Verdict, classify } from './approval';
+import { type Category, type Verdict, classify, innerCommand, pathsIn } from './approval';
 
 export interface AgentQuestion {
   level: 'confirm' | 'strong';
@@ -9,7 +9,7 @@ export interface AgentQuestion {
   detailEn: string;
   categories: Category[];
   /** What the engine actually announced (for logs and diagnostics). */
-  raw?: { title: string; kind: string; status: string; webTainted: boolean };
+  raw?: { title: string; kind: string; status: string; webTainted: boolean; approved: string[]; paths: string[]; unresolved: boolean };
 }
 
 export interface AgentStats {
@@ -103,7 +103,7 @@ export async function runAgentTask(opts: AgentTaskOptions): Promise<AgentOutcome
           stats.asked++;
           let yes = false;
           try {
-            yes = await opts.ask({ level: v.level, so: v.so, en: v.en, detailSo: v.detailSo, detailEn: v.detailEn, categories: v.categories, raw: { title: req.lastTool?.title ?? '', kind: req.lastTool?.kind ?? '', status: req.lastTool?.status ?? '', webTainted } }, signal);
+            yes = await opts.ask({ level: v.level, so: v.so, en: v.en, detailSo: v.detailSo, detailEn: v.detailEn, categories: v.categories, raw: { title: req.lastTool?.title ?? '', kind: req.lastTool?.kind ?? '', status: req.lastTool?.status ?? '', webTainted, approved: opts.approvedFolders, ...(() => { const p = pathsIn(innerCommand(req.lastTool?.title ?? '')); return { paths: p.paths, unresolved: p.unresolved }; })() } }, signal);
           } catch {
             yes = false;
           }
