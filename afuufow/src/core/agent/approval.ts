@@ -153,7 +153,8 @@ export function classify(tool: ToolLike | null, ctx: ApprovalContext): Verdict {
   for (const [c, rx] of Object.entries(RX) as Array<[Category, RegExp]>) if (rx.test(title) || rx.test(cmd)) cats.add(c);
   if (kind === 'delete') cats.add('delete');
   if (cats.has('delete') && RECURSIVE.test(' ' + cmd)) cats.add('delete_recursive');
-  if (kind === 'fetch' || kind === 'search' || /\b(web_search|curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod|playwright|browser_)/i.test(title)) cats.add('web');
+  // ACP kind "search" means searching/listing local files (the real engine reports Get-ChildItem that way on Windows); only "fetch" and web commands touch the web
+  if (kind === 'fetch' || /\b(web_search|curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod|playwright|browser_)/i.test(title)) cats.add('web');
 
   const { paths, unresolved } = pathsIn(cmd);
   const outsidePath = paths.some((p) => !inside(p, ctx.approvedFolders));

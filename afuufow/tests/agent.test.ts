@@ -24,6 +24,11 @@ describe('approval classifier: how much verification a command needs', () => {
     expect(classify(exec(ps('Get-ChildItem C:\\Users\\Hassan\\Downloads')), ctx).action).toBe('allow');
     expect(classify(exec("/bin/bash -lc 'ls /home/h/work'"), ctx).action).toBe('allow');
   });
+  it('a local listing the engine labels kind "search" or "read" is still just a listing (observed on real Windows)', () => {
+    const t = ps('Get-ChildItem C:\\Users\\Hassan\\Downloads');
+    for (const kind of ['execute', 'read', 'search']) expect(classify({ title: t, kind }, ctx).action, kind).toBe('allow');
+    expect(classify({ title: 'web_search: news', kind: 'fetch' }, ctx).action).toBe('ask');
+  });
   it('asks for the same listing outside approved folders, with variables, or with pipes/redirects', () => {
     expect(classify(exec(ps('Get-ChildItem C:\\Windows')), ctx).action).toBe('ask');
     expect(classify(exec(ps('Get-ChildItem $env:USERPROFILE')), ctx).action).toBe('ask');

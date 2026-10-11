@@ -77,7 +77,7 @@ export async function runAgentTask(opts: AgentTaskOptions): Promise<AgentOutcome
       prompt,
       {
         onTool: (t: ToolCallInfo) => {
-          if (t.kind === 'fetch' || t.kind === 'search' || /\b(web_search|curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod|browser_)/i.test(t.title)) webTainted = true;
+          if (t.kind === 'fetch' || /\b(web_search|curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod|browser_)/i.test(t.title)) webTainted = true;
           if (t.status === 'in_progress' || t.status === 'pending') opts.onProgress(t.title.slice(0, 120));
         },
         onPermission: async (req: PermissionRequest) => {
