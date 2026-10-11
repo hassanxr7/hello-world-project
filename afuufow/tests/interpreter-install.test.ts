@@ -135,7 +135,7 @@ describe.skipIf(!RUN)('Open Interpreter: pinned install and runner (real engine)
     expect(cfg).not.toMatch(/api[_-]?key\s*=/i);
   }, 180_000);
 
-  const ask = (answer: boolean, log: string[] = []) => async (q: { detailEn: string }) => (log.push(q.detailEn), answer);
+  const ask = (answer: boolean, log: string[] = []) => async (q: { detailEn: string; categories?: string[]; raw?: unknown }) => (log.push(q.detailEn + ' | categories=' + JSON.stringify(q.categories) + ' | raw=' + JSON.stringify(q.raw)), answer);
 
   it('runner: "yes" lets the deletion run', async () => {
     const work = path.join(tmp, 'my work');

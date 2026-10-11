@@ -8,6 +8,8 @@ export interface AgentQuestion {
   detailSo: string;
   detailEn: string;
   categories: Category[];
+  /** What the engine actually announced (for logs and diagnostics). */
+  raw?: { title: string; kind: string; status: string; webTainted: boolean };
 }
 
 export interface AgentStats {
@@ -101,7 +103,7 @@ export async function runAgentTask(opts: AgentTaskOptions): Promise<AgentOutcome
           stats.asked++;
           let yes = false;
           try {
-            yes = await opts.ask({ level: v.level, so: v.so, en: v.en, detailSo: v.detailSo, detailEn: v.detailEn, categories: v.categories }, signal);
+            yes = await opts.ask({ level: v.level, so: v.so, en: v.en, detailSo: v.detailSo, detailEn: v.detailEn, categories: v.categories, raw: { title: req.lastTool?.title ?? '', kind: req.lastTool?.kind ?? '', status: req.lastTool?.status ?? '', webTainted } }, signal);
           } catch {
             yes = false;
           }
