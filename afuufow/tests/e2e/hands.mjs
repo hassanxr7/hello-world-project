@@ -48,14 +48,13 @@ const waveResult = await page.evaluate(async () => {
     return { label: 'hand', score: 0.9, keypoints: kp };
   };
   const send = (ts, hands) => window.__afuHandFrame({ ts, width: W, height: H, hands });
-  const t0 = Date.now();
-  // a resting open hand does not open it
-  for (let i = 0; i < 10; i++) send(t0 + i * 66, [mk(320, 330, false)]);
-  await new Promise((r) => setTimeout(r, 200));
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+  // a resting open hand does not open it (frame timestamps follow the wall clock, ~15 frames a second)
+  for (let i = 0; i < 10; i++) { send(Date.now(), [mk(320, 330, false)]); await nap(66); }
   const restingOpened = !!document.querySelector('.handstage');
-  // waving an open hand does (moving it ~60 px sideways, a few times)
-  for (let i = 0; i < 16; i++) { send(t0 + 700 + i * 66, [mk(320 + (i % 2 ? 90 : -90), 330, false)]); await new Promise((r) => setTimeout(r, 20)); }
-  await new Promise((r) => setTimeout(r, 400));
+  // waving an open hand does (moving it ~90 px sideways, a few times)
+  for (let i = 0; i < 16; i++) { send(Date.now(), [mk(320 + (i % 2 ? 90 : -90), 330, false)]); await nap(66); }
+  await nap(100);
   return { restingOpened, opened: !!document.querySelector('.handstage') };
 });
 check('a resting open hand does not open the stage', waveResult.restingOpened === false);
