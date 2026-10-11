@@ -68,7 +68,7 @@ export interface TrackerOptions {
   slotMissMs?: number;
 }
 
-const DEF: Required<TrackerOptions> = { smoothing: 0.6, minScore: 0.35, waveDistance: 0.1, waveWindowMs: 900, holdMs: 2500, slotMissMs: 350 };
+const DEF: Required<TrackerOptions> = { smoothing: 0.6, minScore: 0.35, waveDistance: 0.1, waveWindowMs: 900, holdMs: 2500, slotMissMs: 600 };
 
 interface Slot {
   id: number;
@@ -173,12 +173,13 @@ export class HandTracker {
     // wave: an open hand whose wrist travelled far enough within the window
     let waving = false;
     for (const s of this.slots) {
-      if (!s.open || t - s.lastSeen > 150) continue;
+      if (!s.open || t - s.lastSeen > 400) continue;
       let maxD = 0;
       for (let i = 0; i < s.history.length; i++) for (let j = i + 1; j < s.history.length; j++) maxD = Math.max(maxD, Math.hypot(s.history[i]!.x - s.history[j]!.x, s.history[i]!.y - s.history[j]!.y));
       if (maxD >= this.o.waveDistance) waving = true;
     }
-    const visible = this.slots.filter((s) => t - s.lastSeen <= 150);
+    // the hand model on a slow PC delivers a frame every few hundred ms: keep the last pose drawn between frames
+    const visible = this.slots.filter((s) => t - s.lastSeen <= this.o.slotMissMs);
     if (waving) this.activeUntil = t + this.o.holdMs;
     // once open, any clearly moving hand keeps it open
     else if (this.active && visible.some((s) => s.speed >= 0.05)) this.activeUntil = t + this.o.holdMs;

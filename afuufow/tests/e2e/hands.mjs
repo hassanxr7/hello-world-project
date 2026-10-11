@@ -129,17 +129,24 @@ if (got) {
 
 // open the stage through the UI button and look at it
 await page.evaluate(() => window.dispatchEvent(new Event('afu:hands-open')));
-await wait(2500);
-const stage = await page.evaluate(() => {
+const sampleStage = () => page.evaluate(() => {
   const el = document.querySelector('.handstage');
   const c = document.querySelector('.handcanvas');
-  if (!el || !c) return { shown: false };
-  const ctx = c.getContext('2d');
-  const d = ctx.getImageData(0, 0, c.width, c.height).data;
+  if (!el || !c) return { shown: false, w: 0, h: 0, lit: 0 };
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
   let lit = 0;
   for (let i = 3; i < d.length; i += 16) if (d[i] > 20) lit++;
   return { shown: true, w: c.width, h: c.height, lit };
 });
+// the model on a slow PC sees the hand only now and then: sample for a while and keep the best
+let stage = { shown: false, lit: 0 };
+for (let i = 0; i < 25; i++) {
+  await wait(1000);
+  const s1 = await sampleStage();
+  if (s1.lit >= stage.lit) stage = s1;
+  if (s1.lit > 200) { await page.screenshot({ path: join(shots, 'hands-stage.png') }); break; }
+}
+console.log('INFO hand frames', JSON.stringify(await page.evaluate(() => ({ n: window.__hf.n, withHands: window.__hf.withHands }))));
 await page.screenshot({ path: join(shots, 'hands-stage.png') });
 // the overlay needs the camera to be "capturing" in the snapshot; with the enrollment camera that is the case
 check('the stage opens full screen', stage.shown, JSON.stringify(stage));

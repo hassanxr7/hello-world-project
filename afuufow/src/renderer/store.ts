@@ -54,7 +54,11 @@ let nid = 1;
 const handSubs = new Set<(f: HandFrame) => void>();
 /** Hand frames arrive ~15 times a second; they bypass React state on purpose. */
 // test hook: feed hand frames straight into the UI (numbers only; it can do nothing but draw hands)
-(window as unknown as Record<string, unknown>).__afuHandFrame = (f: HandFrame) => handSubs.forEach((fn) => fn(f));
+let syntheticAt = 0;
+(window as unknown as Record<string, unknown>).__afuHandFrame = (f: HandFrame) => {
+  syntheticAt = Date.now();
+  handSubs.forEach((fn) => fn(f));
+};
 
 export function subscribeHands(fn: (f: HandFrame) => void) {
   handSubs.add(fn);
@@ -86,7 +90,10 @@ export async function startStore() {
   api.on('pending', (p) => set({ pending: p }));
   api.on('draft', (d) => set({ draft: d }));
   api.on('notice', (n) => notify(n.level, n.so, n.en));
-  api.on('hands', (f) => handSubs.forEach((fn) => fn(f)));
+  api.on('hands', (f) => {
+    if (Date.now() - syntheticAt < 1000) return; // a test is feeding synthetic frames: do not mix in the live ones
+    handSubs.forEach((fn) => fn(f));
+  });
   api.on('action', (a) => set({ actions: [a, ...state.actions.filter((x) => x.id !== a.id)].slice(0, 300) }));
   api.on('devices', (d) => state.snap && set({ snap: { ...state.snap, devices: d } }));
   api.on('presence', (p) => state.snap && set({ snap: { ...state.snap, presence: p } }));

@@ -86,7 +86,7 @@ Decision logic (when it may speak first, back-off, quiet, hourly cap, no strange
 ## AI hands
 * The hand model (Human `handtrack` + `handlandmark-lite`) is small: fast hand movement, gloves, dark or cluttered light and hands at the edge of the picture reduce accuracy. It is a visual effect, not a gesture-command system.
 * Auto-opening needs the camera on and an **open palm waved** sideways (so typing or a resting hand does not trigger it); otherwise use the 🖐 button.
-* Tested here with synthetic landmarks through the real UI and with the real model in Chromium; the real model inside the Electron app could not be shown to detect hands on the software-GL build machine. The Windows CI job runs it on a hand video and reports the result (informational). Treat real-camera hand detection as unverified until you try it on your PC.
+* Verified: on a real Windows runner the installed app's hand model detected a hand (21 landmarks, confidence 0.70) in a test video; the UI chain is tested with synthetic landmarks. Not verified: accuracy with a real webcam, different skin tones/lighting, and speed on weak PCs (on a slow CPU the model sees a hand only a few times a second, so the drawn hands can look less smooth). Try it on your PC.
 * It costs extra CPU/GPU while the camera is on in auto mode; set the hand stage to *manual* or *off* on weak PCs.
 
 ## Known gaps
