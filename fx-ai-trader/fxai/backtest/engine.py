@@ -83,6 +83,7 @@ class PortfolioBacktest:
         self.initial_balance = initial_balance
         self.use_correlation = use_correlation
         self.strategy = TrendPullbackStrategy(cfg.strategy.params, cfg.exits)
+        self.exits = cfg.exits
         self.symbols = sorted(m1)
         self.info = cfg.symbols.resolve() if set(self.symbols) <= set(cfg.symbols.enabled) else {}
         self._frames: dict[str, pd.DataFrame] = {}
@@ -141,7 +142,7 @@ class PortfolioBacktest:
             i0 = a.index_at_or_after(ts)
             if i0 >= len(a.t) or a.t[i0] - ts > 5 * 60 * NS:
                 continue
-            p = simulate_trade(a, i0, r.side, r.sl, self.cfg.exits, costs, r.atr_e)
+            p = simulate_trade(a, i0, r.side, r.sl, self.exits, costs, r.atr_e)
             if p is not None:
                 paths[r.key] = p
         return paths
