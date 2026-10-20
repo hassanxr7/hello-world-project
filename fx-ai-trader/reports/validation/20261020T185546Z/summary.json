@@ -1,0 +1,3001 @@
+{
+  "generated_utc": "20261020T185546Z",
+  "data": "Oanda M1 mid prices, public mirror github.com/FutureSharks/financial-data (2015-2020, data ends 2020-05-14)",
+  "python": "3.13.16",
+  "symbols": [
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "USDCAD"
+  ],
+  "variants": {
+    "V2_H1_H4": {
+      "timeframes": [
+        "H1",
+        "H4"
+      ],
+      "signals": 699,
+      "runs": {
+        "dev_2015_2017": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2018-01-01 00:00:00+00:00",
+          "years": 3.0,
+          "trades": 311,
+          "initial_balance": 10000.0,
+          "net_profit": -1367.04,
+          "final_balance": 8632.96,
+          "return_pct": -13.67,
+          "cagr_pct": -4.78,
+          "max_drawdown": 1565.28,
+          "max_drawdown_pct": 15.43,
+          "profit_factor": 0.64,
+          "win_rate_pct": 32.8,
+          "expectancy_per_trade": -4.4,
+          "expectancy_r": -0.199,
+          "avg_win_r": 1.072,
+          "avg_loss_r": -0.82,
+          "trades_per_year": 103.7,
+          "avg_hold_hours": 9.64,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 4,
+          "costs": {
+            "spread": 208.46,
+            "commission": 205.8,
+            "swap": 30.39,
+            "slippage": 94.74,
+            "total": 539.39,
+            "pct_of_gross_profit": 22.2
+          },
+          "exit_reasons": {
+            "sl": 165,
+            "breakeven": 70,
+            "tp": 56,
+            "time": 13,
+            "sl_gap": 5,
+            "breakeven_gap": 2
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 10.49,
+          "months": 35,
+          "losing_months": 28,
+          "worst_month": -224.1,
+          "best_month": 79.24,
+          "yearly_net": {
+            "2015": -311.01,
+            "2016": -414.53,
+            "2017": -641.5
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 97,
+              "net": -518.0,
+              "expectancy_r": -0.237,
+              "win_rate_pct": 36.1
+            },
+            "EURUSD": {
+              "trades": 61,
+              "net": -402.85,
+              "expectancy_r": -0.304,
+              "win_rate_pct": 27.9
+            },
+            "GBPUSD": {
+              "trades": 68,
+              "net": -29.14,
+              "expectancy_r": -0.024,
+              "win_rate_pct": 50.0
+            },
+            "USDCAD": {
+              "trades": 85,
+              "net": -417.05,
+              "expectancy_r": -0.221,
+              "win_rate_pct": 18.8
+            }
+          },
+          "daily_return_sharpe_annualised": -2.997,
+          "max_entries_in_a_day": 4,
+          "label": "V2_H1_H4 dev",
+          "daily_loss_halts": 0
+        },
+        "holdout_2018_2020": {
+          "period_start": "2018-01-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 2.37,
+          "trades": 227,
+          "initial_balance": 10000.0,
+          "net_profit": -548.32,
+          "final_balance": 9451.68,
+          "return_pct": -5.48,
+          "cagr_pct": -2.35,
+          "max_drawdown": 790.07,
+          "max_drawdown_pct": 7.83,
+          "profit_factor": 0.799,
+          "win_rate_pct": 33.48,
+          "expectancy_per_trade": -2.42,
+          "expectancy_r": -0.102,
+          "avg_win_r": 1.244,
+          "avg_loss_r": -0.78,
+          "trades_per_year": 95.9,
+          "avg_hold_hours": 11.77,
+          "max_consecutive_losses": 11,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 204.04,
+            "commission": 202.65,
+            "swap": 31.88,
+            "slippage": 90.18,
+            "total": 528.75,
+            "pct_of_gross_profit": 24.3
+          },
+          "exit_reasons": {
+            "sl": 111,
+            "tp": 48,
+            "breakeven": 44,
+            "time": 15,
+            "sl_gap": 5,
+            "breakeven_gap": 4
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.85,
+          "months": 29,
+          "losing_months": 18,
+          "worst_month": -116.04,
+          "best_month": 154.79,
+          "yearly_net": {
+            "2018": -191.48,
+            "2019": -474.59,
+            "2020": 117.75
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 76,
+              "net": -371.48,
+              "expectancy_r": -0.21,
+              "win_rate_pct": 31.6
+            },
+            "EURUSD": {
+              "trades": 50,
+              "net": -10.42,
+              "expectancy_r": -0.002,
+              "win_rate_pct": 42.0
+            },
+            "GBPUSD": {
+              "trades": 46,
+              "net": 61.73,
+              "expectancy_r": 0.059,
+              "win_rate_pct": 39.1
+            },
+            "USDCAD": {
+              "trades": 55,
+              "net": -228.15,
+              "expectancy_r": -0.18,
+              "win_rate_pct": 23.6
+            }
+          },
+          "daily_return_sharpe_annualised": -1.419,
+          "max_entries_in_a_day": 4,
+          "label": "V2_H1_H4 holdout",
+          "daily_loss_halts": 0
+        },
+        "full_period": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 538,
+          "initial_balance": 10000.0,
+          "net_profit": -1854.69,
+          "final_balance": 8145.31,
+          "return_pct": -18.55,
+          "cagr_pct": -3.75,
+          "max_drawdown": 2128.37,
+          "max_drawdown_pct": 20.98,
+          "profit_factor": 0.698,
+          "win_rate_pct": 33.09,
+          "expectancy_per_trade": -3.45,
+          "expectancy_r": -0.158,
+          "avg_win_r": 1.146,
+          "avg_loss_r": -0.803,
+          "trades_per_year": 100.3,
+          "avg_hold_hours": 10.54,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 383.34,
+            "commission": 379.68,
+            "swap": 57.46,
+            "slippage": 172.14,
+            "total": 992.62,
+            "pct_of_gross_profit": 23.2
+          },
+          "exit_reasons": {
+            "sl": 276,
+            "breakeven": 114,
+            "tp": 104,
+            "time": 28,
+            "sl_gap": 10,
+            "breakeven_gap": 6
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.09,
+          "months": 64,
+          "losing_months": 47,
+          "worst_month": -224.1,
+          "best_month": 130.85,
+          "yearly_net": {
+            "2015": -311.01,
+            "2016": -414.53,
+            "2017": -641.5,
+            "2018": -172.16,
+            "2019": -414.87,
+            "2020": 99.38
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 173,
+              "net": -844.78,
+              "expectancy_r": -0.225,
+              "win_rate_pct": 34.1
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -409.51,
+              "expectancy_r": -0.168,
+              "win_rate_pct": 34.2
+            },
+            "GBPUSD": {
+              "trades": 114,
+              "net": 21.72,
+              "expectancy_r": 0.01,
+              "win_rate_pct": 45.6
+            },
+            "USDCAD": {
+              "trades": 140,
+              "net": -622.12,
+              "expectancy_r": -0.205,
+              "win_rate_pct": 20.7
+            }
+          },
+          "daily_return_sharpe_annualised": -2.324,
+          "max_entries_in_a_day": 4,
+          "label": "V2_H1_H4 full",
+          "daily_loss_halts": 0
+        },
+        "full_zero_cost": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 547,
+          "initial_balance": 10000.0,
+          "net_profit": -566.18,
+          "final_balance": 9433.82,
+          "return_pct": -5.66,
+          "cagr_pct": -1.08,
+          "max_drawdown": 1018.85,
+          "max_drawdown_pct": 10.04,
+          "profit_factor": 0.905,
+          "win_rate_pct": 48.63,
+          "expectancy_per_trade": -1.04,
+          "expectancy_r": -0.046,
+          "avg_win_r": 0.894,
+          "avg_loss_r": -0.935,
+          "trades_per_year": 102.0,
+          "avg_hold_hours": 10.46,
+          "max_consecutive_losses": 10,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 0.0,
+            "commission": -0.0,
+            "swap": -0.0,
+            "slippage": 0.0,
+            "total": 0.0,
+            "pct_of_gross_profit": 0.0
+          },
+          "exit_reasons": {
+            "sl": 271,
+            "breakeven": 119,
+            "tp": 116,
+            "time": 29,
+            "sl_gap": 6,
+            "breakeven_gap": 6
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.14,
+          "months": 64,
+          "losing_months": 36,
+          "worst_month": -150.14,
+          "best_month": 140.26,
+          "yearly_net": {
+            "2015": -83.96,
+            "2016": -237.36,
+            "2017": -434.52,
+            "2018": 39.57,
+            "2019": -12.24,
+            "2020": 162.34
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 180,
+              "net": -331.07,
+              "expectancy_r": -0.079,
+              "win_rate_pct": 48.9
+            },
+            "EURUSD": {
+              "trades": 110,
+              "net": -96.07,
+              "expectancy_r": -0.035,
+              "win_rate_pct": 42.7
+            },
+            "GBPUSD": {
+              "trades": 115,
+              "net": 242.99,
+              "expectancy_r": 0.089,
+              "win_rate_pct": 54.8
+            },
+            "USDCAD": {
+              "trades": 142,
+              "net": -382.03,
+              "expectancy_r": -0.12,
+              "win_rate_pct": 47.9
+            }
+          },
+          "daily_return_sharpe_annualised": -0.615,
+          "max_entries_in_a_day": 4,
+          "label": "V2_H1_H4 gross (zero costs)",
+          "daily_loss_halts": 0
+        }
+      },
+      "rejections_full": {
+        "one_position_per_symbol": 129,
+        "currency_exposure": 36,
+        "consecutive_loss_pause": 17,
+        "loss_cooldown": 3,
+        "max_open_positions": 1
+      },
+      "halts_full": [],
+      "monthly_full": {
+        "1": {
+          "2015": 0.0,
+          "2016": 79.0,
+          "2017": -89.0,
+          "2018": -47.0,
+          "2019": -43.0,
+          "2020": 61.0
+        },
+        "2": {
+          "2015": -24.0,
+          "2016": -44.0,
+          "2017": -66.0,
+          "2018": 37.0,
+          "2019": -104.0,
+          "2020": 63.0
+        },
+        "3": {
+          "2015": 58.0,
+          "2016": -1.0,
+          "2017": -9.0,
+          "2018": -51.0,
+          "2019": -99.0,
+          "2020": -36.0
+        },
+        "4": {
+          "2015": 36.0,
+          "2016": -5.0,
+          "2017": -28.0,
+          "2018": -8.0,
+          "2019": -59.0,
+          "2020": -21.0
+        },
+        "5": {
+          "2015": -139.0,
+          "2016": -224.0,
+          "2017": -10.0,
+          "2018": -28.0,
+          "2019": 131.0,
+          "2020": 33.0
+        },
+        "6": {
+          "2015": -21.0,
+          "2016": -21.0,
+          "2017": -52.0,
+          "2018": -4.0,
+          "2019": -75.0,
+          "2020": 0.0
+        },
+        "7": {
+          "2015": -76.0,
+          "2016": 16.0,
+          "2017": -102.0,
+          "2018": 19.0,
+          "2019": 45.0,
+          "2020": 0.0
+        },
+        "8": {
+          "2015": 15.0,
+          "2016": -49.0,
+          "2017": -84.0,
+          "2018": 28.0,
+          "2019": -67.0,
+          "2020": 0.0
+        },
+        "9": {
+          "2015": 41.0,
+          "2016": -71.0,
+          "2017": -46.0,
+          "2018": -86.0,
+          "2019": 16.0,
+          "2020": 0.0
+        },
+        "10": {
+          "2015": -167.0,
+          "2016": -3.0,
+          "2017": -8.0,
+          "2018": 13.0,
+          "2019": -65.0,
+          "2020": 0.0
+        },
+        "11": {
+          "2015": -93.0,
+          "2016": -75.0,
+          "2017": -123.0,
+          "2018": -39.0,
+          "2019": -55.0,
+          "2020": 0.0
+        },
+        "12": {
+          "2015": 59.0,
+          "2016": -16.0,
+          "2017": -25.0,
+          "2018": -6.0,
+          "2019": -40.0,
+          "2020": 0.0
+        }
+      },
+      "cost_sensitivity": {
+        "spread x1.5": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 537,
+          "initial_balance": 10000.0,
+          "net_profit": -1904.65,
+          "final_balance": 8095.35,
+          "return_pct": -19.05,
+          "cagr_pct": -3.86,
+          "max_drawdown": 2173.75,
+          "max_drawdown_pct": 21.43,
+          "profit_factor": 0.695,
+          "win_rate_pct": 32.59,
+          "expectancy_per_trade": -3.55,
+          "expectancy_r": -0.167,
+          "avg_win_r": 1.175,
+          "avg_loss_r": -0.815,
+          "trades_per_year": 100.1,
+          "avg_hold_hours": 10.7,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 5,
+          "costs": {
+            "spread": 567.4,
+            "commission": 374.92,
+            "swap": 57.49,
+            "slippage": 169.85,
+            "total": 1169.66,
+            "pct_of_gross_profit": 26.9
+          },
+          "exit_reasons": {
+            "sl": 279,
+            "breakeven": 108,
+            "tp": 105,
+            "time": 28,
+            "sl_gap": 13,
+            "breakeven_gap": 4
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.25,
+          "months": 64,
+          "losing_months": 45,
+          "worst_month": -226.8,
+          "best_month": 92.72,
+          "yearly_net": {
+            "2015": -305.43,
+            "2016": -328.94,
+            "2017": -744.78,
+            "2018": -142.23,
+            "2019": -479.34,
+            "2020": 96.08
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 173,
+              "net": -935.6,
+              "expectancy_r": -0.254,
+              "win_rate_pct": 33.5
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -368.42,
+              "expectancy_r": -0.151,
+              "win_rate_pct": 34.2
+            },
+            "GBPUSD": {
+              "trades": 113,
+              "net": -37.11,
+              "expectancy_r": -0.017,
+              "win_rate_pct": 43.4
+            },
+            "USDCAD": {
+              "trades": 140,
+              "net": -563.52,
+              "expectancy_r": -0.193,
+              "win_rate_pct": 21.4
+            }
+          },
+          "daily_return_sharpe_annualised": -2.381,
+          "max_entries_in_a_day": 4,
+          "label": "spread x1.5",
+          "daily_loss_halts": 0
+        },
+        "spread x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 528,
+          "initial_balance": 10000.0,
+          "net_profit": -1959.24,
+          "final_balance": 8040.76,
+          "return_pct": -19.59,
+          "cagr_pct": -3.98,
+          "max_drawdown": 2226.05,
+          "max_drawdown_pct": 21.96,
+          "profit_factor": 0.686,
+          "win_rate_pct": 32.01,
+          "expectancy_per_trade": -3.71,
+          "expectancy_r": -0.173,
+          "avg_win_r": 1.206,
+          "avg_loss_r": -0.822,
+          "trades_per_year": 98.4,
+          "avg_hold_hours": 11.01,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 4,
+          "costs": {
+            "spread": 716.93,
+            "commission": 356.37,
+            "swap": 57.07,
+            "slippage": 161.56,
+            "total": 1291.93,
+            "pct_of_gross_profit": 30.2
+          },
+          "exit_reasons": {
+            "sl": 278,
+            "tp": 104,
+            "breakeven": 100,
+            "time": 30,
+            "sl_gap": 14,
+            "breakeven_gap": 2
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.45,
+          "months": 64,
+          "losing_months": 47,
+          "worst_month": -229.68,
+          "best_month": 95.09,
+          "yearly_net": {
+            "2015": -377.18,
+            "2016": -293.0,
+            "2017": -723.23,
+            "2018": -208.36,
+            "2019": -456.76,
+            "2020": 99.28
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 172,
+              "net": -939.78,
+              "expectancy_r": -0.255,
+              "win_rate_pct": 32.6
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -373.86,
+              "expectancy_r": -0.152,
+              "win_rate_pct": 33.3
+            },
+            "GBPUSD": {
+              "trades": 111,
+              "net": -62.71,
+              "expectancy_r": -0.026,
+              "win_rate_pct": 42.3
+            },
+            "USDCAD": {
+              "trades": 134,
+              "net": -582.89,
+              "expectancy_r": -0.206,
+              "win_rate_pct": 21.6
+            }
+          },
+          "daily_return_sharpe_annualised": -2.479,
+          "max_entries_in_a_day": 4,
+          "label": "spread x2",
+          "daily_loss_halts": 0
+        },
+        "slippage x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 536,
+          "initial_balance": 10000.0,
+          "net_profit": -1915.42,
+          "final_balance": 8084.58,
+          "return_pct": -19.15,
+          "cagr_pct": -3.89,
+          "max_drawdown": 2176.43,
+          "max_drawdown_pct": 21.46,
+          "profit_factor": 0.696,
+          "win_rate_pct": 23.69,
+          "expectancy_per_trade": -3.57,
+          "expectancy_r": -0.165,
+          "avg_win_r": 1.64,
+          "avg_loss_r": -0.726,
+          "trades_per_year": 99.9,
+          "avg_hold_hours": 10.58,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 3,
+          "costs": {
+            "spread": 385.05,
+            "commission": 381.43,
+            "swap": 57.52,
+            "slippage": 345.12,
+            "total": 1169.12,
+            "pct_of_gross_profit": 26.6
+          },
+          "exit_reasons": {
+            "sl": 275,
+            "breakeven": 111,
+            "tp": 106,
+            "time": 28,
+            "sl_gap": 12,
+            "breakeven_gap": 4
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.04,
+          "months": 64,
+          "losing_months": 45,
+          "worst_month": -228.53,
+          "best_month": 109.83,
+          "yearly_net": {
+            "2015": -305.32,
+            "2016": -393.85,
+            "2017": -649.08,
+            "2018": -176.58,
+            "2019": -477.26,
+            "2020": 86.68
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 173,
+              "net": -978.66,
+              "expectancy_r": -0.263,
+              "win_rate_pct": 19.1
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -387.23,
+              "expectancy_r": -0.162,
+              "win_rate_pct": 26.1
+            },
+            "GBPUSD": {
+              "trades": 111,
+              "net": 36.96,
+              "expectancy_r": 0.021,
+              "win_rate_pct": 30.6
+            },
+            "USDCAD": {
+              "trades": 141,
+              "net": -586.49,
+              "expectancy_r": -0.194,
+              "win_rate_pct": 22.0
+            }
+          },
+          "daily_return_sharpe_annualised": -2.313,
+          "max_entries_in_a_day": 4,
+          "label": "slippage x2",
+          "daily_loss_halts": 0
+        },
+        "commission x1.5": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 536,
+          "initial_balance": 10000.0,
+          "net_profit": -2005.85,
+          "final_balance": 7994.15,
+          "return_pct": -20.06,
+          "cagr_pct": -4.09,
+          "max_drawdown": 2255.31,
+          "max_drawdown_pct": 22.24,
+          "profit_factor": 0.678,
+          "win_rate_pct": 23.32,
+          "expectancy_per_trade": -3.74,
+          "expectancy_r": -0.174,
+          "avg_win_r": 1.615,
+          "avg_loss_r": -0.718,
+          "trades_per_year": 99.9,
+          "avg_hold_hours": 10.49,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 3,
+          "costs": {
+            "spread": 381.61,
+            "commission": 566.89,
+            "swap": 56.82,
+            "slippage": 171.43,
+            "total": 1176.75,
+            "pct_of_gross_profit": 27.9
+          },
+          "exit_reasons": {
+            "sl": 273,
+            "breakeven": 113,
+            "tp": 104,
+            "time": 28,
+            "sl_gap": 12,
+            "breakeven_gap": 6
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 10.93,
+          "months": 64,
+          "losing_months": 46,
+          "worst_month": -228.3,
+          "best_month": 123.53,
+          "yearly_net": {
+            "2015": -312.44,
+            "2016": -445.47,
+            "2017": -663.79,
+            "2018": -204.91,
+            "2019": -457.79,
+            "2020": 78.55
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 173,
+              "net": -944.92,
+              "expectancy_r": -0.256,
+              "win_rate_pct": 19.1
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -454.63,
+              "expectancy_r": -0.184,
+              "win_rate_pct": 25.2
+            },
+            "GBPUSD": {
+              "trades": 111,
+              "net": 34.14,
+              "expectancy_r": 0.016,
+              "win_rate_pct": 30.6
+            },
+            "USDCAD": {
+              "trades": 141,
+              "net": -640.45,
+              "expectancy_r": -0.215,
+              "win_rate_pct": 21.3
+            }
+          },
+          "daily_return_sharpe_annualised": -2.456,
+          "max_entries_in_a_day": 4,
+          "label": "commission x1.5",
+          "daily_loss_halts": 0
+        },
+        "swap x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 538,
+          "initial_balance": 10000.0,
+          "net_profit": -1895.85,
+          "final_balance": 8104.15,
+          "return_pct": -18.96,
+          "cagr_pct": -3.84,
+          "max_drawdown": 2165.96,
+          "max_drawdown_pct": 21.36,
+          "profit_factor": 0.692,
+          "win_rate_pct": 33.09,
+          "expectancy_per_trade": -3.52,
+          "expectancy_r": -0.164,
+          "avg_win_r": 1.14,
+          "avg_loss_r": -0.808,
+          "trades_per_year": 100.3,
+          "avg_hold_hours": 10.54,
+          "max_consecutive_losses": 17,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 382.0,
+            "commission": 378.35,
+            "swap": 114.79,
+            "slippage": 171.52,
+            "total": 1046.66,
+            "pct_of_gross_profit": 24.6
+          },
+          "exit_reasons": {
+            "sl": 276,
+            "breakeven": 114,
+            "tp": 104,
+            "time": 28,
+            "sl_gap": 10,
+            "breakeven_gap": 6
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.09,
+          "months": 64,
+          "losing_months": 47,
+          "worst_month": -226.19,
+          "best_month": 124.84,
+          "yearly_net": {
+            "2015": -318.78,
+            "2016": -425.93,
+            "2017": -652.4,
+            "2018": -173.83,
+            "2019": -421.29,
+            "2020": 96.38
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 173,
+              "net": -875.88,
+              "expectancy_r": -0.234,
+              "win_rate_pct": 34.1
+            },
+            "EURUSD": {
+              "trades": 111,
+              "net": -415.1,
+              "expectancy_r": -0.172,
+              "win_rate_pct": 34.2
+            },
+            "GBPUSD": {
+              "trades": 114,
+              "net": 21.06,
+              "expectancy_r": 0.005,
+              "win_rate_pct": 45.6
+            },
+            "USDCAD": {
+              "trades": 140,
+              "net": -625.93,
+              "expectancy_r": -0.208,
+              "win_rate_pct": 20.7
+            }
+          },
+          "daily_return_sharpe_annualised": -2.39,
+          "max_entries_in_a_day": 4,
+          "label": "swap x2",
+          "daily_loss_halts": 0
+        }
+      },
+      "ml_walk_forward": {
+        "n_oos": 513,
+        "n_folds": 8,
+        "oos_base_rate": 0.3353,
+        "auc": 0.4841,
+        "brier": 0.23319,
+        "brier_ref": 0.22383,
+        "brier_skill": -0.0418,
+        "folds_with_positive_skill": 0.25,
+        "calibration": [
+          {
+            "bin": 0,
+            "lo": 0.0775864171672478,
+            "hi": 0.26724919846482315,
+            "n": 103,
+            "mean_pred": 0.2089608501106557,
+            "observed": 0.3786407766990291
+          },
+          {
+            "bin": 1,
+            "lo": 0.26724919846482315,
+            "hi": 0.31703522442871235,
+            "n": 102,
+            "mean_pred": 0.29431762314131327,
+            "observed": 0.3235294117647059
+          },
+          {
+            "bin": 2,
+            "lo": 0.31703522442871235,
+            "hi": 0.3608000539529407,
+            "n": 103,
+            "mean_pred": 0.3394555094000961,
+            "observed": 0.27184466019417475
+          },
+          {
+            "bin": 3,
+            "lo": 0.3608000539529407,
+            "hi": 0.4056655375389321,
+            "n": 102,
+            "mean_pred": 0.3836967753315705,
+            "observed": 0.4117647058823529
+          },
+          {
+            "bin": 4,
+            "lo": 0.4056655375389321,
+            "hi": 0.6634517590953067,
+            "n": 103,
+            "mean_pred": 0.46220027966909216,
+            "observed": 0.2912621359223301
+          }
+        ],
+        "max_calibration_error": 0.1709,
+        "calibrated": false,
+        "exp_r_unfiltered": -0.1462,
+        "exp_r_filtered": -0.1852,
+        "n_taken": 260,
+        "win_rate_unfiltered": 0.3353,
+        "win_rate_filtered": 0.35,
+        "gates": {
+          "enough_data": true,
+          "brier_skill_positive": false,
+          "brier_skill_positive_in_60pct_folds": false,
+          "filtered_expectancy_positive": false,
+          "filtered_beats_unfiltered": false
+        },
+        "approvable": false
+      },
+      "ml_folds": [
+        {
+          "test_start": "2016-07-01",
+          "test_end": "2017-01-01",
+          "n_train": 186,
+          "n_test": 60,
+          "base_rate_train": 0.3333,
+          "base_rate_test": 0.35,
+          "auc": 0.5189,
+          "brier": 0.24268,
+          "brier_ref": 0.22778,
+          "brier_skill": -0.0654,
+          "logloss": 0.6892,
+          "threshold": 0.3333,
+          "n_taken": 20,
+          "exp_r_all": -0.1753,
+          "exp_r_taken": -0.3271
+        },
+        {
+          "test_start": "2017-01-01",
+          "test_end": "2017-07-01",
+          "n_train": 246,
+          "n_test": 74,
+          "base_rate_train": 0.3374,
+          "base_rate_test": 0.3919,
+          "auc": 0.469,
+          "brier": 0.25483,
+          "brier_ref": 0.24128,
+          "brier_skill": -0.0562,
+          "logloss": 0.7148,
+          "threshold": 0.3374,
+          "n_taken": 33,
+          "exp_r_all": -0.0663,
+          "exp_r_taken": -0.0892
+        },
+        {
+          "test_start": "2017-07-01",
+          "test_end": "2018-01-01",
+          "n_train": 316,
+          "n_test": 81,
+          "base_rate_train": 0.3513,
+          "base_rate_test": 0.2099,
+          "auc": 0.5119,
+          "brier": 0.19521,
+          "brier_ref": 0.18582,
+          "brier_skill": -0.0505,
+          "logloss": 0.5815,
+          "threshold": 0.3513,
+          "n_taken": 40,
+          "exp_r_all": -0.4717,
+          "exp_r_taken": -0.5723
+        },
+        {
+          "test_start": "2018-01-01",
+          "test_end": "2018-07-01",
+          "n_train": 401,
+          "n_test": 81,
+          "base_rate_train": 0.3217,
+          "base_rate_test": 0.3951,
+          "auc": 0.5478,
+          "brier": 0.24435,
+          "brier_ref": 0.24437,
+          "brier_skill": 0.0001,
+          "logloss": 0.6879,
+          "threshold": 0.3217,
+          "n_taken": 42,
+          "exp_r_all": -0.0259,
+          "exp_r_taken": -0.0385
+        },
+        {
+          "test_start": "2018-07-01",
+          "test_end": "2019-01-01",
+          "n_train": 482,
+          "n_test": 55,
+          "base_rate_train": 0.334,
+          "base_rate_test": 0.3636,
+          "auc": 0.4571,
+          "brier": 0.24048,
+          "brier_ref": 0.23228,
+          "brier_skill": -0.0353,
+          "logloss": 0.6771,
+          "threshold": 0.334,
+          "n_taken": 29,
+          "exp_r_all": 0.0177,
+          "exp_r_taken": 0.0247
+        },
+        {
+          "test_start": "2019-01-01",
+          "test_end": "2019-07-01",
+          "n_train": 536,
+          "n_test": 66,
+          "base_rate_train": 0.3377,
+          "base_rate_test": 0.3182,
+          "auc": 0.5185,
+          "brier": 0.21923,
+          "brier_ref": 0.21732,
+          "brier_skill": -0.0088,
+          "logloss": 0.6312,
+          "threshold": 0.3377,
+          "n_taken": 44,
+          "exp_r_all": -0.1195,
+          "exp_r_taken": -0.1405
+        },
+        {
+          "test_start": "2019-07-01",
+          "test_end": "2020-01-01",
+          "n_train": 600,
+          "n_test": 58,
+          "base_rate_train": 0.335,
+          "base_rate_test": 0.3103,
+          "auc": 0.325,
+          "brier": 0.24889,
+          "brier_ref": 0.21464,
+          "brier_skill": -0.1596,
+          "logloss": 0.694,
+          "threshold": 0.335,
+          "n_taken": 33,
+          "exp_r_all": -0.2356,
+          "exp_r_taken": -0.572
+        },
+        {
+          "test_start": "2020-01-01",
+          "test_end": "2020-05-12",
+          "n_train": 661,
+          "n_test": 38,
+          "base_rate_train": 0.3328,
+          "base_rate_test": 0.3684,
+          "auc": 0.744,
+          "brier": 0.22302,
+          "brier_ref": 0.23395,
+          "brier_skill": 0.0467,
+          "logloss": 0.6434,
+          "threshold": 0.3328,
+          "n_taken": 19,
+          "exp_r_all": 0.0341,
+          "exp_r_taken": 0.536
+        }
+      ],
+      "ml_portfolio_oos": {
+        "baseline": {
+          "period_start": "2016-07-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 3.87,
+          "trades": 392,
+          "initial_balance": 10000.0,
+          "net_profit": -1418.33,
+          "final_balance": 8581.67,
+          "return_pct": -14.18,
+          "cagr_pct": -3.88,
+          "max_drawdown": 1583.43,
+          "max_drawdown_pct": 15.77,
+          "profit_factor": 0.695,
+          "win_rate_pct": 32.91,
+          "expectancy_per_trade": -3.62,
+          "expectancy_r": -0.16,
+          "avg_win_r": 1.163,
+          "avg_loss_r": -0.809,
+          "trades_per_year": 101.3,
+          "avg_hold_hours": 10.74,
+          "max_consecutive_losses": 11,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 311.39,
+            "commission": 311.29,
+            "swap": 46.15,
+            "slippage": 140.18,
+            "total": 809.01,
+            "pct_of_gross_profit": 25.0
+          },
+          "exit_reasons": {
+            "sl": 202,
+            "breakeven": 79,
+            "tp": 77,
+            "time": 21,
+            "sl_gap": 8,
+            "breakeven_gap": 5
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 11.57,
+          "months": 47,
+          "losing_months": 36,
+          "worst_month": -133.23,
+          "best_month": 143.15,
+          "yearly_net": {
+            "2016": -214.51,
+            "2017": -689.04,
+            "2018": -159.19,
+            "2019": -445.22,
+            "2020": 89.65
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 127,
+              "net": -588.68,
+              "expectancy_r": -0.211,
+              "win_rate_pct": 33.9
+            },
+            "EURUSD": {
+              "trades": 84,
+              "net": -311.56,
+              "expectancy_r": -0.156,
+              "win_rate_pct": 34.5
+            },
+            "GBPUSD": {
+              "trades": 79,
+              "net": -35.27,
+              "expectancy_r": -0.011,
+              "win_rate_pct": 43.0
+            },
+            "USDCAD": {
+              "trades": 102,
+              "net": -482.82,
+              "expectancy_r": -0.215,
+              "win_rate_pct": 22.5
+            }
+          },
+          "daily_return_sharpe_annualised": -2.35,
+          "max_entries_in_a_day": 4,
+          "label": "V2_H1_H4 baseline OOS",
+          "daily_loss_halts": 0
+        },
+        "ml_filtered": {
+          "period_start": "2016-07-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 3.87,
+          "trades": 214,
+          "initial_balance": 10000.0,
+          "net_profit": -844.6,
+          "final_balance": 9155.4,
+          "return_pct": -8.45,
+          "cagr_pct": -2.25,
+          "max_drawdown": 1125.16,
+          "max_drawdown_pct": 11.2,
+          "profit_factor": 0.684,
+          "win_rate_pct": 34.58,
+          "expectancy_per_trade": -3.95,
+          "expectancy_r": -0.173,
+          "avg_win_r": 1.103,
+          "avg_loss_r": -0.848,
+          "trades_per_year": 55.3,
+          "avg_hold_hours": 9.44,
+          "max_consecutive_losses": 8,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 180.88,
+            "commission": 186.13,
+            "swap": 20.9,
+            "slippage": 83.33,
+            "total": 471.24,
+            "pct_of_gross_profit": 25.7
+          },
+          "exit_reasons": {
+            "sl": 112,
+            "tp": 42,
+            "breakeven": 42,
+            "time": 9,
+            "sl_gap": 6,
+            "breakeven_gap": 3
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 5.54,
+          "months": 45,
+          "losing_months": 28,
+          "worst_month": -122.47,
+          "best_month": 132.53,
+          "yearly_net": {
+            "2016": -77.68,
+            "2017": -473.47,
+            "2018": -109.2,
+            "2019": -384.43,
+            "2020": 200.19
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 68,
+              "net": -517.66,
+              "expectancy_r": -0.341,
+              "win_rate_pct": 33.8
+            },
+            "EURUSD": {
+              "trades": 45,
+              "net": 39.25,
+              "expectancy_r": 0.053,
+              "win_rate_pct": 40.0
+            },
+            "GBPUSD": {
+              "trades": 42,
+              "net": -47.13,
+              "expectancy_r": -0.055,
+              "win_rate_pct": 45.2
+            },
+            "USDCAD": {
+              "trades": 59,
+              "net": -319.05,
+              "expectancy_r": -0.237,
+              "win_rate_pct": 23.7
+            }
+          },
+          "daily_return_sharpe_annualised": -2.4,
+          "max_entries_in_a_day": 3,
+          "label": "V2_H1_H4 ML-filtered OOS",
+          "daily_loss_halts": 0
+        }
+      }
+    },
+    "V1_M15_H1": {
+      "timeframes": [
+        "M15",
+        "H1"
+      ],
+      "signals": 3009,
+      "runs": {
+        "dev_2015_2017": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2018-01-01 00:00:00+00:00",
+          "years": 3.0,
+          "trades": 1030,
+          "initial_balance": 10000.0,
+          "net_profit": -4005.44,
+          "final_balance": 5994.56,
+          "return_pct": -40.05,
+          "cagr_pct": -15.69,
+          "max_drawdown": 4149.5,
+          "max_drawdown_pct": 40.91,
+          "profit_factor": 0.627,
+          "win_rate_pct": 33.88,
+          "expectancy_per_trade": -3.89,
+          "expectancy_r": -0.207,
+          "avg_win_r": 1.045,
+          "avg_loss_r": -0.849,
+          "trades_per_year": 343.5,
+          "avg_hold_hours": 4.9,
+          "max_consecutive_losses": 11,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 990.02,
+            "commission": 941.15,
+            "swap": 99.08,
+            "slippage": 438.62,
+            "total": 2468.87,
+            "pct_of_gross_profit": 36.7
+          },
+          "exit_reasons": {
+            "sl": 541,
+            "breakeven": 216,
+            "tp": 197,
+            "time": 29,
+            "sl_gap": 28,
+            "breakeven_gap": 19
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 16.37,
+          "months": 36,
+          "losing_months": 31,
+          "worst_month": -309.15,
+          "best_month": 134.62,
+          "yearly_net": {
+            "2015": -1958.07,
+            "2016": -995.42,
+            "2017": -1051.95
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 375,
+              "net": -1461.2,
+              "expectancy_r": -0.219,
+              "win_rate_pct": 35.7
+            },
+            "EURUSD": {
+              "trades": 211,
+              "net": -740.58,
+              "expectancy_r": -0.167,
+              "win_rate_pct": 41.2
+            },
+            "GBPUSD": {
+              "trades": 239,
+              "net": -738.49,
+              "expectancy_r": -0.161,
+              "win_rate_pct": 38.1
+            },
+            "USDCAD": {
+              "trades": 205,
+              "net": -1065.17,
+              "expectancy_r": -0.28,
+              "win_rate_pct": 18.0
+            }
+          },
+          "daily_return_sharpe_annualised": -4.12,
+          "max_entries_in_a_day": 7,
+          "label": "V1_M15_H1 dev",
+          "daily_loss_halts": 0
+        },
+        "holdout_2018_2020": {
+          "period_start": "2018-01-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 2.37,
+          "trades": 825,
+          "initial_balance": 10000.0,
+          "net_profit": -3744.26,
+          "final_balance": 6255.74,
+          "return_pct": -37.44,
+          "cagr_pct": -17.98,
+          "max_drawdown": 3882.13,
+          "max_drawdown_pct": 38.38,
+          "profit_factor": 0.583,
+          "win_rate_pct": 32.73,
+          "expectancy_per_trade": -4.54,
+          "expectancy_r": -0.233,
+          "avg_win_r": 0.995,
+          "avg_loss_r": -0.83,
+          "trades_per_year": 348.6,
+          "avg_hold_hours": 4.46,
+          "max_consecutive_losses": 19,
+          "max_consecutive_wins": 5,
+          "costs": {
+            "spread": 1021.83,
+            "commission": 1002.96,
+            "swap": 102.88,
+            "slippage": 466.81,
+            "total": 2594.48,
+            "pct_of_gross_profit": 49.6
+          },
+          "exit_reasons": {
+            "sl": 413,
+            "breakeven": 196,
+            "tp": 153,
+            "sl_gap": 39,
+            "time": 13,
+            "breakeven_gap": 11
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 15.89,
+          "months": 29,
+          "losing_months": 24,
+          "worst_month": -363.86,
+          "best_month": 74.02,
+          "yearly_net": {
+            "2018": -1764.43,
+            "2019": -1753.04,
+            "2020": -226.79
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 301,
+              "net": -1683.39,
+              "expectancy_r": -0.283,
+              "win_rate_pct": 36.9
+            },
+            "EURUSD": {
+              "trades": 163,
+              "net": -709.52,
+              "expectancy_r": -0.221,
+              "win_rate_pct": 36.8
+            },
+            "GBPUSD": {
+              "trades": 181,
+              "net": -803.1,
+              "expectancy_r": -0.234,
+              "win_rate_pct": 33.7
+            },
+            "USDCAD": {
+              "trades": 180,
+              "net": -548.25,
+              "expectancy_r": -0.159,
+              "win_rate_pct": 21.1
+            }
+          },
+          "daily_return_sharpe_annualised": -4.558,
+          "max_entries_in_a_day": 8,
+          "label": "V1_M15_H1 holdout",
+          "daily_loss_halts": 0
+        },
+        "full_period": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1855,
+          "initial_balance": 10000.0,
+          "net_profit": -6184.05,
+          "final_balance": 3815.95,
+          "return_pct": -61.84,
+          "cagr_pct": -16.44,
+          "max_drawdown": 6338.91,
+          "max_drawdown_pct": 62.49,
+          "profit_factor": 0.614,
+          "win_rate_pct": 33.37,
+          "expectancy_per_trade": -3.33,
+          "expectancy_r": -0.219,
+          "avg_win_r": 1.023,
+          "avg_loss_r": -0.841,
+          "trades_per_year": 345.8,
+          "avg_hold_hours": 4.71,
+          "max_consecutive_losses": 19,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 1595.92,
+            "commission": 1536.15,
+            "swap": 159.87,
+            "slippage": 715.48,
+            "total": 4007.42,
+            "pct_of_gross_profit": 40.8
+          },
+          "exit_reasons": {
+            "sl": 954,
+            "breakeven": 412,
+            "tp": 350,
+            "sl_gap": 67,
+            "time": 42,
+            "breakeven_gap": 30
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 16.16,
+          "months": 65,
+          "losing_months": 55,
+          "worst_month": -309.15,
+          "best_month": 134.62,
+          "yearly_net": {
+            "2015": -1958.07,
+            "2016": -995.42,
+            "2017": -1051.95,
+            "2018": -1017.57,
+            "2019": -1035.66,
+            "2020": -125.38
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 676,
+              "net": -2459.98,
+              "expectancy_r": -0.248,
+              "win_rate_pct": 36.2
+            },
+            "EURUSD": {
+              "trades": 374,
+              "net": -1149.24,
+              "expectancy_r": -0.191,
+              "win_rate_pct": 39.3
+            },
+            "GBPUSD": {
+              "trades": 420,
+              "net": -1191.4,
+              "expectancy_r": -0.193,
+              "win_rate_pct": 36.2
+            },
+            "USDCAD": {
+              "trades": 385,
+              "net": -1383.44,
+              "expectancy_r": -0.224,
+              "win_rate_pct": 19.5
+            }
+          },
+          "daily_return_sharpe_annualised": -4.274,
+          "max_entries_in_a_day": 8,
+          "label": "V1_M15_H1 full",
+          "daily_loss_halts": 0
+        },
+        "full_zero_cost": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1932,
+          "initial_balance": 10000.0,
+          "net_profit": -2379.25,
+          "final_balance": 7620.75,
+          "return_pct": -23.79,
+          "cagr_pct": -4.94,
+          "max_drawdown": 3011.68,
+          "max_drawdown_pct": 29.61,
+          "profit_factor": 0.87,
+          "win_rate_pct": 48.14,
+          "expectancy_per_trade": -1.23,
+          "expectancy_r": -0.056,
+          "avg_win_r": 0.856,
+          "avg_loss_r": -0.903,
+          "trades_per_year": 360.1,
+          "avg_hold_hours": 4.52,
+          "max_consecutive_losses": 12,
+          "max_consecutive_wins": 9,
+          "costs": {
+            "spread": 0.0,
+            "commission": -0.0,
+            "swap": -0.0,
+            "slippage": 0.0,
+            "total": 0.0,
+            "pct_of_gross_profit": 0.0
+          },
+          "exit_reasons": {
+            "sl": 919,
+            "breakeven": 455,
+            "tp": 410,
+            "sl_gap": 71,
+            "breakeven_gap": 41,
+            "time": 36
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 16.16,
+          "months": 65,
+          "losing_months": 37,
+          "worst_month": -277.28,
+          "best_month": 241.52,
+          "yearly_net": {
+            "2015": -1310.77,
+            "2016": -106.34,
+            "2017": -178.24,
+            "2018": -540.26,
+            "2019": -525.98,
+            "2020": 282.34
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 721,
+              "net": -887.51,
+              "expectancy_r": -0.055,
+              "win_rate_pct": 48.3
+            },
+            "EURUSD": {
+              "trades": 377,
+              "net": -469.99,
+              "expectancy_r": -0.055,
+              "win_rate_pct": 48.5
+            },
+            "GBPUSD": {
+              "trades": 433,
+              "net": -95.55,
+              "expectancy_r": -0.009,
+              "win_rate_pct": 48.5
+            },
+            "USDCAD": {
+              "trades": 401,
+              "net": -926.2,
+              "expectancy_r": -0.111,
+              "win_rate_pct": 47.1
+            }
+          },
+          "daily_return_sharpe_annualised": -1.109,
+          "max_entries_in_a_day": 9,
+          "label": "V1_M15_H1 gross (zero costs)",
+          "daily_loss_halts": 0
+        }
+      },
+      "rejections_full": {
+        "reentry_cooldown": 207,
+        "one_position_per_symbol": 857,
+        "currency_exposure": 176,
+        "consecutive_loss_pause": 157,
+        "loss_cooldown": 92,
+        "spread_to_stop": 72,
+        "max_open_positions": 7
+      },
+      "halts_full": [],
+      "monthly_full": {
+        "1": {
+          "2015": 76.0,
+          "2016": -213.0,
+          "2017": -15.0,
+          "2018": 45.0,
+          "2019": -206.0,
+          "2020": -83.0
+        },
+        "2": {
+          "2015": -200.0,
+          "2016": -171.0,
+          "2017": -175.0,
+          "2018": -144.0,
+          "2019": -61.0,
+          "2020": -25.0
+        },
+        "3": {
+          "2015": -222.0,
+          "2016": -24.0,
+          "2017": -217.0,
+          "2018": -213.0,
+          "2019": -86.0,
+          "2020": -1.0
+        },
+        "4": {
+          "2015": -22.0,
+          "2016": -92.0,
+          "2017": -62.0,
+          "2018": 44.0,
+          "2019": -85.0,
+          "2020": 16.0
+        },
+        "5": {
+          "2015": -213.0,
+          "2016": 85.0,
+          "2017": -44.0,
+          "2018": -136.0,
+          "2019": -130.0,
+          "2020": -32.0
+        },
+        "6": {
+          "2015": -281.0,
+          "2016": 135.0,
+          "2017": -57.0,
+          "2018": -29.0,
+          "2019": -123.0,
+          "2020": 0.0
+        },
+        "7": {
+          "2015": -249.0,
+          "2016": -51.0,
+          "2017": -27.0,
+          "2018": -166.0,
+          "2019": -97.0,
+          "2020": 0.0
+        },
+        "8": {
+          "2015": -199.0,
+          "2016": -258.0,
+          "2017": -172.0,
+          "2018": -125.0,
+          "2019": 9.0,
+          "2020": 0.0
+        },
+        "9": {
+          "2015": -178.0,
+          "2016": -309.0,
+          "2017": 40.0,
+          "2018": -60.0,
+          "2019": -59.0,
+          "2020": 0.0
+        },
+        "10": {
+          "2015": -150.0,
+          "2016": -84.0,
+          "2017": -83.0,
+          "2018": -150.0,
+          "2019": -52.0,
+          "2020": 0.0
+        },
+        "11": {
+          "2015": -182.0,
+          "2016": -65.0,
+          "2017": -100.0,
+          "2018": -99.0,
+          "2019": -85.0,
+          "2020": 0.0
+        },
+        "12": {
+          "2015": -137.0,
+          "2016": 53.0,
+          "2017": -139.0,
+          "2018": 15.0,
+          "2019": -61.0,
+          "2020": 0.0
+        }
+      },
+      "cost_sensitivity": {
+        "spread x1.5": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1686,
+          "initial_balance": 10000.0,
+          "net_profit": -6359.84,
+          "final_balance": 3640.16,
+          "return_pct": -63.6,
+          "cagr_pct": -17.17,
+          "max_drawdown": 6485.39,
+          "max_drawdown_pct": 64.1,
+          "profit_factor": 0.577,
+          "win_rate_pct": 31.67,
+          "expectancy_per_trade": -3.77,
+          "expectancy_r": -0.251,
+          "avg_win_r": 1.04,
+          "avg_loss_r": -0.849,
+          "trades_per_year": 314.3,
+          "avg_hold_hours": 5.15,
+          "max_consecutive_losses": 14,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 1992.95,
+            "commission": 1281.0,
+            "swap": 147.78,
+            "slippage": 601.23,
+            "total": 4022.96,
+            "pct_of_gross_profit": 46.4
+          },
+          "exit_reasons": {
+            "sl": 904,
+            "breakeven": 358,
+            "tp": 302,
+            "sl_gap": 58,
+            "time": 43,
+            "breakeven_gap": 21
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 16.05,
+          "months": 65,
+          "losing_months": 55,
+          "worst_month": -300.89,
+          "best_month": 161.53,
+          "yearly_net": {
+            "2015": -1961.86,
+            "2016": -1006.11,
+            "2017": -1082.15,
+            "2018": -1222.36,
+            "2019": -941.52,
+            "2020": -145.85
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 568,
+              "net": -2256.18,
+              "expectancy_r": -0.266,
+              "win_rate_pct": 35.6
+            },
+            "EURUSD": {
+              "trades": 365,
+              "net": -1333.07,
+              "expectancy_r": -0.231,
+              "win_rate_pct": 35.3
+            },
+            "GBPUSD": {
+              "trades": 407,
+              "net": -1257.97,
+              "expectancy_r": -0.215,
+              "win_rate_pct": 35.1
+            },
+            "USDCAD": {
+              "trades": 346,
+              "net": -1512.62,
+              "expectancy_r": -0.288,
+              "win_rate_pct": 17.3
+            }
+          },
+          "daily_return_sharpe_annualised": -4.879,
+          "max_entries_in_a_day": 8,
+          "label": "spread x1.5",
+          "daily_loss_halts": 0
+        },
+        "spread x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1446,
+          "initial_balance": 10000.0,
+          "net_profit": -5719.9,
+          "final_balance": 4280.1,
+          "return_pct": -57.2,
+          "cagr_pct": -14.63,
+          "max_drawdown": 5872.02,
+          "max_drawdown_pct": 58.03,
+          "profit_factor": 0.572,
+          "win_rate_pct": 31.54,
+          "expectancy_per_trade": -3.96,
+          "expectancy_r": -0.246,
+          "avg_win_r": 1.045,
+          "avg_loss_r": -0.841,
+          "trades_per_year": 269.5,
+          "avg_hold_hours": 5.7,
+          "max_consecutive_losses": 13,
+          "max_consecutive_wins": 6,
+          "costs": {
+            "spread": 2130.74,
+            "commission": 1035.86,
+            "swap": 129.42,
+            "slippage": 491.93,
+            "total": 3787.95,
+            "pct_of_gross_profit": 49.6
+          },
+          "exit_reasons": {
+            "sl": 782,
+            "breakeven": 313,
+            "tp": 254,
+            "time": 43,
+            "sl_gap": 35,
+            "breakeven_gap": 19
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 15.39,
+          "months": 65,
+          "losing_months": 54,
+          "worst_month": -280.41,
+          "best_month": 100.47,
+          "yearly_net": {
+            "2015": -1885.59,
+            "2016": -1047.03,
+            "2017": -1058.16,
+            "2018": -980.49,
+            "2019": -644.22,
+            "2020": -104.41
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 443,
+              "net": -1669.34,
+              "expectancy_r": -0.237,
+              "win_rate_pct": 35.2
+            },
+            "EURUSD": {
+              "trades": 358,
+              "net": -1380.65,
+              "expectancy_r": -0.234,
+              "win_rate_pct": 34.9
+            },
+            "GBPUSD": {
+              "trades": 371,
+              "net": -1349.82,
+              "expectancy_r": -0.239,
+              "win_rate_pct": 34.2
+            },
+            "USDCAD": {
+              "trades": 274,
+              "net": -1320.1,
+              "expectancy_r": -0.287,
+              "win_rate_pct": 17.5
+            }
+          },
+          "daily_return_sharpe_annualised": -4.703,
+          "max_entries_in_a_day": 7,
+          "label": "spread x2",
+          "daily_loss_halts": 0
+        },
+        "slippage x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1810,
+          "initial_balance": 10000.0,
+          "net_profit": -6514.65,
+          "final_balance": 3485.35,
+          "return_pct": -65.15,
+          "cagr_pct": -17.84,
+          "max_drawdown": 6685.7,
+          "max_drawdown_pct": 65.76,
+          "profit_factor": 0.59,
+          "win_rate_pct": 19.94,
+          "expectancy_per_trade": -3.6,
+          "expectancy_r": -0.243,
+          "avg_win_r": 1.709,
+          "avg_loss_r": -0.73,
+          "trades_per_year": 337.4,
+          "avg_hold_hours": 4.73,
+          "max_consecutive_losses": 30,
+          "max_consecutive_wins": 4,
+          "costs": {
+            "spread": 1512.91,
+            "commission": 1454.95,
+            "swap": 152.45,
+            "slippage": 1357.94,
+            "total": 4478.25,
+            "pct_of_gross_profit": 47.9
+          },
+          "exit_reasons": {
+            "sl": 935,
+            "breakeven": 396,
+            "tp": 338,
+            "sl_gap": 64,
+            "time": 42,
+            "breakeven_gap": 35
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 15.93,
+          "months": 65,
+          "losing_months": 58,
+          "worst_month": -353.98,
+          "best_month": 183.92,
+          "yearly_net": {
+            "2015": -1897.61,
+            "2016": -1189.41,
+            "2017": -1190.51,
+            "2018": -997.23,
+            "2019": -1085.85,
+            "2020": -154.04
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 662,
+              "net": -2621.9,
+              "expectancy_r": -0.275,
+              "win_rate_pct": 19.5
+            },
+            "EURUSD": {
+              "trades": 362,
+              "net": -1328.87,
+              "expectancy_r": -0.234,
+              "win_rate_pct": 18.5
+            },
+            "GBPUSD": {
+              "trades": 412,
+              "net": -1200.16,
+              "expectancy_r": -0.205,
+              "win_rate_pct": 22.3
+            },
+            "USDCAD": {
+              "trades": 374,
+              "net": -1363.72,
+              "expectancy_r": -0.238,
+              "win_rate_pct": 19.5
+            }
+          },
+          "daily_return_sharpe_annualised": -4.6,
+          "max_entries_in_a_day": 7,
+          "label": "slippage x2",
+          "daily_loss_halts": 0
+        },
+        "commission x1.5": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1810,
+          "initial_balance": 10000.0,
+          "net_profit": -6519.91,
+          "final_balance": 3480.09,
+          "return_pct": -65.2,
+          "cagr_pct": -17.86,
+          "max_drawdown": 6695.48,
+          "max_drawdown_pct": 65.89,
+          "profit_factor": 0.584,
+          "win_rate_pct": 20.17,
+          "expectancy_per_trade": -3.6,
+          "expectancy_r": -0.243,
+          "avg_win_r": 1.666,
+          "avg_loss_r": -0.726,
+          "trades_per_year": 337.4,
+          "avg_hold_hours": 4.69,
+          "max_consecutive_losses": 30,
+          "max_consecutive_wins": 4,
+          "costs": {
+            "spread": 1501.95,
+            "commission": 2166.26,
+            "swap": 149.73,
+            "slippage": 673.28,
+            "total": 4491.22,
+            "pct_of_gross_profit": 49.0
+          },
+          "exit_reasons": {
+            "sl": 927,
+            "breakeven": 408,
+            "tp": 341,
+            "sl_gap": 64,
+            "time": 41,
+            "breakeven_gap": 29
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 15.8,
+          "months": 65,
+          "losing_months": 56,
+          "worst_month": -353.95,
+          "best_month": 141.93,
+          "yearly_net": {
+            "2015": -1917.46,
+            "2016": -1293.59,
+            "2017": -1028.89,
+            "2018": -1061.47,
+            "2019": -1088.97,
+            "2020": -129.52
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 658,
+              "net": -2625.69,
+              "expectancy_r": -0.279,
+              "win_rate_pct": 19.5
+            },
+            "EURUSD": {
+              "trades": 364,
+              "net": -1274.0,
+              "expectancy_r": -0.225,
+              "win_rate_pct": 19.0
+            },
+            "GBPUSD": {
+              "trades": 413,
+              "net": -1198.95,
+              "expectancy_r": -0.201,
+              "win_rate_pct": 22.8
+            },
+            "USDCAD": {
+              "trades": 375,
+              "net": -1421.28,
+              "expectancy_r": -0.246,
+              "win_rate_pct": 19.7
+            }
+          },
+          "daily_return_sharpe_annualised": -4.705,
+          "max_entries_in_a_day": 7,
+          "label": "commission x1.5",
+          "daily_loss_halts": 0
+        },
+        "swap x2": {
+          "period_start": "2015-01-01 22:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 5.36,
+          "trades": 1855,
+          "initial_balance": 10000.0,
+          "net_profit": -6285.57,
+          "final_balance": 3714.43,
+          "return_pct": -62.86,
+          "cagr_pct": -16.86,
+          "max_drawdown": 6440.27,
+          "max_drawdown_pct": 63.49,
+          "profit_factor": 0.607,
+          "win_rate_pct": 33.37,
+          "expectancy_per_trade": -3.39,
+          "expectancy_r": -0.225,
+          "avg_win_r": 1.019,
+          "avg_loss_r": -0.847,
+          "trades_per_year": 345.8,
+          "avg_hold_hours": 4.71,
+          "max_consecutive_losses": 19,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 1577.8,
+            "commission": 1518.23,
+            "swap": 316.62,
+            "slippage": 706.96,
+            "total": 4119.61,
+            "pct_of_gross_profit": 42.5
+          },
+          "exit_reasons": {
+            "sl": 954,
+            "breakeven": 412,
+            "tp": 350,
+            "sl_gap": 67,
+            "time": 42,
+            "breakeven_gap": 30
+          },
+          "ambiguous_bars_total": 1,
+          "trades_with_ambiguous_bar": 1,
+          "exposure_pct": 16.16,
+          "months": 65,
+          "losing_months": 55,
+          "worst_month": -306.8,
+          "best_month": 127.42,
+          "yearly_net": {
+            "2015": -1988.14,
+            "2016": -1021.75,
+            "2017": -1069.85,
+            "2018": -1035.27,
+            "2019": -1028.04,
+            "2020": -142.51
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 676,
+              "net": -2470.64,
+              "expectancy_r": -0.253,
+              "win_rate_pct": 36.2
+            },
+            "EURUSD": {
+              "trades": 374,
+              "net": -1191.86,
+              "expectancy_r": -0.197,
+              "win_rate_pct": 39.3
+            },
+            "GBPUSD": {
+              "trades": 420,
+              "net": -1225.76,
+              "expectancy_r": -0.2,
+              "win_rate_pct": 36.2
+            },
+            "USDCAD": {
+              "trades": 385,
+              "net": -1397.3,
+              "expectancy_r": -0.228,
+              "win_rate_pct": 19.5
+            }
+          },
+          "daily_return_sharpe_annualised": -4.406,
+          "max_entries_in_a_day": 8,
+          "label": "swap x2",
+          "daily_loss_halts": 0
+        }
+      },
+      "ml_walk_forward": {
+        "n_oos": 2206,
+        "n_folds": 8,
+        "oos_base_rate": 0.3359,
+        "auc": 0.5746,
+        "brier": 0.22188,
+        "brier_ref": 0.22325,
+        "brier_skill": 0.0061,
+        "folds_with_positive_skill": 0.625,
+        "calibration": [
+          {
+            "bin": 0,
+            "lo": 0.15027771478627472,
+            "hi": 0.24636244670155807,
+            "n": 441,
+            "mean_pred": 0.21899302445181368,
+            "observed": 0.2675736961451247
+          },
+          {
+            "bin": 1,
+            "lo": 0.24636244670155807,
+            "hi": 0.29326131445394477,
+            "n": 441,
+            "mean_pred": 0.2680810158126547,
+            "observed": 0.2743764172335601
+          },
+          {
+            "bin": 2,
+            "lo": 0.29326131445394477,
+            "hi": 0.38283804410137023,
+            "n": 441,
+            "mean_pred": 0.3365653978757365,
+            "observed": 0.34467120181405897
+          },
+          {
+            "bin": 3,
+            "lo": 0.38283804410137023,
+            "hi": 0.4488752329273615,
+            "n": 441,
+            "mean_pred": 0.4169694748574169,
+            "observed": 0.3877551020408163
+          },
+          {
+            "bin": 4,
+            "lo": 0.4488752329273615,
+            "hi": 0.6089027194184048,
+            "n": 442,
+            "mean_pred": 0.49103195865386307,
+            "observed": 0.40497737556561086
+          }
+        ],
+        "max_calibration_error": 0.0861,
+        "calibrated": true,
+        "exp_r_unfiltered": -0.2297,
+        "exp_r_filtered": -0.1875,
+        "n_taken": 1065,
+        "win_rate_unfiltered": 0.3359,
+        "win_rate_filtered": 0.3972,
+        "gates": {
+          "enough_data": true,
+          "brier_skill_positive": true,
+          "brier_skill_positive_in_60pct_folds": true,
+          "filtered_expectancy_positive": false,
+          "filtered_beats_unfiltered": true
+        },
+        "approvable": false
+      },
+      "ml_folds": [
+        {
+          "test_start": "2016-07-01",
+          "test_end": "2017-01-01",
+          "n_train": 797,
+          "n_test": 287,
+          "base_rate_train": 0.3526,
+          "base_rate_test": 0.3415,
+          "auc": 0.6449,
+          "brier": 0.21202,
+          "brier_ref": 0.22499,
+          "brier_skill": 0.0576,
+          "logloss": 0.6126,
+          "threshold": 0.3526,
+          "n_taken": 148,
+          "exp_r_all": -0.2572,
+          "exp_r_taken": -0.0542
+        },
+        {
+          "test_start": "2017-01-01",
+          "test_end": "2017-07-01",
+          "n_train": 1081,
+          "n_test": 286,
+          "base_rate_train": 0.3497,
+          "base_rate_test": 0.3217,
+          "auc": 0.5384,
+          "brier": 0.22471,
+          "brier_ref": 0.21899,
+          "brier_skill": -0.0261,
+          "logloss": 0.6422,
+          "threshold": 0.3497,
+          "n_taken": 124,
+          "exp_r_all": -0.2667,
+          "exp_r_taken": -0.2577
+        },
+        {
+          "test_start": "2017-07-01",
+          "test_end": "2018-01-01",
+          "n_train": 1352,
+          "n_test": 278,
+          "base_rate_train": 0.341,
+          "base_rate_test": 0.3489,
+          "auc": 0.5419,
+          "brier": 0.23062,
+          "brier_ref": 0.22724,
+          "brier_skill": -0.0149,
+          "logloss": 0.6576,
+          "threshold": 0.341,
+          "n_taken": 141,
+          "exp_r_all": -0.1861,
+          "exp_r_taken": -0.2177
+        },
+        {
+          "test_start": "2018-01-01",
+          "test_end": "2018-07-01",
+          "n_train": 1644,
+          "n_test": 331,
+          "base_rate_train": 0.3449,
+          "base_rate_test": 0.3565,
+          "auc": 0.5379,
+          "brier": 0.23406,
+          "brier_ref": 0.22954,
+          "brier_skill": -0.0197,
+          "logloss": 0.6621,
+          "threshold": 0.3449,
+          "n_taken": 135,
+          "exp_r_all": -0.1677,
+          "exp_r_taken": -0.1436
+        },
+        {
+          "test_start": "2018-07-01",
+          "test_end": "2019-01-01",
+          "n_train": 1975,
+          "n_test": 272,
+          "base_rate_train": 0.3458,
+          "base_rate_test": 0.3199,
+          "auc": 0.6221,
+          "brier": 0.21076,
+          "brier_ref": 0.21822,
+          "brier_skill": 0.0342,
+          "logloss": 0.6109,
+          "threshold": 0.3458,
+          "n_taken": 143,
+          "exp_r_all": -0.2692,
+          "exp_r_taken": -0.212
+        },
+        {
+          "test_start": "2019-01-01",
+          "test_end": "2019-07-01",
+          "n_train": 2252,
+          "n_test": 266,
+          "base_rate_train": 0.3433,
+          "base_rate_test": 0.3008,
+          "auc": 0.5786,
+          "brier": 0.2111,
+          "brier_ref": 0.21211,
+          "brier_skill": 0.0047,
+          "logloss": 0.6127,
+          "threshold": 0.3433,
+          "n_taken": 149,
+          "exp_r_all": -0.3113,
+          "exp_r_taken": -0.2398
+        },
+        {
+          "test_start": "2019-07-01",
+          "test_end": "2020-01-01",
+          "n_train": 2518,
+          "n_test": 299,
+          "base_rate_train": 0.3388,
+          "base_rate_test": 0.311,
+          "auc": 0.5782,
+          "brier": 0.21318,
+          "brier_ref": 0.21506,
+          "brier_skill": 0.0088,
+          "logloss": 0.616,
+          "threshold": 0.3388,
+          "n_taken": 142,
+          "exp_r_all": -0.2917,
+          "exp_r_taken": -0.3405
+        },
+        {
+          "test_start": "2020-01-01",
+          "test_end": "2020-05-13",
+          "n_train": 2802,
+          "n_test": 187,
+          "base_rate_train": 0.3355,
+          "base_rate_test": 0.4064,
+          "auc": 0.5721,
+          "brier": 0.24357,
+          "brier_ref": 0.24628,
+          "brier_skill": 0.011,
+          "logloss": 0.6814,
+          "threshold": 0.3355,
+          "n_taken": 83,
+          "exp_r_all": -0.0331,
+          "exp_r_taken": 0.0572
+        }
+      ],
+      "ml_portfolio_oos": {
+        "baseline": {
+          "period_start": "2016-07-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 3.87,
+          "trades": 1333,
+          "initial_balance": 10000.0,
+          "net_profit": -5164.8,
+          "final_balance": 4835.2,
+          "return_pct": -51.65,
+          "cagr_pct": -17.12,
+          "max_drawdown": 5312.67,
+          "max_drawdown_pct": 52.46,
+          "profit_factor": 0.595,
+          "win_rate_pct": 33.08,
+          "expectancy_per_trade": -3.87,
+          "expectancy_r": -0.225,
+          "avg_win_r": 0.998,
+          "avg_loss_r": -0.83,
+          "trades_per_year": 344.5,
+          "avg_hold_hours": 4.63,
+          "max_consecutive_losses": 19,
+          "max_consecutive_wins": 7,
+          "costs": {
+            "spread": 1411.27,
+            "commission": 1366.33,
+            "swap": 136.02,
+            "slippage": 638.61,
+            "total": 3552.23,
+            "pct_of_gross_profit": 46.9
+          },
+          "exit_reasons": {
+            "sl": 668,
+            "breakeven": 311,
+            "tp": 248,
+            "sl_gap": 57,
+            "time": 25,
+            "breakeven_gap": 24
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 15.75,
+          "months": 47,
+          "losing_months": 40,
+          "worst_month": -402.72,
+          "best_month": 65.46,
+          "yearly_net": {
+            "2016": -948.36,
+            "2017": -1355.84,
+            "2018": -1355.82,
+            "2019": -1329.45,
+            "2020": -175.34
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 480,
+              "net": -2534.98,
+              "expectancy_r": -0.299,
+              "win_rate_pct": 34.4
+            },
+            "EURUSD": {
+              "trades": 269,
+              "net": -758.24,
+              "expectancy_r": -0.168,
+              "win_rate_pct": 40.9
+            },
+            "GBPUSD": {
+              "trades": 296,
+              "net": -922.01,
+              "expectancy_r": -0.195,
+              "win_rate_pct": 36.1
+            },
+            "USDCAD": {
+              "trades": 288,
+              "net": -949.57,
+              "expectancy_r": -0.184,
+              "win_rate_pct": 20.5
+            }
+          },
+          "daily_return_sharpe_annualised": -4.454,
+          "max_entries_in_a_day": 8,
+          "label": "V1_M15_H1 baseline OOS",
+          "daily_loss_halts": 0
+        },
+        "ml_filtered": {
+          "period_start": "2016-07-01 00:00:00+00:00",
+          "period_end": "2020-05-14 07:59:00+00:00",
+          "years": 3.87,
+          "trades": 718,
+          "initial_balance": 10000.0,
+          "net_profit": -2639.21,
+          "final_balance": 7360.79,
+          "return_pct": -26.39,
+          "cagr_pct": -7.61,
+          "max_drawdown": 2875.69,
+          "max_drawdown_pct": 28.19,
+          "profit_factor": 0.683,
+          "win_rate_pct": 38.72,
+          "expectancy_per_trade": -3.68,
+          "expectancy_r": -0.174,
+          "avg_win_r": 0.944,
+          "avg_loss_r": -0.88,
+          "trades_per_year": 185.6,
+          "avg_hold_hours": 2.65,
+          "max_consecutive_losses": 9,
+          "max_consecutive_wins": 5,
+          "costs": {
+            "spread": 937.68,
+            "commission": 988.33,
+            "swap": 8.2,
+            "slippage": 454.92,
+            "total": 2389.13,
+            "pct_of_gross_profit": 41.9
+          },
+          "exit_reasons": {
+            "sl": 362,
+            "breakeven": 169,
+            "tp": 150,
+            "sl_gap": 27,
+            "breakeven_gap": 7,
+            "time": 3
+          },
+          "ambiguous_bars_total": 0,
+          "trades_with_ambiguous_bar": 0,
+          "exposure_pct": 5.2,
+          "months": 47,
+          "losing_months": 36,
+          "worst_month": -273.79,
+          "best_month": 169.87,
+          "yearly_net": {
+            "2016": -65.55,
+            "2017": -694.95,
+            "2018": -662.21,
+            "2019": -1067.23,
+            "2020": -149.28
+          },
+          "by_symbol": {
+            "AUDUSD": {
+              "trades": 316,
+              "net": -1909.67,
+              "expectancy_r": -0.27,
+              "win_rate_pct": 39.6
+            },
+            "EURUSD": {
+              "trades": 130,
+              "net": -351.85,
+              "expectancy_r": -0.13,
+              "win_rate_pct": 48.5
+            },
+            "GBPUSD": {
+              "trades": 128,
+              "net": -385.85,
+              "expectancy_r": -0.169,
+              "win_rate_pct": 40.6
+            },
+            "USDCAD": {
+              "trades": 144,
+              "net": 8.15,
+              "expectancy_r": -0.008,
+              "win_rate_pct": 26.4
+            }
+          },
+          "daily_return_sharpe_annualised": -3.078,
+          "max_entries_in_a_day": 6,
+          "label": "V1_M15_H1 ML-filtered OOS",
+          "daily_loss_halts": 0
+        }
+      }
+    }
+  },
+  "parameter_sensitivity_V2": {
+    "TP 1.5R": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 541,
+      "initial_balance": 10000.0,
+      "net_profit": -1887.93,
+      "final_balance": 8112.07,
+      "return_pct": -18.88,
+      "cagr_pct": -3.83,
+      "max_drawdown": 2185.76,
+      "max_drawdown_pct": 21.57,
+      "profit_factor": 0.693,
+      "win_rate_pct": 37.15,
+      "expectancy_per_trade": -3.49,
+      "expectancy_r": -0.16,
+      "avg_win_r": 1.014,
+      "avg_loss_r": -0.855,
+      "trades_per_year": 100.8,
+      "avg_hold_hours": 9.34,
+      "max_consecutive_losses": 10,
+      "max_consecutive_wins": 8,
+      "costs": {
+        "spread": 383.07,
+        "commission": 381.08,
+        "swap": 52.15,
+        "slippage": 161.61,
+        "total": 977.91,
+        "pct_of_gross_profit": 22.9
+      },
+      "exit_reasons": {
+        "sl": 277,
+        "tp": 142,
+        "breakeven": 83,
+        "time": 24,
+        "sl_gap": 11,
+        "breakeven_gap": 4
+      },
+      "ambiguous_bars_total": 0,
+      "trades_with_ambiguous_bar": 0,
+      "exposure_pct": 9.96,
+      "months": 64,
+      "losing_months": 46,
+      "worst_month": -200.01,
+      "best_month": 137.02,
+      "yearly_net": {
+        "2015": -333.68,
+        "2016": -375.58,
+        "2017": -646.73,
+        "2018": -253.39,
+        "2019": -415.49,
+        "2020": 136.94
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 177,
+          "net": -821.43,
+          "expectancy_r": -0.215,
+          "win_rate_pct": 37.3
+        },
+        "EURUSD": {
+          "trades": 111,
+          "net": -564.4,
+          "expectancy_r": -0.232,
+          "win_rate_pct": 36.0
+        },
+        "GBPUSD": {
+          "trades": 114,
+          "net": 74.12,
+          "expectancy_r": 0.034,
+          "win_rate_pct": 50.0
+        },
+        "USDCAD": {
+          "trades": 139,
+          "net": -576.21,
+          "expectancy_r": -0.193,
+          "win_rate_pct": 27.3
+        }
+      },
+      "daily_return_sharpe_annualised": -2.602,
+      "max_entries_in_a_day": 4,
+      "label": "TP 1.5R",
+      "daily_loss_halts": 0
+    },
+    "TP 3R": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 533,
+      "initial_balance": 10000.0,
+      "net_profit": -1758.78,
+      "final_balance": 8241.22,
+      "return_pct": -17.59,
+      "cagr_pct": -3.54,
+      "max_drawdown": 2096.6,
+      "max_drawdown_pct": 20.44,
+      "profit_factor": 0.715,
+      "win_rate_pct": 30.39,
+      "expectancy_per_trade": -3.3,
+      "expectancy_r": -0.153,
+      "avg_win_r": 1.264,
+      "avg_loss_r": -0.772,
+      "trades_per_year": 99.4,
+      "avg_hold_hours": 12.92,
+      "max_consecutive_losses": 17,
+      "max_consecutive_wins": 4,
+      "costs": {
+        "spread": 390.33,
+        "commission": 382.62,
+        "swap": 70.73,
+        "slippage": 184.43,
+        "total": 1028.11,
+        "pct_of_gross_profit": 23.3
+      },
+      "exit_reasons": {
+        "sl": 273,
+        "breakeven": 137,
+        "tp": 60,
+        "time": 47,
+        "sl_gap": 10,
+        "breakeven_gap": 6
+      },
+      "ambiguous_bars_total": 0,
+      "trades_with_ambiguous_bar": 0,
+      "exposure_pct": 13.29,
+      "months": 64,
+      "losing_months": 42,
+      "worst_month": -224.37,
+      "best_month": 120.28,
+      "yearly_net": {
+        "2015": -192.76,
+        "2016": -412.12,
+        "2017": -553.75,
+        "2018": -129.71,
+        "2019": -520.88,
+        "2020": 50.45
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 171,
+          "net": -796.73,
+          "expectancy_r": -0.212,
+          "win_rate_pct": 32.7
+        },
+        "EURUSD": {
+          "trades": 109,
+          "net": -439.56,
+          "expectancy_r": -0.186,
+          "win_rate_pct": 33.0
+        },
+        "GBPUSD": {
+          "trades": 113,
+          "net": -73.52,
+          "expectancy_r": -0.039,
+          "win_rate_pct": 40.7
+        },
+        "USDCAD": {
+          "trades": 140,
+          "net": -448.97,
+          "expectancy_r": -0.149,
+          "win_rate_pct": 17.1
+        }
+      },
+      "daily_return_sharpe_annualised": -1.934,
+      "max_entries_in_a_day": 4,
+      "label": "TP 3R",
+      "daily_loss_halts": 0
+    },
+    "break-even off": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 529,
+      "initial_balance": 10000.0,
+      "net_profit": -1731.22,
+      "final_balance": 8268.78,
+      "return_pct": -17.31,
+      "cagr_pct": -3.48,
+      "max_drawdown": 1989.53,
+      "max_drawdown_pct": 19.53,
+      "profit_factor": 0.77,
+      "win_rate_pct": 32.7,
+      "expectancy_per_trade": -3.27,
+      "expectancy_r": -0.15,
+      "avg_win_r": 1.558,
+      "avg_loss_r": -0.98,
+      "trades_per_year": 98.6,
+      "avg_hold_hours": 13.64,
+      "max_consecutive_losses": 15,
+      "max_consecutive_wins": 4,
+      "costs": {
+        "spread": 392.48,
+        "commission": 382.06,
+        "swap": 70.22,
+        "slippage": 163.13,
+        "total": 1007.89,
+        "pct_of_gross_profit": 17.4
+      },
+      "exit_reasons": {
+        "sl": 331,
+        "tp": 134,
+        "time": 49,
+        "sl_gap": 15
+      },
+      "ambiguous_bars_total": 0,
+      "trades_with_ambiguous_bar": 0,
+      "exposure_pct": 14.01,
+      "months": 64,
+      "losing_months": 44,
+      "worst_month": -203.03,
+      "best_month": 145.8,
+      "yearly_net": {
+        "2015": -261.17,
+        "2016": -269.64,
+        "2017": -688.59,
+        "2018": -162.44,
+        "2019": -364.39,
+        "2020": 15.02
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 169,
+          "net": -1034.93,
+          "expectancy_r": -0.28,
+          "win_rate_pct": 28.4
+        },
+        "EURUSD": {
+          "trades": 110,
+          "net": -245.71,
+          "expectancy_r": -0.103,
+          "win_rate_pct": 33.6
+        },
+        "GBPUSD": {
+          "trades": 111,
+          "net": 87.04,
+          "expectancy_r": 0.038,
+          "win_rate_pct": 38.7
+        },
+        "USDCAD": {
+          "trades": 139,
+          "net": -537.64,
+          "expectancy_r": -0.178,
+          "win_rate_pct": 32.4
+        }
+      },
+      "daily_return_sharpe_annualised": -1.798,
+      "max_entries_in_a_day": 4,
+      "label": "break-even off",
+      "daily_loss_halts": 0
+    },
+    "trailing on": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 537,
+      "initial_balance": 10000.0,
+      "net_profit": -1767.15,
+      "final_balance": 8232.85,
+      "return_pct": -17.67,
+      "cagr_pct": -3.56,
+      "max_drawdown": 2055.3,
+      "max_drawdown_pct": 20.26,
+      "profit_factor": 0.713,
+      "win_rate_pct": 35.94,
+      "expectancy_per_trade": -3.29,
+      "expectancy_r": -0.15,
+      "avg_win_r": 1.085,
+      "avg_loss_r": -0.842,
+      "trades_per_year": 100.1,
+      "avg_hold_hours": 9.83,
+      "max_consecutive_losses": 17,
+      "max_consecutive_wins": 7,
+      "costs": {
+        "spread": 382.86,
+        "commission": 379.96,
+        "swap": 54.36,
+        "slippage": 173.1,
+        "total": 990.28,
+        "pct_of_gross_profit": 22.5
+      },
+      "exit_reasons": {
+        "sl": 276,
+        "tp": 100,
+        "breakeven": 93,
+        "trail": 30,
+        "time": 22,
+        "sl_gap": 11,
+        "breakeven_gap": 4,
+        "trail_gap": 1
+      },
+      "ambiguous_bars_total": 0,
+      "trades_with_ambiguous_bar": 0,
+      "exposure_pct": 10.4,
+      "months": 64,
+      "losing_months": 46,
+      "worst_month": -251.82,
+      "best_month": 130.85,
+      "yearly_net": {
+        "2015": -305.33,
+        "2016": -444.86,
+        "2017": -614.87,
+        "2018": -143.83,
+        "2019": -372.11,
+        "2020": 113.85
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 174,
+          "net": -868.04,
+          "expectancy_r": -0.226,
+          "win_rate_pct": 36.2
+        },
+        "EURUSD": {
+          "trades": 110,
+          "net": -392.9,
+          "expectancy_r": -0.166,
+          "win_rate_pct": 36.4
+        },
+        "GBPUSD": {
+          "trades": 114,
+          "net": 84.3,
+          "expectancy_r": 0.039,
+          "win_rate_pct": 49.1
+        },
+        "USDCAD": {
+          "trades": 139,
+          "net": -590.51,
+          "expectancy_r": -0.196,
+          "win_rate_pct": 24.5
+        }
+      },
+      "daily_return_sharpe_annualised": -2.216,
+      "max_entries_in_a_day": 4,
+      "label": "trailing on",
+      "daily_loss_halts": 0
+    },
+    "ADX min 25": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 449,
+      "initial_balance": 10000.0,
+      "net_profit": -1635.92,
+      "final_balance": 8364.08,
+      "return_pct": -16.36,
+      "cagr_pct": -3.28,
+      "max_drawdown": 1896.93,
+      "max_drawdown_pct": 18.66,
+      "profit_factor": 0.692,
+      "win_rate_pct": 32.96,
+      "expectancy_per_trade": -3.64,
+      "expectancy_r": -0.166,
+      "avg_win_r": 1.156,
+      "avg_loss_r": -0.817,
+      "trades_per_year": 83.7,
+      "avg_hold_hours": 10.75,
+      "max_consecutive_losses": 12,
+      "max_consecutive_wins": 5,
+      "costs": {
+        "spread": 329.69,
+        "commission": 324.31,
+        "swap": 48.69,
+        "slippage": 146.48,
+        "total": 849.17,
+        "pct_of_gross_profit": 23.1
+      },
+      "exit_reasons": {
+        "sl": 233,
+        "breakeven": 89,
+        "tp": 86,
+        "time": 25,
+        "sl_gap": 10,
+        "breakeven_gap": 6
+      },
+      "ambiguous_bars_total": 0,
+      "trades_with_ambiguous_bar": 0,
+      "exposure_pct": 9.43,
+      "months": 63,
+      "losing_months": 44,
+      "worst_month": -200.14,
+      "best_month": 106.35,
+      "yearly_net": {
+        "2015": -238.62,
+        "2016": -429.34,
+        "2017": -427.02,
+        "2018": -205.11,
+        "2019": -401.35,
+        "2020": 65.53
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 146,
+          "net": -790.71,
+          "expectancy_r": -0.248,
+          "win_rate_pct": 34.2
+        },
+        "EURUSD": {
+          "trades": 92,
+          "net": -404.48,
+          "expectancy_r": -0.196,
+          "win_rate_pct": 31.5
+        },
+        "GBPUSD": {
+          "trades": 92,
+          "net": 117.08,
+          "expectancy_r": 0.058,
+          "win_rate_pct": 47.8
+        },
+        "USDCAD": {
+          "trades": 119,
+          "net": -557.82,
+          "expectancy_r": -0.217,
+          "win_rate_pct": 21.0
+        }
+      },
+      "daily_return_sharpe_annualised": -2.376,
+      "max_entries_in_a_day": 4,
+      "label": "ADX min 25",
+      "daily_loss_halts": 0
+    },
+    "room filter off": {
+      "period_start": "2015-01-01 22:00:00+00:00",
+      "period_end": "2020-05-14 07:59:00+00:00",
+      "years": 5.36,
+      "trades": 1130,
+      "initial_balance": 10000.0,
+      "net_profit": -2168.01,
+      "final_balance": 7831.99,
+      "return_pct": -21.68,
+      "cagr_pct": -4.45,
+      "max_drawdown": 2292.58,
+      "max_drawdown_pct": 22.72,
+      "profit_factor": 0.818,
+      "win_rate_pct": 34.16,
+      "expectancy_per_trade": -1.92,
+      "expectancy_r": -0.092,
+      "avg_win_r": 1.217,
+      "avg_loss_r": -0.771,
+      "trades_per_year": 210.6,
+      "avg_hold_hours": 12.11,
+      "max_consecutive_losses": 13,
+      "max_consecutive_wins": 7,
+      "costs": {
+        "spread": 731.08,
+        "commission": 722.61,
+        "swap": 128.91,
+        "slippage": 321.13,
+        "total": 1903.73,
+        "pct_of_gross_profit": 19.6
+      },
+      "exit_reasons": {
+        "sl": 537,
+        "breakeven": 251,
+        "tp": 239,
+        "time": 63,
+        "sl_gap": 25,
+        "breakeven_gap": 15
+      },
+      "ambiguous_bars_total": 1,
+      "trades_with_ambiguous_bar": 1,
+      "exposure_pct": 24.75,
+      "months": 64,
+      "losing_months": 42,
+      "worst_month": -427.76,
+      "best_month": 157.51,
+      "yearly_net": {
+        "2015": -405.01,
+        "2016": -472.78,
+        "2017": -699.15,
+        "2018": -187.76,
+        "2019": -321.71,
+        "2020": -81.61
+      },
+      "by_symbol": {
+        "AUDUSD": {
+          "trades": 340,
+          "net": -566.74,
+          "expectancy_r": -0.076,
+          "win_rate_pct": 38.5
+        },
+        "EURUSD": {
+          "trades": 255,
+          "net": -241.51,
+          "expectancy_r": -0.035,
+          "win_rate_pct": 39.2
+        },
+        "GBPUSD": {
+          "trades": 238,
+          "net": -268.07,
+          "expectancy_r": -0.062,
+          "win_rate_pct": 39.5
+        },
+        "USDCAD": {
+          "trades": 297,
+          "net": -1091.69,
+          "expectancy_r": -0.184,
+          "win_rate_pct": 20.5
+        }
+      },
+      "daily_return_sharpe_annualised": -1.317,
+      "max_entries_in_a_day": 6,
+      "label": "room filter off",
+      "daily_loss_halts": 0
+    }
+  }
+}

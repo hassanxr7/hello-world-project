@@ -1,0 +1,141 @@
+# fxai example configuration - copy to config/config.yaml and edit.
+# Secrets do NOT belong here: put them in .env (see .env.example) or OS environment variables.
+# Every value below is a DEMO starting default, not a recommendation or an optimised setting.
+
+# paper = historical replay (python -m fxai paper) | demo = MT4 demo account | live = real money
+mode: demo
+# Live trading requires ALL of: mode: live, this flag true, a passed reports/validation_status.json,
+# and the EA inputs EnableTrading=true + AllowLiveAccount=true. See docs/DEMO_AND_LIVE.md.
+live_trading_acknowledged: false
+account_currency: USD          # simulation only; live currency comes from the broker
+
+daily_reset:                   # trading-day boundary for counters and the daily-loss limit
+  zone: server                 # server | UTC | America/New_York | Europe/London  (match the EA input ResetZone)
+  hour: 0                      # local hour in that zone (e.g. America/New_York + 17 = FX day)
+
+symbols:
+  enabled: [EURUSD, GBPUSD, USDJPY, USDCAD, AUDUSD, USDCHF, NZDUSD]
+  prefix: ""
+  suffix: ""                   # broker suffix, e.g. ".r", "m", "-ECN" (must match the EA inputs)
+  overrides: {}                # e.g. EURUSD: {max_spread_points: 15, trading_hours_utc: "07:00-17:00"}
+  custom: {}                   # anything else MUST be defined explicitly, e.g.:
+  #  XAUUSD: {base: XAU, quote: USD, digits: 2, max_spread_points: 40, trading_hours_utc: "07:00-20:00"}
+
+bridge:
+  type: file
+  root: auto                   # auto = %APPDATA%\MetaQuotes\Terminal\Common\Files\FXAI on Windows
+  account: auto                # MT4 login number sub-folder; auto = the only one present
+  poll_interval_s: 1.0         # monitoring cadence (decisions only happen on completed bars)
+  ea_heartbeat_timeout_s: 10
+  command_ttl_s: 15            # an entry command older than this is refused by the EA
+  ack_timeout_s: 20
+  magic_number: 7340001        # identifies system orders (must match the EA input)
+
+risk:
+  risk_per_trade_pct: 0.25
+  max_total_risk_pct: 1.0      # sum of open planned stop-loss risk
+  max_open_positions: 3
+  max_positions_per_symbol: 1
+  max_daily_loss_pct: 2.0      # equity-based, includes floating P&L, excludes deposits/withdrawals
+  max_entries_per_day: 20      # a MAXIMUM, never a target
+  max_currency_risk_pct: 0.5   # net stop-risk per single currency across positions
+  correlation_threshold: 0.75
+  max_correlated_positions: 2
+  max_margin_usage_pct: 30
+  min_margin_level_pct: 300
+  cooldown_after_entry_min: 30 # per symbol
+  cooldown_after_loss_min: 60  # per symbol
+  max_consecutive_losses: 3
+  consecutive_loss_pause_min: 240
+  daily_loss_headroom_check: true   # a new trade must fit inside the remaining daily-loss budget
+  daily_loss_policy: hold_protected # hold_protected | close_all  (existing positions when the limit hits)
+  emergency_stop_policy: close_all  # close_all | hold_protected
+  max_quote_age_s: 30
+  max_spread_to_stop: 0.15     # spread may be at most 15 % of the stop distance
+  commission_per_lot_round_turn: 7.0   # your broker's value, account currency (used in sizing)
+  sizing_slippage_points: 5    # slippage buffer added to the stop distance when sizing
+  max_lot_per_trade: 5.0
+  max_entry_deviation_points: 20
+  max_slippage_points: 10
+
+hard_limits:                   # the dashboard can never set limits above these
+  risk_per_trade_pct: 0.5
+  max_total_risk_pct: 2.0
+  max_open_positions: 5
+  max_daily_loss_pct: 3.0
+  max_entries_per_day: 20
+
+strategy:
+  name: trend_pullback
+  decision_timeframe: H1       # H1/H4 chosen by the pre-declared protocol (docs/RESEARCH_LOG.md);
+  trend_timeframe: H4          #   NO variant showed a positive edge in the validation data
+  signal_ttl_s: 90
+  params:
+    atr_period: 14
+    adx_period: 14
+    adx_min: 20.0
+    ema_fast: 50
+    ema_slow: 200
+    ema_slope_bars: 5
+    vol_ratio_max: 2.0
+    vol_median_window: 500
+    ema_entry: 20
+    pullback_lookback: 6
+    pullback_atr_tol: 0.25
+    rsi_period: 14
+    rsi_long_min: 50.0
+    rsi_long_max: 70.0
+    max_extension_atr: 1.0
+    stop_buffer_atr: 0.2
+    min_stop_atr: 1.0
+    max_stop_atr: 2.5
+    min_room_r: 1.0
+    swing_lookback_bars: 200
+    fractal_n: 3
+    friday_cutoff_utc: "18:00"
+
+exits:                         # mirrored by EA inputs (BreakEven*, Trailing*, MaxHoldHours)
+  take_profit_r: 2.0
+  breakeven_enabled: true
+  breakeven_trigger_r: 1.0
+  breakeven_offset_points: 10
+  trailing_enabled: false
+  trailing_start_r: 1.5
+  trailing_atr_mult: 2.0
+  max_hold_hours: 48
+
+ml:
+  enabled: false               # only a model approved with `python -m fxai model approve` is ever loaded
+  registry_dir: models
+
+llm:
+  mode: "off"                  # off | advisory (explanations only) | veto (may turn BUY/SELL into WAIT, never the reverse)
+  provider: anthropic
+  model: claude-opus-5-5
+  effort: medium
+  timeout_s: 20
+  max_calls_per_day: 40
+  max_cost_usd_per_day: 2.0
+  cache_ttl_min: 60
+  max_output_tokens: 4000
+  on_unavailable: proceed      # proceed | wait
+  price_input_per_mtok: 4.0    # keep in sync with published pricing (used for the local cost cap)
+  price_output_per_mtok: 20.0
+
+news:
+  provider: none               # none = no event filter (dashboard shows "inactive") | csv = your own calendar file
+  csv_path: data/calendar.csv  # header: time_utc,currency,impact,title
+  block_minutes_before: 30
+  block_minutes_after: 30
+  min_impact: high
+  require_feed: false          # true = WAIT on every symbol if the feed is missing or stale
+  max_feed_age_days: 7
+
+dashboard:
+  host: 127.0.0.1              # keep on loopback; use RDP/SSH tunnel or an HTTPS reverse proxy for remote access
+  port: 8787
+  session_ttl_min: 720
+  secure_cookies: false        # true when served over HTTPS
+
+storage:
+  db_path: data/fxai.sqlite

@@ -1,0 +1,19 @@
+# secrets and local state
+.env
+config/config.yaml
+data/
+models/candidates/
+models/approved/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# MT4 build outputs
+*.ex4

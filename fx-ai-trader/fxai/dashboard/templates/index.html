@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>fxai dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">fxai <span class="muted">v{{ version }}</span></div>
+  <div class="badges" id="badges"></div>
+  <div class="top-actions">
+    <button class="btn ghost" id="theme-toggle" type="button" aria-label="Toggle light/dark theme">Theme</button>
+    <button class="btn ghost" id="logout" type="button">Sign out</button>
+  </div>
+</header>
+
+<main class="page">
+  <section id="banner" class="banner" hidden></section>
+
+  <section class="controls" aria-label="Controls">
+    <button class="btn" data-action="pause" type="button">Pause entries</button>
+    <button class="btn" data-action="resume" type="button">Resume</button>
+    <button class="btn danger" data-action="estop" data-policy="close_all" type="button">Emergency stop + flatten</button>
+    <button class="btn danger-outline" data-action="estop" data-policy="hold" type="button">Emergency stop (keep protected)</button>
+    <button class="btn" data-action="estop_clear" type="button">Clear emergency stop</button>
+    <button class="btn" data-action="close_all" type="button">Close all system positions</button>
+    <button class="btn" data-action="clear_loss_pause" type="button">Clear loss-streak pause</button>
+    <span class="spacer"></span>
+    <a class="btn ghost" href="/api/trades.csv">Export trades CSV</a>
+    <a class="btn ghost" href="/api/decisions.csv">Export decisions CSV</a>
+  </section>
+  <p id="control-msg" class="muted small" role="status"></p>
+
+  <section class="tiles" id="tiles" aria-label="Key figures"></section>
+
+  <section class="card">
+    <div class="card-head"><h2>Equity</h2><span class="muted small" id="equity-note"></span></div>
+    <div class="chart-wrap" id="equity-chart"></div>
+    <details><summary class="small">Equity data table</summary><div id="equity-table" class="table-scroll"></div></details>
+  </section>
+
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Latest decision per symbol</h2></div><div id="decisions"></div></section>
+    <section class="card"><div class="card-head"><h2>Connection and data feed</h2></div><div id="connection"></div><div id="quotes" class="table-scroll"></div></section>
+  </div>
+
+  <section class="card"><div class="card-head"><h2>Open positions</h2><span class="muted small" id="exposure-note"></span></div><div id="positions" class="table-scroll"></div></section>
+
+  <div class="grid2">
+    <section class="card">
+      <div class="card-head"><h2>Risk limits (effective)</h2></div>
+      <div id="limits"></div>
+      <form id="limits-form" class="limits-form">
+        <p class="muted small">Change limits within the hard caps from the config file. The EA's own inputs cap them again.</p>
+        <div id="limits-inputs"></div>
+        <button class="btn primary" type="submit">Apply limits</button>
+      </form>
+    </section>
+    <section class="card"><div class="card-head"><h2>Strategy, models and data</h2></div><div id="models"></div></section>
+  </div>
+
+  <section class="card"><div class="card-head"><h2>Recent trades</h2></div><div id="trades" class="table-scroll"></div></section>
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Warnings and errors</h2></div><div id="errors" class="table-scroll"></div></section>
+    <section class="card"><div class="card-head"><h2>Event log</h2></div><div id="events" class="table-scroll"></div></section>
+  </div>
+  <section class="card"><div class="card-head"><h2>Decision history</h2></div><div id="history" class="table-scroll"></div></section>
+  <div id="tooltip" class="tooltip" hidden></div>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
