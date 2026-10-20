@@ -126,7 +126,9 @@ def cmd_paper(args) -> None:
     prices = {s: float(df["close"][df.index < start].iloc[-1]) for s, df in m1.items()}
     specs = {s: default_sim_spec(s, *KNOWN_MAJORS[s], cfg.account_currency, prices) for s in m1}
     broker = SimBroker(specs=specs, balance=args.balance)
-    tfs = sorted({cfg.strategy.decision_timeframe, cfg.strategy.trend_timeframe})
+    from .strategy import build_strategy
+    _s = build_strategy(cfg)
+    tfs = sorted({_s.entry_tf, _s.trend_tf})
     ea = EAEmulator(root, broker, EAInputs(enable_trading=True, symbols=list(m1), bars_timeframes=tfs,
                                            magic=cfg.bridge.magic_number), m1=m1)
     now = {"t": start.to_pydatetime()}

@@ -195,6 +195,8 @@ class TradeIntent:
     features: dict[str, float] = field(default_factory=dict)
     ml_score: float | None = None
     ml_model_version: str | None = None
+    exit_params: dict[str, float] = field(default_factory=dict)  # per-order exit policy sent to the EA
+    invalidation: list[str] = field(default_factory=list)
 
     @property
     def stop_distance(self) -> float:

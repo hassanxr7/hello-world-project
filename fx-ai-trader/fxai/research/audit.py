@@ -15,6 +15,7 @@ Writes reports/research/audit_<ts>/AUDIT.md and audit.json.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -119,7 +120,8 @@ def exit_whatifs(bt: PortfolioBacktest, sig: pd.DataFrame, costs: CostModel, bas
 def run_audit(cfg: AppConfig, m1: dict[str, pd.DataFrame], start: pd.Timestamp, end: pd.Timestamp, out_root: str | Path,
               n_perm: int = 100, label: str = "") -> Path:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out = Path(out_root) / f"audit_{stamp}"
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", label or "strategy").strip("_")[:40]
+    out = Path(out_root) / f"audit_{slug}_{stamp}"
     out.mkdir(parents=True, exist_ok=True)
     costs = CostModel()
     bt = PortfolioBacktest(cfg, m1, costs)

@@ -34,7 +34,7 @@ def bars():
 @pytest.fixture(scope="module")
 def strat():
     cfg = AppConfig()
-    return TrendPullbackStrategy(cfg.strategy.params, cfg.exits)
+    return TrendPullbackStrategy()
 
 
 def test_indicators_basic():

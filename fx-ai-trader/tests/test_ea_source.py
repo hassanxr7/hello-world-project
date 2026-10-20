@@ -13,6 +13,7 @@ import pytest
 from fxai.bridge.ea_emulator import EAInputs
 from fxai.bridge.protocol import CMD_TYPES
 from fxai.config import AppConfig
+from fxai.strategy import build_strategy
 
 ROOT = Path(__file__).resolve().parents[1]
 EA = (ROOT / "mql4" / "Experts" / "FXAI_Bridge.mq4").read_text(encoding="utf-8")
@@ -43,6 +44,7 @@ def inputs() -> dict[str, str]:
 
 def test_input_defaults_match_python_mirror_and_config():
     inp, e, cfg = inputs(), EAInputs(), AppConfig()
+    ex = build_strategy(cfg).exits
     num = {k: float(v) for k, v in inp.items() if re.fullmatch(r"-?\d+(\.\d+)?", v)}
     assert inp["EnableTrading"] == "false" and inp["AllowLiveAccount"] == "false"  # safe defaults
     assert int(num["MagicNumber"]) == e.magic == cfg.bridge.magic_number
@@ -54,10 +56,10 @@ def test_input_defaults_match_python_mirror_and_config():
     assert num["RiskTolerancePct"] == e.risk_tolerance_pct
     assert num["MaxCommandAgeSec"] == e.max_command_age_s == cfg.bridge.command_ttl_s
     assert num["PyHeartbeatTimeoutSec"] == e.py_heartbeat_timeout_s
-    assert num["BreakEvenTriggerR"] == e.breakeven_trigger_r == cfg.exits.breakeven_trigger_r
-    assert num["BreakEvenOffsetPoints"] == e.breakeven_offset_points == cfg.exits.breakeven_offset_points
-    assert num["MaxHoldHours"] == e.max_hold_hours == cfg.exits.max_hold_hours
-    assert inp["TrailingEnabled"] == ("true" if cfg.exits.trailing_enabled else "false")
+    assert num["BreakEvenTriggerR"] == e.breakeven_trigger_r == ex.breakeven_trigger_r
+    assert num["BreakEvenOffsetPoints"] == e.breakeven_offset_points == ex.breakeven_offset_points
+    assert num["MaxHoldHours"] == e.max_hold_hours == ex.max_hold_hours
+    assert inp["TrailingEnabled"] == ("true" if ex.trailing_enabled else "false")
     assert inp["EStopPolicy"] == "POLICY_CLOSE_ALL" and cfg.risk.emergency_stop_policy == "close_all"
     assert inp["DailyLossPolicy"] == "POLICY_HOLD_PROTECTED" and cfg.risk.daily_loss_policy == "hold_protected"
 

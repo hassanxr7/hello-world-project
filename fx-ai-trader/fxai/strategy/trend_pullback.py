@@ -1,46 +1,41 @@
-"""Baseline strategy: trend-timeframe regime + entry-timeframe pullback-resumption.
+"""Baseline strategy v1: trend-timeframe regime + entry-timeframe pullback-resumption.
 
 Timeframes are configurable: H1 entries / H4 trend (default) or M15 / H1.
 Below, "H1" means the trend timeframe and "M15" the entry timeframe.
 
 Deliberately small and explainable. Parameters were fixed a priori from common
 practice (EMA 50/200, ADX 20, ATR 14, RSI 14, 2R target) and were NOT tuned on
-the evaluation data. See docs/STRATEGY.md.
+the evaluation data. Validation showed NO edge (docs/VALIDATION.md); the audit
+in docs/STRATEGY_AUDIT.md explains why.
 
 Rules (all evaluated on COMPLETED bars):
 
-Regime (H1)
-  VOLATILE   ATR14 / median(ATR14, 500) > vol_ratio_max            -> WAIT
-  TREND_UP   ADX14 >= adx_min, EMA50 > EMA200, close > EMA50, EMA50 rising
-  TREND_DOWN mirror image
-  RANGE      otherwise                                              -> WAIT
-
-Entry (M15), long side (short is the mirror image)
+Regime (trend TF)   see fxai/analysis/regime.py
+Entry (entry TF), long side (short is the mirror image)
   pullback   some bar in the last `pullback_lookback` bars had low <= EMA20 + tol*ATR
   resumption close > EMA20, bullish candle, close > previous high
   momentum   rsi_long_min <= RSI14 <= rsi_long_max
   extension  (close - EMA20) / ATR <= max_extension_atr
   stop       below the pullback low - buffer*ATR, widened to >= min_stop_atr*ATR,
              WAIT if wider than max_stop_atr*ATR
-  room       nearest confirmed H1 swing resistance >= min_room_r * stop distance away
+  room       nearest confirmed trend-TF swing resistance >= min_room_r * stop distance away
   session    close time inside the symbol's UTC window; no Friday entries after cutoff
 Target: take_profit_r * stop distance from the actual entry price.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
 
-from ..analysis.bars import align_higher
-from ..analysis.indicators import adx, atr, ema, rolling_median, rsi
+from ..analysis.indicators import atr, ema, rolling_median, rsi
+from ..analysis.regime import RegimeParams
 from ..analysis.structure import find_swings, nearest_levels
-from ..config import ExitConfig, StrategyParams
-from ..domain import Action, Regime
-from ..timeutil import parse_hours_window
+from ..config import ExitConfig
+from ..domain import Regime
+from .base import Setup, StrategyBase, StrategyParamsBase, mark, session_mask
 
 NAME = "trend_pullback"
 VERSION = "1.0.0"
@@ -51,71 +46,69 @@ FEATURES = [
 ]
 
 
-@dataclass
-class StrategyOutput:
-    symbol: str
-    action: Action
-    bar_open_time: pd.Timestamp | None
-    bar_close_time: pd.Timestamp | None
-    regime: Regime
-    reasons: list[str]
-    entry_ref: float | None = None
-    stop_loss: float | None = None
-    take_profit_r: float = 2.0
-    features: dict[str, float] = field(default_factory=dict)
+class TrendPullbackParams(StrategyParamsBase):
+    atr_period: int = 14
+    adx_period: int = 14
+    adx_min: float = 20.0
+    ema_fast: int = 50  # trend timeframe
+    ema_slow: int = 200  # trend timeframe
+    ema_slope_bars: int = 5
+    vol_ratio_max: float = 2.0
+    vol_median_window: int = 500
+    ema_entry: int = 20
+    pullback_lookback: int = 6
+    pullback_atr_tol: float = 0.25
+    rsi_period: int = 14
+    rsi_long_min: float = 50.0
+    rsi_long_max: float = 70.0
+    max_extension_atr: float = 1.0
+    stop_buffer_atr: float = 0.2
+    min_stop_atr: float = 1.0
+    max_stop_atr: float = 2.5
+    min_room_r: float = 1.0
+    swing_lookback_bars: int = 200  # trend-timeframe bars
+    fractal_n: int = 3
+    friday_cutoff_utc: str = "18:00"
 
 
-class TrendPullbackStrategy:
-    name = NAME
-    version = VERSION
-
-    def __init__(self, params: StrategyParams, exits: ExitConfig):
-        self.p = params
-        self.exits = exits
+class TrendPullbackStrategy(StrategyBase):
+    name: ClassVar[str] = NAME
+    version: ClassVar[str] = VERSION
+    default_entry_tf: ClassVar[str] = "H1"
+    default_trend_tf: ClassVar[str] = "H4"
+    default_exits: ClassVar[ExitConfig] = ExitConfig(take_profit_r=2.0, breakeven_enabled=True, breakeven_trigger_r=1.0,
+                                                     breakeven_offset_points=10, trailing_enabled=False, max_hold_hours=48)
+    Params = TrendPullbackParams
+    features: ClassVar[list[str]] = FEATURES
+    setup_ttl_bars: ClassVar[int] = 6
 
     @property
-    def full_version(self) -> str:
-        return f"{NAME}-{VERSION}"
+    def regime_params(self) -> RegimeParams:  # type: ignore[override]
+        p = self.p
+        return RegimeParams(p.atr_period, p.adx_period, p.adx_min, p.ema_fast, p.ema_slow, p.ema_slope_bars,
+                            p.vol_ratio_max, p.vol_median_window)
+
+    @property
+    def trend_warmup_bars(self) -> int:
+        return self.p.ema_slow + 20
 
     # ------------------------------------------------------------------------------
-    def trend_frame(self, h1: pd.DataFrame) -> pd.DataFrame:
-        p = self.p
-        out = pd.DataFrame(index=h1.index)
-        out["close_time"] = h1["close_time"]
-        out["close"] = h1["close"]
-        out["atr"] = atr(h1, p.atr_period)
-        out["adx"] = adx(h1, p.adx_period)["adx"]
-        out["ema_f"] = ema(h1["close"], p.ema_fast)
-        out["ema_s"] = ema(h1["close"], p.ema_slow)
-        out["slope"] = (out["ema_f"] - out["ema_f"].shift(p.ema_slope_bars)) / out["atr"]
-        out["vol_ratio"] = out["atr"] / rolling_median(out["atr"], p.vol_median_window)
-        up = (out["adx"] >= p.adx_min) & (out["ema_f"] > out["ema_s"]) & (out["close"] > out["ema_f"]) & (out["slope"] > 0)
-        dn = (out["adx"] >= p.adx_min) & (out["ema_f"] < out["ema_s"]) & (out["close"] < out["ema_f"]) & (out["slope"] < 0)
-        regime = np.where(up, Regime.TREND_UP.value, np.where(dn, Regime.TREND_DOWN.value, Regime.RANGE.value))
-        regime = np.where(out["vol_ratio"] > p.vol_ratio_max, Regime.VOLATILE.value, regime)
-        unknown = out[["adx", "ema_s", "slope", "vol_ratio"]].isna().any(axis=1)
-        out["regime"] = np.where(unknown, Regime.UNKNOWN.value, regime)
-        return out
-
     def compute(self, m15: pd.DataFrame, h1: pd.DataFrame, session_window: str = "00:00-24:00") -> pd.DataFrame:
         """Vectorised evaluation for every completed entry-timeframe bar (used by backtest and live).
 
-        ``m15`` holds the ENTRY timeframe bars and ``h1`` the TREND timeframe bars
-        (M15/H1 or H1/H4 depending on configuration). Column prefixes: ``tr_`` =
-        trend timeframe, ``atr_e`` = entry-timeframe ATR.
+        ``m15`` holds the ENTRY timeframe bars and ``h1`` the TREND timeframe bars.
+        Column prefixes: ``tr_`` = trend timeframe, ``atr_e`` = entry-timeframe ATR.
         """
         p = self.p
         entry_min = int(round((m15["close_time"] - m15.index).median().total_seconds() / 60)) if len(m15) else 15
         trend_min = int(round((h1["close_time"] - h1.index).median().total_seconds() / 60)) if len(h1) else 60
-        hf = self.trend_frame(h1)
         f = pd.DataFrame(index=m15.index)
         for c in ("open", "high", "low", "close", "close_time"):
             f[c] = m15[c]
         f["atr_e"] = atr(m15, p.atr_period)
         f["ema20"] = ema(m15["close"], p.ema_entry)
         f["rsi"] = rsi(m15["close"], p.rsi_period)
-        f.index.name = "open_time"
-        f = align_higher(f, hf, ["regime", "adx", "ema_f", "ema_s", "slope", "vol_ratio", "atr", "close"], "tr_")
+        f = self.attach_trend(f, h1)
 
         a = f["atr_e"]
         L = p.pullback_lookback
@@ -143,16 +136,7 @@ class TrendPullbackStrategy:
         f["stop_atr_s"] = (sl_s - f["close"]) / a
         f["r_stop_l"] = f["stop_atr_l"] <= p.max_stop_atr
         f["r_stop_s"] = f["stop_atr_s"] <= p.max_stop_atr
-
-        # Session filter on the decision time (= bar close time).
-        ct = pd.DatetimeIndex(f["close_time"])
-        mins = ct.hour * 60 + ct.minute
-        s0, s1 = parse_hours_window(session_window)
-        in_win = (mins >= s0) & (mins < s1) if s0 <= s1 else ((mins >= s0) | (mins < s1))
-        fc_h, fc_m = (int(x) for x in p.friday_cutoff_utc.split(":"))
-        fri_late = (ct.weekday == 4) & (mins >= fc_h * 60 + fc_m)
-        weekend = (ct.weekday == 5) | (ct.weekday == 6)
-        f["r_session"] = np.asarray(in_win & ~fri_late & ~weekend)
+        f["r_session"] = session_mask(f["close_time"], session_window, p.friday_cutoff_utc).to_numpy()
 
         f["r_regime_l"] = f["tr_regime"] == Regime.TREND_UP.value
         f["r_regime_s"] = f["tr_regime"] == Regime.TREND_DOWN.value
@@ -182,12 +166,17 @@ class TrendPullbackStrategy:
         short_sig = base_s & f["r_room"]
         f["signal"] = np.where(long_sig, 1, np.where(short_sig, -1, 0))
         f["sl"] = np.where(long_sig, f["sl_l"], np.where(short_sig, f["sl_s"], np.nan))
-        f["candidate_side"] = np.where(base_l, 1, np.where(base_s, -1, 0))
+        # Watchlist candidate: regime + pullback seen, waiting for the resumption bar.
+        watch_l = warm & f["r_regime_l"] & f["r_pullback_l"] & f["r_session"] & ~long_sig
+        watch_s = warm & f["r_regime_s"] & f["r_pullback_s"] & f["r_session"] & ~short_sig
+        f["candidate_side"] = np.where(watch_l, 1, np.where(watch_s, -1, 0))
+        f["invalidation"] = np.where(watch_l, f["sl_l"], np.where(watch_s, f["sl_s"], np.nan))
         self._features(f, entry_min)
         return f
 
     def _features(self, f: pd.DataFrame, entry_min: int) -> None:
         side = np.where(f["candidate_side"] != 0, f["candidate_side"], np.where(f["tr_regime"] == Regime.TREND_DOWN.value, -1, 1))
+        side = np.where(f["signal"] != 0, f["signal"], side)
         a = f["atr_e"]
         f["adx_trend"] = f["tr_adx"]
         f["trend_strength"] = side * (f["tr_ema_f"] - f["tr_ema_s"]) / f["tr_atr"]
@@ -210,30 +199,6 @@ class TrendPullbackStrategy:
         f["vol_ratio"] = f["tr_vol_ratio"]
 
     # ------------------------------------------------------------------------------
-    def decide_latest(self, symbol: str, m15: pd.DataFrame, h1: pd.DataFrame, session_window: str,
-                      now: datetime) -> StrategyOutput:
-        """Evaluate the most recent completed M15 bar and explain the outcome."""
-        if len(m15) < 60 or len(h1) < self.p.ema_slow + 20:
-            return StrategyOutput(symbol, Action.WAIT, None, None, Regime.UNKNOWN,
-                                  [f"insufficient history (entry TF {len(m15)}, trend TF {len(h1)} bars)"])
-        f = self.compute(m15, h1, session_window)
-        row = f.iloc[-1]
-        bar_open = f.index[-1]
-        close_t = pd.Timestamp(row["close_time"])
-        age_min = (pd.Timestamp(now) - close_t).total_seconds() / 60.0
-        regime = Regime(row["tr_regime"]) if isinstance(row["tr_regime"], str) else Regime.UNKNOWN
-        tf_min = (close_t - pd.Timestamp(bar_open)).total_seconds() / 60.0
-        if age_min > 2 * tf_min:
-            return StrategyOutput(symbol, Action.WAIT, bar_open, close_t, regime,
-                                  [f"latest completed entry bar is {age_min:.0f} min old - data stale or market closed"])
-        reasons = self.explain(row)
-        feats = {k: float(row[k]) for k in FEATURES if pd.notna(row.get(k))}
-        if row["signal"] == 0:
-            return StrategyOutput(symbol, Action.WAIT, bar_open, close_t, regime, reasons, features=feats)
-        action = Action.BUY if row["signal"] > 0 else Action.SELL
-        return StrategyOutput(symbol, action, bar_open, close_t, regime, reasons, float(row["close"]),
-                              float(row["sl"]), self.exits.take_profit_r, feats)
-
     def explain(self, row: pd.Series) -> list[str]:
         p = self.p
         reg = row["tr_regime"]
@@ -245,10 +210,6 @@ class TrendPullbackStrategy:
             return out
         s = "l" if reg == Regime.TREND_UP.value else "s"
         word = "long" if s == "l" else "short"
-
-        def mark(ok: bool) -> str:
-            return "pass" if ok else "FAIL"
-
         out.append(f"session window: {mark(bool(row['r_session']))}")
         out.append(f"pullback to EMA{p.ema_entry} zone within {p.pullback_lookback} bars: {mark(bool(row[f'r_pullback_{s}']))}")
         out.append(f"{word} resumption candle (close beyond EMA and prior bar extreme): {mark(bool(row[f'r_resume_{s}']))}")
@@ -263,3 +224,28 @@ class TrendPullbackStrategy:
             out.append(f"{'BUY' if row['signal'] > 0 else 'SELL'}: all conditions met; "
                        f"stop {row['sl']:.5f}, target {self.exits.take_profit_r}R")
         return out
+
+    def invalidation_notes(self, row: pd.Series) -> list[str]:
+        s = "l" if row["signal"] > 0 else "s"
+        return [f"price beyond the stop {row['sl']:.5f} (pullback extreme ± buffer)",
+                "trend-TF regime no longer TREND_" + ("UP" if s == "l" else "DOWN"),
+                f"signal older than the entry bar + TTL (bar closed {pd.Timestamp(row['close_time']):%H:%M} UTC)"]
+
+    def setups(self, f: pd.DataFrame, symbol: str) -> list[Setup]:
+        if f.empty:
+            return []
+        row = f.iloc[-1]
+        side = int(row["candidate_side"])
+        if side == 0:
+            return []
+        s = "l" if side > 0 else "s"
+        conds = {"regime": bool(row[f"r_regime_{s}"]), "pullback": bool(row[f"r_pullback_{s}"]),
+                 "resumption candle": bool(row[f"r_resume_{s}"]), "rsi": bool(row[f"r_rsi_{s}"]),
+                 "not extended": bool(row[f"r_ext_{s}"]), "stop size": bool(row[f"r_stop_{s}"]),
+                 "session": bool(row["r_session"])}
+        stage = sum(conds.values()) / len(conds)
+        bar_min = int((pd.Timestamp(row["close_time"]) - pd.Timestamp(f.index[-1])).total_seconds() // 60)
+        created = pd.Timestamp(row["close_time"])
+        trigger = float(row["high"]) if side > 0 else float(row["low"])  # resumption needs a close beyond the prior extreme
+        return [Setup(symbol, self.full_version, side, stage, created, created + pd.Timedelta(minutes=bar_min * self.setup_ttl_bars),
+                      trigger, float(row["invalidation"]), conds, self.explain(row))]

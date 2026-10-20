@@ -33,6 +33,7 @@ from .. import __version__
 from ..bridge.file_bridge import FileBridge
 from ..config import AppConfig, Secrets, resolve_bridge_dir
 from ..storage import Storage
+from ..strategy import build_strategy
 from ..timeutil import utcnow
 from .auth import LoginLimiter, SessionSigner, verify_password
 
@@ -51,6 +52,7 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
         raise RuntimeError("set FXAI_DASHBOARD_PASSWORD_HASH (python -m fxai hash-password) and FXAI_SECRET_KEY "
                            "(>= 32 random characters) before starting the dashboard")
     signer = SessionSigner(secret_key.encode(), cfg.dashboard.session_ttl_min * 60)
+    strategy = build_strategy(cfg)
     limiter = LoginLimiter()
     templates = Jinja2Templates(directory=str(HERE / "templates"))
     app = FastAPI(title="fxai dashboard", docs_url=None, redoc_url=None, openapi_url=None)
@@ -145,7 +147,8 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
             "overrides": storage.overrides(),
             "hard_limits": cfg.hard_limits.model_dump(),
             "config": {"mode": cfg.mode, "live_enabled": cfg.live_enabled, "symbols": cfg.symbols.enabled,
-                       "risk": cfg.risk.model_dump(), "exits": cfg.exits.model_dump(),
+                       "risk": cfg.risk.model_dump(), "exits": strategy.exits.model_dump(),
+                       "strategy": strategy.full_version, "timeframes": [strategy.entry_tf, strategy.trend_tf],
                        "llm_mode": cfg.llm.mode, "ml_enabled": cfg.ml.enabled, "news": cfg.news.provider},
         }
 

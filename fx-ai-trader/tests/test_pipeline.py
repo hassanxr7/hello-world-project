@@ -46,7 +46,7 @@ def make(tmp_path, m1, t, cfg_extra=None):
 
 def first_signal_time(m1) -> tuple[pd.Timestamp, int]:
     cfg = AppConfig()
-    s = TrendPullbackStrategy(cfg.strategy.params, cfg.exits)
+    s = TrendPullbackStrategy()
     f = s.compute(resample(m1, "M15"), resample(m1, "H1"), "00:00-24:00")
     sig = f[(f["signal"] != 0) & (f.index > f.index[0] + pd.Timedelta(days=40))]
     assert len(sig), "synthetic market produced no signal"

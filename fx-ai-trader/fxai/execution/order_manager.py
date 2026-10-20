@@ -65,7 +65,8 @@ class OrderManager:
             "OPEN", seq, int(self.clock().timestamp()), self.ttl_s, id=intent.signal_id,
             tag=signal_tag(intent.signal_id), symbol=intent.symbol, side=intent.side.value, volume=decision.volume,
             sl=intent.stop_loss, tp=intent.take_profit, ref=intent.entry_price, maxdev=max_dev_points,
-            maxrisk=round(decision.planned_risk_money * 1.0, 2), slip=slippage_points, magic=self.magic)
+            maxrisk=round(decision.planned_risk_money * 1.0, 2), slip=slippage_points, magic=self.magic,
+            **{k: v for k, v in intent.exit_params.items()})
         payload = {**cmd, "planned_risk": decision.planned_risk_money, "comment": order_comment(intent.signal_id)}
         try:
             self.st.insert_command(seq, "OPEN", payload, intent.signal_id, intent.symbol, day_id, "QUEUED")

@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -150,57 +150,62 @@ class HardLimits(_Strict):
     max_entries_per_day: int = Field(default=20, ge=0, le=20)
 
 
-class StrategyParams(_Strict):
-    atr_period: int = 14
-    adx_period: int = 14
-    adx_min: float = 20.0
-    ema_fast: int = 50  # trend timeframe
-    ema_slow: int = 200  # trend timeframe
-    ema_slope_bars: int = 5
-    vol_ratio_max: float = 2.0
-    vol_median_window: int = 500
-    ema_entry: int = 20
-    pullback_lookback: int = 6
-    pullback_atr_tol: float = 0.25
-    rsi_period: int = 14
-    rsi_long_min: float = 50.0
-    rsi_long_max: float = 70.0
-    max_extension_atr: float = 1.0
-    stop_buffer_atr: float = 0.2
-    min_stop_atr: float = 1.0
-    max_stop_atr: float = 2.5
-    min_room_r: float = 1.0
-    swing_lookback_bars: int = 200  # trend-timeframe bars
-    fractal_n: int = 3
-    friday_cutoff_utc: str = "18:00"
+STRATEGY_NAMES = ("trend_pullback", "donchian_trend", "range_reversion", "london_breakout",
+                  "pullback_rejection", "vol_breakout")
+TF_MIN = {"M15": 15, "M30": 30, "H1": 60, "H4": 240, "D1": 1440}
 
 
 class StrategyConfig(_Strict):
-    name: Literal["trend_pullback"] = "trend_pullback"
-    # Default H1/H4 chosen by the pre-declared protocol in docs/RESEARCH_LOG.md
-    # (it was the less-bad variant; NEITHER variant showed a positive edge).
-    decision_timeframe: Literal["M15", "M30", "H1"] = "H1"
-    trend_timeframe: Literal["H1", "H4"] = "H4"
+    """Which strategy runs live. Each strategy carries its own default timeframes,
+    parameters and exit policy (see fxai/strategy/); anything set here overrides them.
+    ``trend_pullback`` (the v1 baseline) is the default only because it is the
+    least-bad variant evaluated so far - see docs/RESEARCH_LOG.md for what the
+    research programme found."""
+
+    name: Literal["trend_pullback", "donchian_trend", "range_reversion", "london_breakout",
+                  "pullback_rejection", "vol_breakout"] = "trend_pullback"
+    decision_timeframe: Literal["M15", "M30", "H1", "H4"] | None = None
+    trend_timeframe: Literal["H1", "H4", "D1"] | None = None
     signal_ttl_s: int = Field(default=90, ge=10, le=900)
-    params: StrategyParams = Field(default_factory=StrategyParams)
+    params: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def _tf_order(self) -> "StrategyConfig":
-        mins = {"M15": 15, "M30": 30, "H1": 60, "H4": 240}
-        if mins[self.trend_timeframe] <= mins[self.decision_timeframe]:
+    def _validate(self) -> "StrategyConfig":
+        if self.decision_timeframe and self.trend_timeframe and \
+                TF_MIN[self.trend_timeframe] <= TF_MIN[self.decision_timeframe]:
             raise ValueError("trend_timeframe must be higher than decision_timeframe")
+        from .strategy.registry import REGISTRY  # lazy: strategy modules import this module
+
+        REGISTRY[self.name].Params.model_validate(self.params)  # typos fail at load time
         return self
 
 
 class ExitConfig(_Strict):
-    take_profit_r: float = Field(default=2.0, gt=0.2, le=10)
+    take_profit_r: float = Field(default=2.0, gt=0.2, le=50)
     breakeven_enabled: bool = True
     breakeven_trigger_r: float = Field(default=1.0, gt=0)
     breakeven_offset_points: int = Field(default=10, ge=0)
     trailing_enabled: bool = False
-    trailing_start_r: float = Field(default=1.5, gt=0)
+    trailing_start_r: float = Field(default=1.5, ge=0)
     trailing_atr_mult: float = Field(default=2.0, gt=0)
     max_hold_hours: float = Field(default=48, gt=0)
+
+
+class ExitOverrides(_Strict):
+    """Partial override of the active strategy's default exit policy (all fields optional)."""
+
+    take_profit_r: float | None = Field(default=None, gt=0.2, le=50)
+    breakeven_enabled: bool | None = None
+    breakeven_trigger_r: float | None = Field(default=None, gt=0)
+    breakeven_offset_points: int | None = Field(default=None, ge=0)
+    trailing_enabled: bool | None = None
+    trailing_start_r: float | None = Field(default=None, ge=0)
+    trailing_atr_mult: float | None = Field(default=None, gt=0)
+    max_hold_hours: float | None = Field(default=None, gt=0)
+
+    def apply(self, base: ExitConfig) -> ExitConfig:
+        upd = {k: v for k, v in self.model_dump().items() if v is not None}
+        return ExitConfig.model_validate({**base.model_dump(), **upd})
 
 
 class MLConfig(_Strict):
@@ -263,7 +268,7 @@ class AppConfig(_Strict):
     risk: RiskConfig = Field(default_factory=RiskConfig)
     hard_limits: HardLimits = Field(default_factory=HardLimits)
     strategy: StrategyConfig = Field(default_factory=StrategyConfig)
-    exits: ExitConfig = Field(default_factory=ExitConfig)
+    exits: ExitOverrides | None = None  # None = the strategy's own default exit policy
     ml: MLConfig = Field(default_factory=MLConfig)
     llm: LLMConfig = Field(default_factory=LLMConfig)
     news: NewsConfig = Field(default_factory=NewsConfig)

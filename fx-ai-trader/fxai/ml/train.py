@@ -64,9 +64,9 @@ def fit_logreg(x: np.ndarray, y: np.ndarray, c: float = C_REG) -> tuple[list, li
     return impute.tolist(), mean.tolist(), scale.tolist(), clf.coef_[0].tolist(), float(clf.intercept_[0])
 
 
-def _model(version: str, fit, threshold: float, strategy_version: str, meta: dict) -> LogisticModel:
+def _model(version: str, fit, threshold: float, strategy_version: str, meta: dict, features: list[str] | None = None) -> LogisticModel:
     impute, mean, scale, coef, intercept = fit
-    return LogisticModel(version=version, features=list(FEATURES), impute=impute, mean=mean, scale=scale, coef=coef,
+    return LogisticModel(version=version, features=list(features or FEATURES), impute=impute, mean=mean, scale=scale, coef=coef,
                          intercept=intercept, threshold=threshold, strategy_version=strategy_version, metadata=meta)
 
 
@@ -87,7 +87,8 @@ def calibration_table(p: np.ndarray, y: np.ndarray, bins: int = 5) -> list[dict]
 
 def walk_forward(ds: pd.DataFrame, first_test_start: pd.Timestamp, fold_months: int = 6,
                  embargo: pd.Timedelta = pd.Timedelta(hours=72), min_train: int = 150,
-                 strategy_version: str = "") -> tuple[list[FoldResult], pd.DataFrame]:
+                 strategy_version: str = "", features: list[str] | None = None) -> tuple[list[FoldResult], pd.DataFrame]:
+    FEATS = list(features or FEATURES)
     end = ds["t_decision"].max() + pd.Timedelta(seconds=1)
     starts = pd.date_range(first_test_start, end, freq=f"{fold_months}MS")
     if len(starts) == 0 or starts[0] != first_test_start:
@@ -100,11 +101,11 @@ def walk_forward(ds: pd.DataFrame, first_test_start: pd.Timestamp, fold_months: 
         train = ds[ds["t_exit"] < ts - embargo]
         if len(test) == 0 or len(train) < min_train or train["label"].nunique() < 2:
             continue
-        xtr, ytr = train[FEATURES].to_numpy(float), train["label"].to_numpy(int)
-        xte, yte = test[FEATURES].to_numpy(float), test["label"].to_numpy(int)
+        xtr, ytr = train[FEATS].to_numpy(float), train["label"].to_numpy(int)
+        xte, yte = test[FEATS].to_numpy(float), test["label"].to_numpy(int)
         fit = fit_logreg(xtr, ytr)
         base = float(ytr.mean())
-        m = _model("wf", fit, base, strategy_version, {})
+        m = _model("wf", fit, base, strategy_version, {}, FEATS)
         p = m.predict_proba(xte)
         brier = float(np.mean((p - yte) ** 2))
         brier_ref = float(np.mean((base - yte) ** 2))
@@ -163,22 +164,24 @@ def evaluate(folds: list[FoldResult], oos: pd.DataFrame) -> dict:
     }
 
 
-def train_final(ds: pd.DataFrame, report: dict, strategy_version: str, data_desc: str) -> LogisticModel:
+def train_final(ds: pd.DataFrame, report: dict, strategy_version: str, data_desc: str,
+                features: list[str] | None = None) -> LogisticModel:
     """Fit on ALL rows (the walk-forward report above is its out-of-sample evidence)."""
-    x, y = ds[FEATURES].to_numpy(float), ds["label"].to_numpy(int)
+    FEATS = list(features or FEATURES)
+    x, y = ds[FEATS].to_numpy(float), ds["label"].to_numpy(int)
     fit = fit_logreg(x, y)
     base = float(y.mean())
-    h = hashlib.sha256(pd.util.hash_pandas_object(ds[["key", "label"] + FEATURES], index=False).values.tobytes()).hexdigest()
+    h = hashlib.sha256(pd.util.hash_pandas_object(ds[["key", "label"] + FEATS], index=False).values.tobytes()).hexdigest()
     version = f"meta-{pd.Timestamp.now(tz='UTC'):%Y%m%d%H%M%S}-{h[:8]}"
     meta = {
         "dataset_sha256": h, "rows": int(len(ds)), "base_rate": round(base, 4),
         "train_period": [str(ds["t_decision"].min()), str(ds["t_decision"].max())],
         "label": "1 if per-signal R net of spread, slippage, commission and swap > 0",
-        "features": list(FEATURES), "model": f"L2 logistic regression C={C_REG}",
+        "features": FEATS, "model": f"L2 logistic regression C={C_REG}",
         "threshold_rule": "training base rate", "data": data_desc,
         "walk_forward": {k: v for k, v in report.items() if k != "folds"},
         "folds": report.get("folds", []),
     }
-    m = _model(version, fit, base, strategy_version, meta)
+    m = _model(version, fit, base, strategy_version, meta, FEATS)
     m.calibrated = bool(report.get("calibrated", False))
     return m

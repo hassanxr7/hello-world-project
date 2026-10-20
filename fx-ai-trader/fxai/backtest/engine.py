@@ -27,11 +27,11 @@ from ..analysis.bars import resample
 from ..config import AppConfig
 from ..domain import AccountSnapshot, Position, Quote, Side, SymbolSpec, TradeIntent
 from ..risk import EffectiveLimits, RiskContext, RiskEngine, RiskState
-from ..strategy import FEATURES, TrendPullbackStrategy
+from ..strategy import build_strategy
 from ..symbols import KNOWN_MAJORS, default_sim_spec
 from ..timeutil import UTC, from_epoch
 from .costs import CostModel
-from .fills import SymbolArrays, TradePath, simulate_trade
+from .fills import SymbolArrays, TradePath, simulate_trade_fast
 
 CONTRACT = 100_000.0
 NS = 1_000_000_000
@@ -82,8 +82,8 @@ class PortfolioBacktest:
         self.costs = costs or CostModel()
         self.initial_balance = initial_balance
         self.use_correlation = use_correlation
-        self.strategy = TrendPullbackStrategy(cfg.strategy.params, cfg.exits)
-        self.exits = cfg.exits
+        self.strategy = build_strategy(cfg)
+        self.exits = self.strategy.exits
         self.symbols = sorted(m1)
         self.info = cfg.symbols.resolve() if set(self.symbols) <= set(cfg.symbols.enabled) else {}
         self._frames: dict[str, pd.DataFrame] = {}
@@ -93,6 +93,8 @@ class PortfolioBacktest:
 
     # ------------------------------------------------------------------ preparation
     def _session(self, sym: str) -> str:
+        if self.strategy.ignores_session_window:
+            return "00:00-24:00"
         if sym in self.info:
             return self.info[sym].trading_hours_utc
         from ..symbols import DEFAULT_SESSIONS_UTC
@@ -103,8 +105,8 @@ class PortfolioBacktest:
         h1_closes = {}
         for sym in self.symbols:
             m1 = self.m1[sym]
-            m15 = resample(m1, self.cfg.strategy.decision_timeframe)
-            h1 = resample(m1, self.cfg.strategy.trend_timeframe)
+            m15 = resample(m1, self.strategy.entry_tf)
+            h1 = resample(m1, self.strategy.trend_tf)
             # Drop a trailing partial bar.
             last_t = m1.index[-1] + pd.Timedelta(minutes=1)
             m15, h1 = m15[m15["close_time"] <= last_t], h1[h1["close_time"] <= last_t]
@@ -117,7 +119,9 @@ class PortfolioBacktest:
                     "key": f"{sym}|{r['close_time'].isoformat()}", "symbol": sym, "time": r["close_time"],
                     "side": int(r["signal"]), "sl": float(r["sl"]), "ref_close": float(r["close"]),
                     "atr_e": float(r["atr_e"]), "regime": r["tr_regime"],
-                    **{k: float(r[k]) if pd.notna(r[k]) else np.nan for k in FEATURES},
+                    "tp": float(r["tp"]) if "tp" in f and pd.notna(r["tp"]) else np.nan,
+                    "deadline": pd.Timestamp(r["deadline"]) if "deadline" in f and pd.notna(r["deadline"]) else pd.NaT,
+                    **{k: float(r[k]) if pd.notna(r[k]) else np.nan for k in self.strategy.features},
                 })
         self._h1_close = pd.DataFrame(h1_closes).sort_index()
         self._signals = pd.DataFrame(rows).sort_values("time").reset_index(drop=True) if rows else pd.DataFrame()
@@ -142,7 +146,9 @@ class PortfolioBacktest:
             i0 = a.index_at_or_after(ts)
             if i0 >= len(a.t) or a.t[i0] - ts > 5 * 60 * NS:
                 continue
-            p = simulate_trade(a, i0, r.side, r.sl, self.exits, costs, r.atr_e)
+            tp_price = float(r.tp) if pd.notna(r.tp) else None
+            deadline = int(pd.Timestamp(r.deadline).value) if pd.notna(r.deadline) else None
+            p = simulate_trade_fast(a, i0, r.side, r.sl, self.exits, costs, r.atr_e, tp_price=tp_price, deadline_ns=deadline)
             if p is not None:
                 paths[r.key] = p
         return paths
@@ -417,8 +423,8 @@ class PortfolioBacktest:
         stats["label"] = label
         stats["daily_loss_halts"] = len(halts)
         params = {"strategy": self.strategy.full_version, "costs": costs.describe(),
-                  "risk": cfg.risk.model_dump(), "exits": cfg.exits.model_dump(),
-                  "strategy_params": cfg.strategy.params.model_dump(), "symbols": self.symbols,
+                  "risk": cfg.risk.model_dump(), "exits": self.exits.model_dump(),
+                  "strategy_params": self.strategy.p.model_dump(), "symbols": self.symbols,
                   "initial_balance": self.initial_balance, "period": [str(t0), str(t1)]}
         return BacktestResult(trades, eq_h, daily, rejections, stats, params, considered + ml_skipped, halts)
 

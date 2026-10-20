@@ -22,6 +22,7 @@ from .analysis.indicators import atr
 from .bridge.file_bridge import FileBridge
 from .config import AppConfig, resolve_bridge_dir
 from .risk import EffectiveLimits
+from .strategy import build_strategy
 from .risk.sizing import loss_per_lot
 from .timeutil import trading_day_id, utcnow
 
@@ -60,8 +61,9 @@ def run_doctor(cfg: AppConfig, now: datetime | None = None, env: dict[str, str] 
     def add(status: str, name: str, detail: str) -> None:
         out.append(Check(status, name, detail))
 
-    add("INFO", "fxai", f"version {__version__}, mode={cfg.mode}, strategy entries {cfg.strategy.decision_timeframe} "
-        f"/ trend {cfg.strategy.trend_timeframe}, symbols {cfg.symbols.enabled}, suffix '{cfg.symbols.suffix}'")
+    strat = build_strategy(cfg)
+    add("INFO", "fxai", f"version {__version__}, mode={cfg.mode}, strategy {strat.full_version} (entries {strat.entry_tf} "
+        f"/ trend {strat.trend_tf}), symbols {cfg.symbols.enabled}, suffix '{cfg.symbols.suffix}'")
     if cfg.mode == "live":
         add("WARN" if cfg.live_trading_acknowledged else "FAIL", "live mode",
             "mode=live - the service also requires reports/validation_status.json with passed=true")
@@ -155,7 +157,7 @@ def run_doctor(cfg: AppConfig, now: datetime | None = None, env: dict[str, str] 
             f"{[sp.broker_name for sp in state.specs.values()]} - check SymbolSuffix/Symbols inputs and Market Watch")
     else:
         add("PASS", "symbols", ", ".join(f"{s}->{state.specs[s].broker_name}" for s in info))
-    for tf in {cfg.strategy.decision_timeframe, cfg.strategy.trend_timeframe}:
+    for tf in {strat.entry_tf, strat.trend_tf}:
         if ea.bar_timeframes and tf not in ea.bar_timeframes:
             add("FAIL", "bar timeframes", f"strategy needs {tf} but EA BarTimeframes={','.join(ea.bar_timeframes)}")
     budget = acct.equity * lim.risk_per_trade_pct / 100.0
@@ -179,13 +181,12 @@ def run_doctor(cfg: AppConfig, now: datetime | None = None, env: dict[str, str] 
             else:
                 add("PASS", f"{sym} quote", f"spread {spread:.0f} pts (max {si.max_spread_points}), "
                     f"digits {spec.digits}, stop level {spec.stop_level_points}")
-        entry = bridge.read_bars(sym, cfg.strategy.decision_timeframe, state.offset_s)
-        trend = bridge.read_bars(sym, cfg.strategy.trend_timeframe, state.offset_s)
-        for tf, df in ((cfg.strategy.decision_timeframe, entry), (cfg.strategy.trend_timeframe, trend)):
+        entry = bridge.read_bars(sym, strat.entry_tf, state.offset_s)
+        trend = bridge.read_bars(sym, strat.trend_tf, state.offset_s)
+        for tf, df, need in ((strat.entry_tf, entry, strat.warmup_bars), (strat.trend_tf, trend, strat.trend_warmup_bars)):
             if df is None or df.empty:
                 add("FAIL", f"{sym} {tf} bars", "file missing - open that chart once so MT4 loads history")
                 continue
-            need = cfg.strategy.params.ema_slow + 20
             last_close = df["close_time"].iloc[-1]
             lag_min = (pd.Timestamp(now) - last_close).total_seconds() / 60
             stale = lag_min > 2 * TF_MINUTES[tf] and not closed
@@ -193,7 +194,7 @@ def run_doctor(cfg: AppConfig, now: datetime | None = None, env: dict[str, str] 
             add(status, f"{sym} {tf} bars", f"{len(df)} bars (need >= {need}, 520+ recommended), last closed "
                 f"{last_close:%Y-%m-%d %H:%M} UTC" + (" - not updating" if stale else ""))
         if entry is not None and len(entry) > 20 and q is not None:
-            a = float(atr(entry, cfg.strategy.params.atr_period).iloc[-1])
+            a = float(atr(entry, int(getattr(strat.p, 'atr_period', 14))).iloc[-1])
             stop = 1.5 * a  # typical stop for this strategy (1.0-2.5 ATR)
             mid = (q.bid + q.ask) / 2
             lpl = loss_per_lot(spec, mid, mid - stop, cfg.risk.commission_per_lot_round_turn,

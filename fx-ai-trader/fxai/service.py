@@ -34,7 +34,7 @@ import pandas as pd
 from . import __version__
 from .bridge.file_bridge import FileBridge
 from .bridge.protocol import BridgeState
-from .config import AppConfig
+from .config import TF_MIN, AppConfig
 from .domain import Action, Side, TradeIntent
 from .execution.order_manager import FillEvent, OrderManager
 from .execution.tracker import TradeTracker
@@ -44,7 +44,7 @@ from .news import Calendar
 from .risk import EffectiveLimits, RiskContext, RiskEngine, RiskState
 from .risk.exposure import currency_exposure, exposure_items, total_open_risk
 from .storage import Storage
-from .strategy import StrategyOutput, TrendPullbackStrategy
+from .strategy import StrategyOutput, build_strategy
 from .timeutil import utcnow
 
 log = logging.getLogger("fxai.service")
@@ -67,7 +67,7 @@ class TradingService:
         self.bridge = bridge
         self.clock = clock
         self.symbols = cfg.symbols.resolve()
-        self.strategy = TrendPullbackStrategy(cfg.strategy.params, cfg.exits)
+        self.strategy = build_strategy(cfg)
         self.engine = RiskEngine(cfg.risk)
         self.om = OrderManager(storage, bridge, cfg.bridge.magic_number, cfg.bridge.command_ttl_s,
                                cfg.bridge.ack_timeout_s, clock=clock)
@@ -280,7 +280,7 @@ class TradingService:
             return self._corr
         closes = {}
         for s in self.symbols:
-            b = self.bridge.read_bars(s, self.cfg.strategy.trend_timeframe, self.state.offset_s if self.state else 0)
+            b = self.bridge.read_bars(s, self.strategy.trend_tf, self.state.offset_s if self.state else 0)
             if b is not None and len(b) > 50:
                 closes[s] = b.set_index("close_time")["close"].tail(200)
         if len(closes) < 2:
@@ -315,7 +315,7 @@ class TradingService:
                                     self.model.version if self.model else None, reasons, signal_id)
 
     def _decide(self, state: BridgeState, now: datetime) -> None:
-        etf, ttf = self.cfg.strategy.decision_timeframe, self.cfg.strategy.trend_timeframe
+        etf, ttf = self.strategy.entry_tf, self.strategy.trend_tf
         for sym, info in self.symbols.items():
             if sym not in state.specs:
                 self.latest[sym] = {"action": "WAIT", "reasons": ["symbol not reported by EA"], "regime": "UNKNOWN"}
@@ -336,7 +336,8 @@ class TradingService:
             self.last_decided[sym] = last_close
             if self.st.decision_exists(sym, last_close.to_pydatetime(), self.strategy.full_version):
                 continue  # already decided before a restart
-            out = self.strategy.decide_latest(sym, entry, trend, info.trading_hours_utc, now)
+            window = "00:00-24:00" if self.strategy.ignores_session_window else info.trading_hours_utc
+            out = self.strategy.decide_latest(sym, entry, trend, window, now)
             if out.action is Action.WAIT:
                 self._record(sym, out, "WAIT", out.reasons)
                 continue
@@ -357,13 +358,22 @@ class TradingService:
         side = Side.BUY if out.action is Action.BUY else Side.SELL
         entry = q.ask if side is Side.BUY else q.bid
         r = abs(entry - out.stop_loss)
-        tp = spec.round_price(entry + side.sign * out.take_profit_r * r)
+        tp = spec.round_price(out.take_profit_price) if out.take_profit_price else \
+            spec.round_price(entry + side.sign * out.take_profit_r * r)
+        ex = self.strategy.exits
+        hold_h = ex.max_hold_hours
+        if out.deadline is not None:
+            hold_h = max(0.25, min(hold_h, (out.deadline - pd.Timestamp(now)).total_seconds() / 3600))
+        exit_params = {"hold_h": round(hold_h, 2), "be_r": ex.breakeven_trigger_r if ex.breakeven_enabled else 0,
+                       "be_pts": ex.breakeven_offset_points, "trail_r": ex.trailing_start_r if ex.trailing_enabled else -1,
+                       "trail_atr": ex.trailing_atr_mult, "trail_tf": TF_MIN[self.strategy.trend_tf]}
         sid = f"{self.strategy.full_version}:{sym}:{out.bar_close_time:%Y%m%dT%H%M}:{side.value}"
         intent = TradeIntent(signal_id=sid, symbol=sym, side=side, entry_price=entry,
                              stop_loss=spec.round_price(out.stop_loss), take_profit=tp,
                              strategy=self.strategy.name, strategy_version=self.strategy.full_version,
                              bar_time_utc=out.bar_close_time.to_pydatetime(), created_utc=now,
-                             reasons=out.reasons, features=out.features)
+                             reasons=out.reasons, features=out.features, exit_params=exit_params,
+                             invalidation=out.invalidation)
         # ML meta-filter (can only remove trades)
         if self.cfg.ml.enabled:
             if self.model is None:
@@ -397,7 +407,7 @@ class TradingService:
         return {"symbol": intent.symbol, "side": intent.side.value, "regime": out.regime.value,
                 "time_utc": now.isoformat(), "spread_points": round((q.ask - q.bid) / spec.point, 1),
                 "stop_distance_points": round(intent.stop_distance / spec.point, 1),
-                "target_r": self.cfg.exits.take_profit_r, "rule_checks": out.reasons,
+                "target_r": self.strategy.exits.take_profit_r, "rule_checks": out.reasons,
                 "features": {k: round(v, 4) for k, v in out.features.items()}, "events": ev}
 
     def _process_reviews(self, state: BridgeState, now: datetime) -> None:

@@ -1,0 +1,605 @@
+{
+  "label": "trend_pullback-1.0.0 V2 H1/H4",
+  "period": [
+    "2015-01-01 00:00:00+00:00",
+    "2018-01-01 00:00:00+00:00"
+  ],
+  "symbols": [
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "USDCAD"
+  ],
+  "signals": 423,
+  "portfolio_trades": 329,
+  "portfolio_stats": {
+    "period_start": "2015-01-01 00:00:00+00:00",
+    "period_end": "2018-01-01 00:00:00+00:00",
+    "years": 3.0,
+    "trades": 329,
+    "initial_balance": 10000.0,
+    "net_profit": -1647.71,
+    "final_balance": 8352.29,
+    "return_pct": -16.48,
+    "cagr_pct": -5.82,
+    "max_drawdown": 1705.96,
+    "max_drawdown_pct": 17.05,
+    "profit_factor": 0.591,
+    "win_rate_pct": 32.22,
+    "expectancy_per_trade": -5.01,
+    "expectancy_r": -0.225,
+    "avg_win_r": 1.05,
+    "avg_loss_r": -0.831,
+    "trades_per_year": 109.6,
+    "avg_hold_hours": 9.39,
+    "max_consecutive_losses": 17,
+    "max_consecutive_wins": 4,
+    "costs": {
+      "spread": 212.99,
+      "commission": 210.14,
+      "swap": 30.93,
+      "slippage": 97.63,
+      "total": 551.69,
+      "pct_of_gross_profit": 23.2
+    },
+    "exit_reasons": {
+      "sl": 179,
+      "breakeven": 73,
+      "tp": 57,
+      "time": 13,
+      "sl_gap": 5,
+      "breakeven_gap": 2
+    },
+    "ambiguous_bars_total": 0,
+    "trades_with_ambiguous_bar": 0,
+    "exposure_pct": 10.84,
+    "months": 36,
+    "losing_months": 29,
+    "worst_month": -236.93,
+    "best_month": 69.26,
+    "yearly_net": {
+      "2015": -594.17,
+      "2016": -413.35,
+      "2017": -640.19
+    },
+    "by_symbol": {
+      "AUDUSD": {
+        "trades": 104,
+        "net": -678.91,
+        "expectancy_r": -0.288,
+        "win_rate_pct": 34.6
+      },
+      "EURUSD": {
+        "trades": 64,
+        "net": -441.89,
+        "expectancy_r": -0.321,
+        "win_rate_pct": 28.1
+      },
+      "GBPUSD": {
+        "trades": 72,
+        "net": -60.14,
+        "expectancy_r": -0.037,
+        "win_rate_pct": 50.0
+      },
+      "USDCAD": {
+        "trades": 89,
+        "net": -466.76,
+        "expectancy_r": -0.234,
+        "win_rate_pct": 18.0
+      }
+    },
+    "daily_return_sharpe_annualised": -3.572,
+    "max_entries_in_a_day": 4,
+    "label": "audit",
+    "daily_loss_halts": 0
+  },
+  "per_signal_mean_r_net": -0.2297,
+  "per_signal_mean_r_gross": -0.1937,
+  "forward_returns": [
+    {
+      "symbol": "AUDUSD",
+      "horizon_bars": 1,
+      "n": 151,
+      "signal_mean_atr": 0.0175,
+      "signal_t": 0.2788,
+      "regime_bars_mean_atr": 0.0066,
+      "hit_rate": 0.4768
+    },
+    {
+      "symbol": "AUDUSD",
+      "horizon_bars": 2,
+      "n": 151,
+      "signal_mean_atr": -0.0847,
+      "signal_t": -1.0049,
+      "regime_bars_mean_atr": 0.0118,
+      "hit_rate": 0.457
+    },
+    {
+      "symbol": "AUDUSD",
+      "horizon_bars": 4,
+      "n": 151,
+      "signal_mean_atr": -0.0952,
+      "signal_t": -0.8177,
+      "regime_bars_mean_atr": 0.0269,
+      "hit_rate": 0.4636
+    },
+    {
+      "symbol": "AUDUSD",
+      "horizon_bars": 8,
+      "n": 151,
+      "signal_mean_atr": -0.2775,
+      "signal_t": -1.6307,
+      "regime_bars_mean_atr": 0.0535,
+      "hit_rate": 0.4172
+    },
+    {
+      "symbol": "AUDUSD",
+      "horizon_bars": 24,
+      "n": 151,
+      "signal_mean_atr": -0.1237,
+      "signal_t": -0.4655,
+      "regime_bars_mean_atr": 0.1268,
+      "hit_rate": 0.4702
+    },
+    {
+      "symbol": "EURUSD",
+      "horizon_bars": 1,
+      "n": 79,
+      "signal_mean_atr": -0.0807,
+      "signal_t": -0.7682,
+      "regime_bars_mean_atr": 0.0028,
+      "hit_rate": 0.4177
+    },
+    {
+      "symbol": "EURUSD",
+      "horizon_bars": 2,
+      "n": 79,
+      "signal_mean_atr": -0.2527,
+      "signal_t": -2.0473,
+      "regime_bars_mean_atr": 0.0058,
+      "hit_rate": 0.3418
+    },
+    {
+      "symbol": "EURUSD",
+      "horizon_bars": 4,
+      "n": 79,
+      "signal_mean_atr": -0.3343,
+      "signal_t": -1.3577,
+      "regime_bars_mean_atr": 0.0148,
+      "hit_rate": 0.3797
+    },
+    {
+      "symbol": "EURUSD",
+      "horizon_bars": 8,
+      "n": 79,
+      "signal_mean_atr": -0.1154,
+      "signal_t": -0.3101,
+      "regime_bars_mean_atr": 0.0383,
+      "hit_rate": 0.4304
+    },
+    {
+      "symbol": "EURUSD",
+      "horizon_bars": 24,
+      "n": 79,
+      "signal_mean_atr": -0.3298,
+      "signal_t": -0.6838,
+      "regime_bars_mean_atr": 0.1432,
+      "hit_rate": 0.3797
+    },
+    {
+      "symbol": "GBPUSD",
+      "horizon_bars": 1,
+      "n": 80,
+      "signal_mean_atr": 0.0839,
+      "signal_t": 0.8359,
+      "regime_bars_mean_atr": 0.0013,
+      "hit_rate": 0.4875
+    },
+    {
+      "symbol": "GBPUSD",
+      "horizon_bars": 2,
+      "n": 80,
+      "signal_mean_atr": -0.1032,
+      "signal_t": -0.6714,
+      "regime_bars_mean_atr": 0.0034,
+      "hit_rate": 0.4625
+    },
+    {
+      "symbol": "GBPUSD",
+      "horizon_bars": 4,
+      "n": 80,
+      "signal_mean_atr": -0.1462,
+      "signal_t": -0.7354,
+      "regime_bars_mean_atr": -0.001,
+      "hit_rate": 0.4625
+    },
+    {
+      "symbol": "GBPUSD",
+      "horizon_bars": 8,
+      "n": 80,
+      "signal_mean_atr": -0.3332,
+      "signal_t": -1.2022,
+      "regime_bars_mean_atr": -0.0255,
+      "hit_rate": 0.475
+    },
+    {
+      "symbol": "GBPUSD",
+      "horizon_bars": 24,
+      "n": 80,
+      "signal_mean_atr": -0.3797,
+      "signal_t": -1.014,
+      "regime_bars_mean_atr": -0.0408,
+      "hit_rate": 0.475
+    },
+    {
+      "symbol": "USDCAD",
+      "horizon_bars": 1,
+      "n": 113,
+      "signal_mean_atr": -0.2843,
+      "signal_t": -3.1116,
+      "regime_bars_mean_atr": 0.0119,
+      "hit_rate": 0.4071
+    },
+    {
+      "symbol": "USDCAD",
+      "horizon_bars": 2,
+      "n": 113,
+      "signal_mean_atr": -0.2624,
+      "signal_t": -2.0443,
+      "regime_bars_mean_atr": 0.0229,
+      "hit_rate": 0.4513
+    },
+    {
+      "symbol": "USDCAD",
+      "horizon_bars": 4,
+      "n": 113,
+      "signal_mean_atr": -0.522,
+      "signal_t": -2.765,
+      "regime_bars_mean_atr": 0.0493,
+      "hit_rate": 0.4159
+    },
+    {
+      "symbol": "USDCAD",
+      "horizon_bars": 8,
+      "n": 113,
+      "signal_mean_atr": -0.853,
+      "signal_t": -2.6066,
+      "regime_bars_mean_atr": 0.0914,
+      "hit_rate": 0.4336
+    },
+    {
+      "symbol": "USDCAD",
+      "horizon_bars": 24,
+      "n": 113,
+      "signal_mean_atr": -0.5727,
+      "signal_t": -1.3615,
+      "regime_bars_mean_atr": 0.1717,
+      "hit_rate": 0.4779
+    }
+  ],
+  "permutation_matched_regime": {
+    "n_signals": 423,
+    "real_mean_r": -0.2297,
+    "null_mean_r": -0.0424,
+    "null_sd": 0.0566,
+    "z_score": -3.31,
+    "p_value": 1.0,
+    "n_perm": 100,
+    "real_by_symbol": {
+      "AUDUSD": -0.2874,
+      "EURUSD": -0.2557,
+      "GBPUSD": -0.0152,
+      "USDCAD": -0.2863
+    }
+  },
+  "permutation_hour_only": {
+    "n_signals": 423,
+    "real_mean_r": -0.2297,
+    "null_mean_r": -0.0813,
+    "null_sd": 0.0543,
+    "z_score": -2.73,
+    "p_value": 1.0,
+    "n_perm": 50,
+    "real_by_symbol": {
+      "AUDUSD": -0.2874,
+      "EURUSD": -0.2557,
+      "GBPUSD": -0.0152,
+      "USDCAD": -0.2863
+    }
+  },
+  "exit_decomposition": [
+    {
+      "reason": "sl",
+      "trades": 179,
+      "net": -3889.95,
+      "mean_r": -1.0,
+      "share_of_trades_pct": 54.4
+    },
+    {
+      "reason": "sl_gap",
+      "trades": 5,
+      "net": -109.66,
+      "mean_r": -1.002,
+      "share_of_trades_pct": 1.5
+    },
+    {
+      "reason": "breakeven",
+      "trades": 73,
+      "net": -10.21,
+      "mean_r": -0.006,
+      "share_of_trades_pct": 22.2
+    },
+    {
+      "reason": "breakeven_gap",
+      "trades": 2,
+      "net": -1.53,
+      "mean_r": -0.035,
+      "share_of_trades_pct": 0.6
+    },
+    {
+      "reason": "time",
+      "trades": 13,
+      "net": 71.55,
+      "mean_r": 0.264,
+      "share_of_trades_pct": 4.0
+    },
+    {
+      "reason": "tp",
+      "trades": 57,
+      "net": 2292.1,
+      "mean_r": 1.877,
+      "share_of_trades_pct": 17.3
+    }
+  ],
+  "give_back": {
+    "pct_reaching_1R": 42.2,
+    "pct_reaching_2R": 17.3,
+    "pct_of_1R_reachers_ending_le_0": 25.2,
+    "mean_mae_winners": 0.4,
+    "mean_mae_losers": 1.039,
+    "mean_mfe_losers": 0.487
+  },
+  "breakdown": {
+    "session": [
+      {
+        "session": "asia 0-6",
+        "trades": 45,
+        "net": -266.01,
+        "mean_r": -0.254,
+        "win_pct": 35.6
+      },
+      {
+        "session": "london 7-11",
+        "trades": 163,
+        "net": -1032.79,
+        "mean_r": -0.291,
+        "win_pct": 33.1
+      },
+      {
+        "session": "overlap 12-16",
+        "trades": 83,
+        "net": -352.21,
+        "mean_r": -0.182,
+        "win_pct": 30.1
+      },
+      {
+        "session": "ny late 17-23",
+        "trades": 38,
+        "net": 3.3,
+        "mean_r": -0.004,
+        "win_pct": 28.9
+      }
+    ],
+    "symbol": [
+      {
+        "symbol": "AUDUSD",
+        "trades": 104,
+        "net": -678.91,
+        "mean_r": -0.288,
+        "win_pct": 34.6
+      },
+      {
+        "symbol": "EURUSD",
+        "trades": 64,
+        "net": -441.89,
+        "mean_r": -0.321,
+        "win_pct": 28.1
+      },
+      {
+        "symbol": "GBPUSD",
+        "trades": 72,
+        "net": -60.14,
+        "mean_r": -0.037,
+        "win_pct": 50.0
+      },
+      {
+        "symbol": "USDCAD",
+        "trades": 89,
+        "net": -466.76,
+        "mean_r": -0.234,
+        "win_pct": 18.0
+      }
+    ],
+    "year": [
+      {
+        "year": 2015,
+        "trades": 109,
+        "net": -594.17,
+        "mean_r": -0.23,
+        "win_pct": 33.0
+      },
+      {
+        "year": 2016,
+        "trades": 105,
+        "net": -413.35,
+        "mean_r": -0.178,
+        "win_pct": 33.3
+      },
+      {
+        "year": 2017,
+        "trades": 115,
+        "net": -640.19,
+        "mean_r": -0.263,
+        "win_pct": 30.4
+      }
+    ],
+    "adx_bucket": [
+      {
+        "adx_bucket": "20-25",
+        "trades": 60,
+        "net": -402.69,
+        "mean_r": -0.309,
+        "win_pct": 26.7
+      },
+      {
+        "adx_bucket": "25-30",
+        "trades": 59,
+        "net": -452.81,
+        "mean_r": -0.356,
+        "win_pct": 28.8
+      },
+      {
+        "adx_bucket": "30-40",
+        "trades": 114,
+        "net": -539.88,
+        "mean_r": -0.208,
+        "win_pct": 36.0
+      },
+      {
+        "adx_bucket": "40+",
+        "trades": 96,
+        "net": -252.32,
+        "mean_r": -0.113,
+        "win_pct": 33.3
+      }
+    ],
+    "stop_bucket": [
+      {
+        "stop_bucket": "1.0-1.25 ATR",
+        "trades": 72,
+        "net": -710.86,
+        "mean_r": -0.433,
+        "win_pct": 26.4
+      },
+      {
+        "stop_bucket": "1.25-1.75",
+        "trades": 125,
+        "net": -118.97,
+        "mean_r": -0.046,
+        "win_pct": 39.2
+      },
+      {
+        "stop_bucket": "1.75-2.5",
+        "trades": 132,
+        "net": -817.87,
+        "mean_r": -0.281,
+        "win_pct": 28.8
+      }
+    ],
+    "room_bucket": [
+      {
+        "room_bucket": "1-1.5R",
+        "trades": 128,
+        "net": -445.7,
+        "mean_r": -0.157,
+        "win_pct": 33.6
+      },
+      {
+        "room_bucket": "1.5-2.5R",
+        "trades": 99,
+        "net": -556.84,
+        "mean_r": -0.252,
+        "win_pct": 35.4
+      },
+      {
+        "room_bucket": "2.5R+",
+        "trades": 102,
+        "net": -645.17,
+        "mean_r": -0.285,
+        "win_pct": 27.5
+      }
+    ],
+    "side": [
+      {
+        "side": "BUY",
+        "trades": 139,
+        "net": -603.35,
+        "mean_r": -0.196,
+        "win_pct": 33.1
+      },
+      {
+        "side": "SELL",
+        "trades": 190,
+        "net": -1044.35,
+        "mean_r": -0.246,
+        "win_pct": 31.6
+      }
+    ],
+    "regime": [
+      {
+        "regime": "TREND_DOWN",
+        "trades": 190,
+        "net": -1044.35,
+        "mean_r": -0.246,
+        "win_pct": 31.6
+      },
+      {
+        "regime": "TREND_UP",
+        "trades": 139,
+        "net": -603.35,
+        "mean_r": -0.196,
+        "win_pct": 33.1
+      }
+    ]
+  },
+  "exit_whatifs": [
+    {
+      "variant": "as configured",
+      "n": 423,
+      "mean_r_net": -0.2297,
+      "mean_r_gross": -0.1937,
+      "win_pct": 31.4,
+      "pf": 0.614
+    },
+    {
+      "variant": "BE offset 25 pts (> round-trip cost)",
+      "n": 423,
+      "mean_r_net": -0.23,
+      "mean_r_gross": -0.1941,
+      "win_pct": 41.8,
+      "pf": 0.612
+    },
+    {
+      "variant": "BE off",
+      "n": 423,
+      "mean_r_net": -0.2369,
+      "mean_r_gross": -0.1998,
+      "win_pct": 29.3,
+      "pf": 0.672
+    },
+    {
+      "variant": "time stop 24h",
+      "n": 423,
+      "mean_r_net": -0.2418,
+      "mean_r_gross": -0.206,
+      "win_pct": 32.6,
+      "pf": 0.591
+    },
+    {
+      "variant": "TP 1R",
+      "n": 423,
+      "mean_r_net": -0.1945,
+      "mean_r_gross": -0.1595,
+      "win_pct": 41.8,
+      "pf": 0.672
+    },
+    {
+      "variant": "TP 3R, BE off",
+      "n": 423,
+      "mean_r_net": -0.1852,
+      "mean_r_gross": -0.147,
+      "win_pct": 27.0,
+      "pf": 0.752
+    }
+  ]
+}

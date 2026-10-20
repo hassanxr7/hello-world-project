@@ -4,8 +4,9 @@ This log records every strategy evaluation that informed a design decision, in
 the order it happened, so the amount of testing done on the data is visible
 (multiple testing inflates apparent performance).
 
-Data: Oanda M1 mid prices, EURUSD / GBPUSD / USDCAD / AUDUSD, 2015-01-01 to
-2020-05-14 (public mirror: github.com/FutureSharks/financial-data). USDJPY,
+Data: Oanda M1 mid prices, EURUSD / GBPUSD / USDCAD / AUDUSD (public mirror:
+github.com/FutureSharks/financial-data). Entries 1-5 used 2015-01-01 to
+2020-05-14; from entry 6 on, 2005-2014 is also used (research plan v2). USDJPY,
 USDCHF and NZDUSD were not available in this environment.
 
 ## Entry 1 - exploratory full-period run of V1 (2026-10-20)
@@ -94,3 +95,24 @@ Additional diagnostics from the same validation run (reports/validation/):
 validation) is in place, but no strategy in this repository has demonstrated an
 edge. It must stay on demo / paper until a strategy passes this protocol on
 data from the broker you will trade with.
+
+## Entry 6 - audit of the baseline (2015-01-01 to 2017-12-31, already-seen data)
+
+Research plan v2 (`docs/RESEARCH_PLAN_v2.md`) was committed first. The audit was then run on
+the v1 development period to explain the loss. Full write-up: `docs/STRATEGY_AUDIT.md`.
+
+| Variant | Signals | Real net R | Random-entry null (same symbol/hour/regime/side/stop/exits) | z | p |
+|---|---|---|---|---|---|
+| V1 M15/H1 | 1,678 | -0.201 | -0.179 +/- 0.024 | -0.89 | 0.80 |
+| V2 H1/H4 | 423 | -0.230 | -0.042 +/- 0.057 | -3.31 | 1.00 |
+
+- V2's entry trigger is significantly *worse* than random bars in the same regime. Random
+  entries lose about the transaction cost; the trigger adds about -0.19 R by entering on
+  short-term extensions that retrace.
+- V1's M15 entries are indistinguishable from random; the loss is costs plus the exit structure.
+- Both variants are negative before costs. No exit variant (BE offset, BE off, 24 h time stop,
+  TP 1R, TP 3R) gets near zero. Every year, symbol, side and ADX bucket is negative.
+
+**Outcome:** no change to the baseline. The candidate set in plan v2 is unchanged (it was
+fixed before these numbers existed). Evaluations on 2015-2017 so far: v1 development (2
+variants), ML walk-forward (2), this audit (2 variants, diagnostic).

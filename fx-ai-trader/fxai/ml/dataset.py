@@ -25,7 +25,8 @@ CONTRACT = 100_000.0
 
 
 def build_dataset(signals: pd.DataFrame, paths: dict[str, TradePath], costs: CostModel,
-                  account_ccy: str = "USD") -> pd.DataFrame:
+                  account_ccy: str = "USD", features: list[str] | None = None) -> pd.DataFrame:
+    features = list(features or FEATURES)
     rows = []
     for r in signals.itertuples(index=False):
         p = paths.get(r.key)
@@ -41,7 +42,7 @@ def build_dataset(signals: pd.DataFrame, paths: dict[str, TradePath], costs: Cos
         row = {"key": r.key, "symbol": r.symbol, "side": r.side, "t_decision": pd.Timestamp(r.time),
                "t_exit": pd.Timestamp(p.t_exit, tz="UTC"), "r_net": r_net, "label": int(r_net > 0),
                "exit_reason": p.reason}
-        for f in FEATURES:
+        for f in features:
             v = getattr(r, f)
             row[f] = float(v) if v is not None and np.isfinite(v) else np.nan
         rows.append(row)
