@@ -72,6 +72,7 @@ def test_state_json_has_every_field_the_parser_reads():
         "risk_per_trade_pct", "total_risk_pct", "max_positions", "max_entries", "symbols", "name", "canonical",
         "base", "profit_ccy", "bid", "ask", "tick_time", "digits", "point", "tick_size", "tick_value",
         "contract_size", "min_lot", "max_lot", "lot_step", "stop_level", "freeze_level", "margin_required",
+        "magic", "reset_zone", "reset_hour", "bar_timeframes", "bars_to_export", "symbol_suffix",
         "orders", "ticket", "symbol", "type", "lots", "open_price", "open_time", "sl", "tp", "profit", "swap",
         "commission", "magic", "comment", "history", "close_time", "close_price", "events",
     ]

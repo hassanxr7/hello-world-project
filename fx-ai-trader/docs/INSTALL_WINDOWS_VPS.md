@@ -3,6 +3,9 @@
 MT4 runs only on Windows (or Wine), and the file bridge needs MT4 and the Python service on the
 **same machine**. A Windows VPS close to your broker's servers is the usual setup.
 
+> Short version: [VPS_QUICKSTART.md](VPS_QUICKSTART.md). `scripts\windows\setup_vps.ps1` automates steps 1.4-1.5
+> and section 2 below, and `python -m fxai doctor` checks the whole chain (read-only).
+
 ## Requirements
 
 | Item | Notes |

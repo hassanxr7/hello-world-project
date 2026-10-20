@@ -9,6 +9,7 @@
   validate                full validation protocol -> reports/validation/<ts>/REPORT.md
   model train|approve|list
   estop [--policy]        write the emergency-stop flag for the EA directly
+  doctor [--json]         deployment diagnostics (safe, read-only; paste the output when asking for help)
   status                  print the latest status snapshot
 """
 
@@ -239,6 +240,15 @@ def cmd_estop(args) -> None:
           "To clear: delete the flag via the dashboard 'Clear emergency stop' (requires typing CLEAR).")
 
 
+def cmd_doctor(args) -> None:
+    from .doctor import as_dicts, format_report, run_doctor
+    cfg = _cfg(args)
+    checks = run_doctor(cfg)
+    print(json.dumps(as_dicts(checks), indent=1) if args.json else format_report(checks))
+    if any(c.status == "FAIL" for c in checks):
+        raise SystemExit(1)
+
+
 def cmd_status(args) -> None:
     from .storage import Storage
     cfg = _cfg(args)
@@ -264,6 +274,9 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("service").set_defaults(fn=cmd_service)
     sub.add_parser("dashboard").set_defaults(fn=cmd_dashboard)
     sub.add_parser("status").set_defaults(fn=cmd_status)
+    sp = sub.add_parser("doctor")
+    sp.add_argument("--json", action="store_true")
+    sp.set_defaults(fn=cmd_doctor)
     sp = sub.add_parser("paper")
     data_args(sp)
     sp.add_argument("--start", required=True)

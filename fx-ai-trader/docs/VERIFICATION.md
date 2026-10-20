@@ -4,7 +4,7 @@
 
 | Area | Evidence |
 |---|---|
-| 140 automated tests pass | `reports/test_output.txt` (from `python -m pytest -v`) |
+| 147 automated tests pass | `reports/test_output.txt` (from `python -m pytest -v`) |
 | Pinned dependencies resolve and install cleanly in a fresh venv | `pip install -r requirements-dev.txt -r requirements-llm.txt` then `pip check`: "No broken requirements found" |
 | Sizing, rounding, min-lot skip, tick-value use | `tests/test_sizing.py` |
 | Every risk check incl. currency, correlation, margin, daily loss with deposits, cooldowns, streaks, estop, live gate | `tests/test_risk_engine.py` |

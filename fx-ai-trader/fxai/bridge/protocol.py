@@ -116,6 +116,13 @@ class EAStatus:
     py_heartbeat_age: float
     last_cmd_seq: int
     limits: EALimits | None
+    magic: int | None = None
+    reset_zone: str | None = None
+    reset_hour: int | None = None
+    bar_timeframes: list[str] = field(default_factory=list)
+    bars_to_export: int | None = None
+    symbol_prefix: str | None = None
+    symbol_suffix: str | None = None
 
 
 @dataclass
@@ -178,7 +185,12 @@ def parse_state(text: str, magic: int) -> BridgeState:
         daily_loss_pct=_f(e, "daily_loss_pct"), entries_today=int(e.get("entries_today", 0)),
         failed_today=int(e.get("failed_today", 0)), modifications_today=int(e.get("modifications_today", 0)),
         partial_closes_today=int(e.get("partial_closes_today", 0)),
-        py_heartbeat_age=_f(e, "py_heartbeat_age", 1e9), last_cmd_seq=int(e.get("last_cmd_seq", 0)), limits=limits)
+        py_heartbeat_age=_f(e, "py_heartbeat_age", 1e9), last_cmd_seq=int(e.get("last_cmd_seq", 0)), limits=limits,
+        magic=int(e["magic"]) if "magic" in e else None, reset_zone=e.get("reset_zone"),
+        reset_hour=int(e["reset_hour"]) if "reset_hour" in e else None,
+        bar_timeframes=[t.strip() for t in str(e.get("bar_timeframes", "")).split(",") if t.strip()],
+        bars_to_export=int(e["bars_to_export"]) if "bars_to_export" in e else None,
+        symbol_prefix=e.get("symbol_prefix"), symbol_suffix=e.get("symbol_suffix"))
 
     specs: dict[str, SymbolSpec] = {}
     quotes: dict[str, Quote] = {}

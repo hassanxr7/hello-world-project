@@ -55,6 +55,7 @@ Screenshot of the dashboard (paper session on 2019 data):
 
 ## Quick start (demo)
 
+**Fastest path on a Windows VPS: [docs/VPS_QUICKSTART.md](docs/VPS_QUICKSTART.md)** (setup script + `python -m fxai doctor`).
 Full instructions: [docs/INSTALL_WINDOWS_VPS.md](docs/INSTALL_WINDOWS_VPS.md).
 
 ```powershell
@@ -77,7 +78,7 @@ it on a **demo** account.
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest                       # 140 tests: risk, sizing, time/DST, strategy causality, fills,
+python -m pytest                       # 147 tests: risk, sizing, time/DST, strategy causality, fills,
                                        # protocol, integration, dashboard security, LLM bounds, ML gates
 python -m fxai validate --data-root <oanda folder>    # regenerates reports/validation/<ts>/REPORT.md
 ```
@@ -93,6 +94,7 @@ python -m fxai validate --data-root <oanda folder>    # regenerates reports/vali
 - [MODEL_CARD.md](docs/MODEL_CARD.md): ML meta-filter dataset, features, labels, validation, limitations; LLM design
 - [VALIDATION.md](docs/VALIDATION.md): measured results, including losing periods
 - [RESEARCH_LOG.md](docs/RESEARCH_LOG.md): every evaluation in order, so the amount of testing is visible
+- [VPS_QUICKSTART.md](docs/VPS_QUICKSTART.md): step-by-step VPS setup with the setup script and diagnostics
 - [INSTALL_WINDOWS_VPS.md](docs/INSTALL_WINDOWS_VPS.md): installation and VPS deployment
 - [DEMO_AND_LIVE.md](docs/DEMO_AND_LIVE.md): demo forward-test procedure and the explicit live-enable checklist
 - [VERIFICATION.md](docs/VERIFICATION.md): what was and was not verified, and the exact remaining steps

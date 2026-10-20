@@ -279,6 +279,14 @@ datetime DayStartGmt(const datetime gmt)
    return MakeDate(s.year, s.mon, s.day) + ResetHour * 3600 - off;
 }
 
+string ZoneName()
+{
+   if(ResetZone == ZONE_UTC) return "UTC";
+   if(ResetZone == ZONE_NEW_YORK) return "America/New_York";
+   if(ResetZone == ZONE_LONDON) return "Europe/London";
+   return "server";
+}
+
 string DayIdStr(const int d)
 {
    return StringFormat("%04d-%02d-%02d", d / 10000, (d / 100) % 100, d % 100);
@@ -1182,6 +1190,10 @@ void WriteState()
         ",\"failed_today\":" + IntegerToString(g_failed) + ",\"modifications_today\":" + IntegerToString(g_mods) +
         ",\"partial_closes_today\":" + IntegerToString(g_partials) + ",\"py_heartbeat_age\":" + Num(PyHeartbeatAge(), 1) +
         ",\"last_cmd_seq\":" + IntegerToString(g_lastSeq) + ",\"server_offset\":" + IntegerToString(g_srvOffset) +
+        ",\"magic\":" + IntegerToString(MagicNumber) + ",\"reset_zone\":\"" + ZoneName() +
+        "\",\"reset_hour\":" + IntegerToString(ResetHour) + ",\"bar_timeframes\":\"" + JsonEsc(BarTimeframes) +
+        "\",\"bars_to_export\":" + IntegerToString(BarsToExport) + ",\"symbol_prefix\":\"" + JsonEsc(SymbolPrefix) +
+        "\",\"symbol_suffix\":\"" + JsonEsc(SymbolSuffix) + "\"" +
         ",\"limits\":{\"risk_per_trade_pct\":" + Num(MaxRiskPerTradePct, 4) + ",\"total_risk_pct\":" + Num(MaxTotalRiskPct, 4) +
         ",\"max_positions\":" + IntegerToString(MaxOpenPositions) + ",\"max_entries\":" + IntegerToString(MaxEntriesPerDay) +
         ",\"daily_loss_pct\":" + Num(MaxDailyLossPct, 4) + "}}";
