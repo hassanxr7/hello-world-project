@@ -4,7 +4,14 @@
 
 | Area | Evidence |
 |---|---|
-| 147 automated tests pass | `reports/test_output.txt` (from `python -m pytest -v`) |
+| 215 automated tests pass, 1 skipped (range_reversion forms no watchlist setup in the synthetic market) | `reports/test_output.txt` (from `python -m pytest -o addopts="" -v`) |
+| Every strategy is causal, has valid stops/targets, explains itself and forms watchlist setups | `tests/test_strategies.py` |
+| Vectorised fill simulator = bar-by-bar reference (24 configurations × random paths) | `tests/test_strategies.py::test_fast_simulator_matches_reference` |
+| Per-signal simulation = portfolio engine paths; random entries keep target/deadline; permutation test detects a look-ahead signal and does not flag coin flips | `tests/test_research.py` |
+| Per-order exit policy: persisted, survives an EA restart, fixed-distance trailing, time exit, invalid policies rejected; EA bounds = Python bounds | `tests/test_integration.py`, `tests/test_ea_source.py` |
+| Candlestick patterns (causal), watchlist lifecycle, pair assessment, minute scan in the service, signal ranking | `tests/test_operations.py` |
+| Period figures by trading day, drawdown, allowance, forecast evidence gate, block bootstrap keeps serial dependence, scenario arithmetic, dashboard labels | `tests/test_analytics.py` |
+| Dashboard v2 in a real browser (desktop and 390 px mobile width, no script errors, no horizontal overflow) | `docs/img/dashboard_v2.png` |
 | Pinned dependencies resolve and install cleanly in a fresh venv | `pip install -r requirements-dev.txt -r requirements-llm.txt` then `pip check`: "No broken requirements found" |
 | Sizing, rounding, min-lot skip, tick-value use | `tests/test_sizing.py` |
 | Every risk check incl. currency, correlation, margin, daily loss with deposits, cooldowns, streaks, estop, live gate | `tests/test_risk_engine.py` |
@@ -56,4 +63,13 @@
 4. **Restart tests:** restart MT4 and the service with an open demo position. Counters, estop
    and break-even behaviour persist and there are no duplicate orders.
 5. **Two charts:** attach the EA to a second chart. It must show STANDBY.
-6. **Record results** in `docs/RESEARCH_LOG.md` / your own log before any live consideration.
+6. **Per-order exits:** with a demo position open, open Tools → Global Variables (F3). Check
+   that `FXAI_<login>_XOK_<ticket>` = 1 and that `XH_`, `XBR_`, `XBP_`, `XTR_` and `XTD_` hold
+   the values sent with the order (they are in the OPEN command in the `commands` table).
+   Restart MT4: the values persist and break-even, trailing and max-hold continue. Rejection of
+   invalid policies is covered by the emulator tests and the EA source check.
+7. **D1 bars:** `bars\<SYM>_D1.csv` exists. The default is `BarTimeframes=M15,H1,H4,D1`, but an
+   EA attached **before this update keeps its saved inputs**: set `BarTimeframes` to
+   `M15,H1,H4,D1` in the EA's Inputs tab. `python -m fxai doctor` reports a missing timeframe
+   that the configured strategy needs.
+8. **Record results** in `docs/RESEARCH_LOG.md` / your own log before any live consideration.

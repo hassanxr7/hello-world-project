@@ -78,10 +78,29 @@ fraction of 1R.
 The filtered portfolios lose less mainly because they trade about half as much. Per-trade
 expectancy stays negative, so neither model may be approved.
 
+## Research plan v2: five new ideas plus a baseline variant (2007–2014, development)
+
+Pre-declared in [RESEARCH_PLAN_v2.md](RESEARCH_PLAN_v2.md) before any run. All six candidates
+failed every quality gate, so none was evaluated on 2015–2017 or later.
+
+| Candidate | Trades | PF | Exp. R | Max DD % | Per-signal gross R | Random-entry p |
+|---|---|---|---|---|---|---|
+| trend_pullback (BE +25) | 828 | 0.88 | −0.057 | 16.7 | −0.038 | 0.60 |
+| donchian_trend | 947 | 0.94 | −0.037 | 17.8 | −0.026 | 0.90 |
+| range_reversion | 2,035 | 0.84 | −0.085 | 33.7 | −0.077 | 1.00 |
+| london_breakout | 2,725 | 0.80 | −0.089 | 43.1 | −0.072 | 0.99 |
+| pullback_rejection | 1,923 | 0.82 | −0.093 | 36.9 | −0.060 | 0.47 |
+| vol_breakout | 2,175 | 0.90 | −0.060 | 31.4 | −0.018 | 0.72 |
+
+Full numbers, yearly results, adverse-cost runs and every trade are in `reports/experiments/`.
+The analysis is in [RESEARCH_LOG.md](RESEARCH_LOG.md) entry 7. Why the baseline loses is in
+[STRATEGY_AUDIT.md](STRATEGY_AUDIT.md).
+
 ## Conclusion
 
-The infrastructure works and the result is measured honestly: **the baseline strategy does not
-have an edge on this data, with or without the ML filter.** Do not trade it with real money.
+The infrastructure works and the result is measured honestly: **no strategy in this repository
+has an edge on this data, with or without the ML filter.** That covers the baseline and the
+five plan-v2 candidates. Do not trade it with real money.
 Use the system to develop and validate your own hypotheses on your broker's data
 (`mql4/Scripts/FXAI_ExportHistory.mq4` → `python -m fxai validate --data-format mt4`), then
 forward-test on demo as described in [DEMO_AND_LIVE.md](DEMO_AND_LIVE.md).
@@ -91,8 +110,12 @@ forward-test on demo as described in [DEMO_AND_LIVE.md](DEMO_AND_LIVE.md).
 ```bash
 bash scripts/fetch_oanda_data.sh /path/to/data       # sparse checkout of the public dataset
 python -m fxai validate --data-root /path/to/data/pyfinancialdata/data/currencies/oanda
+python -m fxai experiment --stage dev --data-root /path/to/data/pyfinancialdata/data/currencies/oanda --jobs 3
 python -m pytest
 ```
+
+The plan-v2 stage-1 run takes about 11 minutes on 4 cores (Donchian's month-long holds dominate).
+Re-running appends new rows to `reports/experiments/INDEX.md`, because every run is recorded.
 
 The run takes about 3–5 minutes on 4 CPU cores. The results are deterministic for a given dataset
 and code version.

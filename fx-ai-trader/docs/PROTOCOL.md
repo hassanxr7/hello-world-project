@@ -61,7 +61,7 @@ Common fields: `v`, `seq` (strictly increasing, never reused), `type`, `created`
 
 | type | extra fields | EA behaviour |
 |---|---|---|
-| `OPEN` | `id` signal id, `tag` 10-char base32 of sha256(id), `symbol` canonical, `side` BUY/SELL, `volume`, `sl`, `tp`, `ref` reference price, `maxdev` points, `maxrisk` money, `slip` points, `magic` | Refused if age > min(ttl, MaxCommandAgeSec). Duplicate tag means `DUPLICATE`. Then the full hard guard, write-ahead pending marker, `OrderSend` with comment `FXAI\|<tag>`; see the result statuses below |
+| `OPEN` | `id` signal id, `tag` 10-char base32 of sha256(id), `symbol` canonical, `side` BUY/SELL, `volume`, `sl`, `tp`, `ref` reference price, `maxdev` points, `maxrisk` money, `slip` points, `magic`; optional exit policy `hold_h` (0–1080), `be_r` (0–20, 0 = off), `be_pts` (0–2000), `trail_r` (−1–50, < 0 = off), `trail_dist` (price units, ≤ 5 % of price; required when trailing) | Refused if age > min(ttl, MaxCommandAgeSec). Duplicate tag means `DUPLICATE`. Then the full hard guard, write-ahead pending marker, `OrderSend` with comment `FXAI\|<tag>`; see the result statuses below |
 | `MODIFY` | `ticket`, `sl`, `tp` | System orders only; the stop may not be removed or widened |
 | `CLOSE` | `ticket`, `volume` (0 = full) | System orders only; a partial close is counted separately |
 | `CLOSE_ALL` | `reason` | Close all system positions and delete system pending orders |
@@ -95,3 +95,23 @@ system positions → symbol configured → one position per symbol → symbol tr
 `ref` → volume within min/max/step → planned risk ≤ min(`maxrisk`, equity × MaxRiskPerTradePct)
 × (1 + RiskTolerancePct) → open + new risk ≤ equity × MaxTotalRiskPct × (1 + tol) → free-margin
 check.
+
+## Per-order exit policy
+
+Each OPEN carries the strategy's own exit policy, the one that was backtested. Without it the
+EA would apply one global policy to every strategy.
+
+- The EA validates the five values with `ValidateExits()`. The ranges are shared with
+  `fxai.bridge.protocol.validate_exit_params`, and a test keeps them identical. Out-of-range
+  values make the EA answer `REJECTED` with `invalid exit params: ...`.
+- The policy is saved as GlobalVariables `FXAI_<login>_X{H,BR,BP,TR,TD,OK}_T<tag>` **before**
+  `OrderSend`. On fill or reconciliation it moves to `..._<ticket>`, so it survives terminal
+  restarts and ambiguous outcomes.
+- `ManagePositions()` uses the ticket's policy:
+  - break-even once profit >= `be_r` x R, at entry +/- `be_pts`;
+  - trailing once profit >= `trail_r` x R, at a FIXED distance `trail_dist`, which is the
+    strategy's trailing ATR multiple times the entry-timeframe ATR at the signal, exactly as
+    in `fxai/backtest/fills.py`;
+  - close after `hold_h` hours.
+- Orders without a policy (older orders, manual tests) use the EA inputs as before. Stops
+  only ever tighten.

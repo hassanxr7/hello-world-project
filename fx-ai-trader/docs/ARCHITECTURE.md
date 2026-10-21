@@ -79,8 +79,11 @@ host is possible via an SMB share but is not recommended.
 ## Timing
 
 - Monitoring: EA timer 500 ms; Python loop 1 s (state, quotes, health, reconciliation, safety).
-- Decisions: only when a new **completed** entry-timeframe bar exists (H1 by default). A
-  decision older than `signal_ttl_s` (90 s) is dropped.
+- Decisions: only when a new **completed** entry-timeframe bar exists (the strategy's entry
+  timeframe). A decision older than `signal_ttl_s` (90 s) is dropped. Signals on the same step
+  are ranked before the risk engine sees them.
+- Opportunity scan and watchlist re-evaluation: every `scan_interval_s` (≤ 60 s). The scan is
+  advisory, so a failure is logged and monitoring continues.
 - Higher-timeframe values are joined by bar **close** time (`merge_asof` backward), and swing
   levels count only after their confirmation bar has closed (no look-ahead; covered by a test).
 
@@ -88,5 +91,6 @@ host is possible via an SMB share but is not recommended.
 
 `signals`, `decisions` (unique per symbol/bar/strategy version), `commands` (unique OPEN per
 signal), `trades`, `events`, `equity` (1/min), `kv` (risk state, command seq), `controls`,
-`overrides`, `audit`, `models`, `llm_calls`, `status` (latest snapshot for the dashboard).
+`overrides`, `audit`, `models`, `llm_calls`, `watchlist` (one active setup per symbol, strategy and
+side; closed ones keep their outcome), `status` (latest snapshot for the dashboard, incl. the scan).
 WAL mode lets the dashboard read while the service writes.

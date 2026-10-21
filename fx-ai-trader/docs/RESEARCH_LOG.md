@@ -161,8 +161,8 @@ What the numbers say:
   resumption does not help on 2007-2014 (p = 0.47; real equals random).
 - The closest to zero are the slower trend and volatility rules (S1, S5, per-signal
   -0.04 to -0.05 R). S1 made +8.7 % in 2007 and +1.8 % in 2008, then lost in 5 of the next
-  6 years. That is consistent with the published decline of simple FX trend-following
-  returns after 2008, but it is one sample and is not evidence of an edge.
+  6 years. That fits the widely reported weakening of simple FX trend-following after 2008,
+  but it is one sample and no evidence of an edge.
 
 Evaluations so far on 2007-2014: 6, all in this entry. On 2015-2017: v1 development (2), ML
 walk-forward (2), baseline audit (2, diagnostic). On 2018-2020-05: v1 holdout (2).

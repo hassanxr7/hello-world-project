@@ -93,9 +93,12 @@ system's pending orders are cancelled, and existing positions follow `daily_loss
 
 ## Exits and protection
 
-Every entry carries a broker-side stop-loss (and take-profit at 2R by default). Break-even
-(at 1R, +10 points), optional ATR trailing stops and a maximum holding time (48 h) are run by the
-EA every 500 ms, independent of Python. Stops are only ever moved in the favourable direction,
+Every entry carries a broker-side stop-loss and, where the strategy has one, a take-profit.
+Each order also carries its strategy's exit policy: maximum hold, break-even trigger and offset,
+and trailing start with a fixed trailing distance. The EA stores the policy per ticket and runs
+it every 500 ms, independent of Python ([PROTOCOL.md](PROTOCOL.md)). Out-of-range values make
+the EA reject the order. Orders without a policy use the EA inputs (break-even at 1R +10
+points, max hold 48 h). Stops are only ever moved in the favourable direction,
 respecting the broker's stop and freeze levels. If you use break-even, set the offset above your
 round-trip cost (spread + commission + slippage); otherwise break-even exits become small losses
 (visible in the validation report).

@@ -1,6 +1,7 @@
 # External services, licences, subscriptions and costs
 
-Prices change. The figures below are indications as of writing; check current terms.
+Prices change. The figures below are indications as of writing; check current terms. Market data and
+economic-calendar options (quality, latency, coverage, cost) are compared in [DATA_SOURCES.md](DATA_SOURCES.md).
 
 | Item | Needed? | Cost | Notes |
 |---|---|---|---|

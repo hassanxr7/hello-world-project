@@ -8,6 +8,21 @@ Three kinds of "AI" appear in this system and are kept distinct:
 | Trained statistical model | `fxai/ml` | Meta-filter: may only *remove* rule-based signals | Implemented; **no model passed its gates**, disabled |
 | Language model | `fxai/llm` | Optional review: explanation, or veto (WAIT) | Implemented; **off by default**; not exercised against the live API here |
 
+### Authority and change control (applies to every AI component)
+
+- **Claude (LLM) review is not a trained model.** It is a veto-only reviewer of a candidate that
+  has already passed the rules and the risk engine. It cannot open, upgrade or size a trade.
+- **A trained model gets execution authority only after showing added value on unseen data.**
+  That means passing the walk-forward gates on data not used for training, then a human
+  `model approve`. Even then it can only remove signals. No model has qualified.
+- **No AI component can override a limit.** The risk engine and then the EA re-check every order
+  against the hard limits whatever any model says.
+- **No unvalidated self-modification.** The live service never trains, tunes or edits strategy
+  parameters. Every strategy or model change is a new version that must go through the
+  versioned evaluation (research plan, experiment record, approval).
+- The attention score and the candlestick reading are **descriptive heuristics**, labelled as
+  such on the dashboard. They order and explain; they never decide.
+
 ## 1. ML meta-filter
 
 **Task.** For each baseline signal, estimate whether the trade would finish with a positive R

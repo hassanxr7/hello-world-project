@@ -16,9 +16,18 @@ EA `EnableTrading=false`, config `mode: demo`.
 
 EA `EnableTrading=true`, still on a **demo** account.
 
+> No strategy in this repository has passed validation (research log entries 3–7). A demo run
+> of any of them tests the **integration** with your broker and terminal: fills, protection,
+> restarts, reconciliation and costs. It does not test an edge. Expect it to lose money.
+
 - [ ] Every order has a broker-side SL (and TP); comment `FXAI|…`; magic matches.
 - [ ] A manual trade with another magic number is never modified or closed.
 - [ ] Break-even moves once price reaches 1R; the stop never widens.
+- [ ] The order's own exit policy is applied: in MT4, Tools → Global Variables (F3) shows
+      `FXAI_<login>_XOK_<ticket>` = 1 and the hold / break-even / trailing values sent with the
+      order. A trailing strategy keeps the stop at the fixed `XTD_<ticket>` distance.
+- [ ] The dashboard's watchlist changes state as bars close (active → triggered / expired /
+      invalidated), and "Pairs by attention" refreshes at least once a minute.
 - [ ] Restart MT4 with an open position: protection resumes, counters persist.
 - [ ] Disconnect the network briefly: no duplicate orders after reconnecting; reconciliation
       events appear in the log if a result was ambiguous.
@@ -39,7 +48,8 @@ Live trading is only reasonable if **all** of these hold:
 3. You accept that losses can exceed planned stops and daily thresholds, and that past results
    do not guarantee future results.
 
-**The baseline strategy shipped here does not meet condition 1** (see [VALIDATION.md](VALIDATION.md)).
+**No strategy shipped here meets condition 1** (see [VALIDATION.md](VALIDATION.md) and
+[RESEARCH_LOG.md](RESEARCH_LOG.md) entry 7: all six candidates of research plan v2 failed development).
 
 ## Stage 3: the explicit live switches (all are required)
 
@@ -47,7 +57,7 @@ Live trading is only reasonable if **all** of these hold:
 |---|---|
 | `config/config.yaml` | `mode: live` |
 | `config/config.yaml` | `live_trading_acknowledged: true` |
-| `reports/validation_status.json` | `{"strategy_version": "...", "passed": true, "demo_forward_test": "<dates, trades, notes>", "approved_by": "<you>", "date": "..."}`. The service refuses `mode: live` without `"passed": true`. Write this file yourself, only when stages 1 and 2 are satisfied |
+| `reports/validation_status.json` | `{"strategy_version": "...", "passed": true, "demo_forward_test": "<dates, trades, notes>", "approved_by": "<you>", "date": "..."}`. The service refuses `mode: live` unless `"passed": true` **and** `strategy_version` equals the configured strategy (e.g. `trend_pullback-1.0.0`). Write this file yourself, only when stages 1 and 2 are satisfied. The dashboard forecast also stays off without it |
 | EA inputs | `EnableTrading=true` **and** `AllowLiveAccount=true` |
 
 Every risk control stays active in live mode, and the hard limits still cap everything. Start
