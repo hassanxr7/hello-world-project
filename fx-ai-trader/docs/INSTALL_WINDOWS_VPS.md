@@ -3,8 +3,10 @@
 MT4 runs only on Windows (or Wine), and the file bridge needs MT4 and the Python service on the
 **same machine**. A Windows VPS close to your broker's servers is the usual setup.
 
-> Short version: [VPS_QUICKSTART.md](VPS_QUICKSTART.md). `scripts\windows\setup_vps.ps1` automates steps 1.4-1.5
-> and section 2 below, and `python -m fxai doctor` checks the whole chain (read-only).
+> Short version: [VPS_QUICKSTART.md](VPS_QUICKSTART.md). One PowerShell command runs
+> `scripts\windows\setup_vps.ps1`, which automates everything below except installing MT4 and
+> attaching the EA to a chart. This page is the manual route and the reference for what the
+> installer does.
 
 ## Requirements
 
@@ -35,7 +37,7 @@ MT4 runs only on Windows (or Wine), and the file bridge needs MT4 and the Python
    - *Inputs*: keep `EnableTrading=false` and `AllowLiveAccount=false` for the first run; set
      `SymbolSuffix`/`SymbolPrefix`; keep `MagicNumber` equal to `bridge.magic_number`;
      choose `ResetZone`/`ResetHour` to match `daily_reset` in the config;
-     `BarTimeframes` must include the strategy timeframes (default `M15,H1,H4`).
+     `BarTimeframes` must include the strategy timeframes (default `M15,H1,H4,D1`).
 8. The chart's top-left shows `FXAI Bridge 1.0.0 [ACTIVE]`. The *Experts* tab shows
    `INIT ... folder Common\Files\FXAI\<login>`.
 

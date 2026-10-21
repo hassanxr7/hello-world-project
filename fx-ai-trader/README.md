@@ -68,24 +68,16 @@ Screenshot of the dashboard (paper session on 2019 data, taken after the paper s
 
 ## Quick start (demo)
 
-**Fastest path on a Windows VPS: [docs/VPS_QUICKSTART.md](docs/VPS_QUICKSTART.md)** (setup script + `python -m fxai doctor`).
-Full instructions: [docs/INSTALL_WINDOWS_VPS.md](docs/INSTALL_WINDOWS_VPS.md).
+On the Windows VPS, paste this into **Windows PowerShell**. It installs or updates everything,
+asks only for the dashboard password, the symbol suffix and the commission, and ends with a
+verified summary. Details are in [docs/VPS_QUICKSTART.md](docs/VPS_QUICKSTART.md).
 
 ```powershell
-# Windows, in the fx-ai-trader folder
-py -3.13 -m venv .venv                                  # tested with Python 3.13
-.venv\Scripts\pip install -r requirements.txt
-copy config\config.example.yaml config\config.yaml      # edit symbols suffix etc.
-copy config\.env.example .env
-.venv\Scripts\python -m fxai hash-password              # put the output in .env
-.venv\Scripts\python -m fxai gen-secret                 # put the output in .env
-# MT4: copy mql4\Experts\FXAI_Bridge.mq4 to <MT4 data folder>\MQL4\Experts, compile, attach to ONE chart
-.venv\Scripts\python -m fxai service                    # terminal 1
-.venv\Scripts\python -m fxai dashboard                  # terminal 2, then open http://127.0.0.1:8787
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072; $f = "$env:TEMP\fxai-setup.ps1"; Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/hassanxr7/hello-world-project/ccr-4ece60e2-b0u54h/fx-ai-trader/scripts/windows/setup_vps.ps1" -OutFile $f; & $f
 ```
 
-The EA ships with `EnableTrading=false`. Start that way to verify connectivity, then enable
-it on a **demo** account.
+Two steps stay manual: installing your broker's MT4, and attaching the EA to one chart. The EA
+ships with `EnableTrading=false`, and the config is created with `mode: demo`.
 
 ## Tests and reproducibility
 
