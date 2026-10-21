@@ -89,9 +89,8 @@ class LondonBreakout(StrategyBase):
         f["sl"] = np.where(long_sig, sl_l, np.where(short_sig, sl_s, np.nan))
         f["tp"] = np.where(long_sig, f["close"] + f["range_h"], np.where(short_sig, f["close"] - f["range_h"], np.nan))
         f["signal"] = np.where(long_sig, 1, np.where(short_sig, -1, 0))
-        exit_at = pd.DatetimeIndex(day) + pd.Timedelta(hours=p.exit_hour)
-        f["deadline"] = pd.Series(np.where(long_sig | short_sig, exit_at.asi8, np.nan), index=f.index)
-        f["deadline"] = pd.to_datetime(f["deadline"], utc=True)
+        exit_at = pd.Series(pd.DatetimeIndex(day).as_unit("ns") + pd.Timedelta(hours=p.exit_hour), index=f.index)
+        f["deadline"] = exit_at.where(np.asarray(long_sig | short_sig))  # NaT where there is no signal
         # watchlist: valid range during the window, no break yet (trigger levels = range edges)
         watch = warm & f["r_window"] & f["r_range"] & ~above & ~below & (nth == 0)
         f["candidate_side"] = np.where(watch, np.where(f["close"] >= (hi + lo) / 2, 1, -1), 0)

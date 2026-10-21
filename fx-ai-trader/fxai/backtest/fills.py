@@ -115,6 +115,8 @@ def simulate_trade(a: SymbolArrays, i0: int, side: int, sl: float, exits: ExitCo
     n = len(a.t)
     if i0 >= n:
         return None
+    if deadline_ns is not None and deadline_ns <= int(a.t[i0]):
+        return None  # the signal expired before it could be filled - never trade an expired signal
     bo, bh, bl, bc, ao, ah, al, ac = a.bid_ask(i0)
     eslip, sslip = costs.entry_slip(a.pip_size), costs.stop_slip(a.pip_size)
     entry = ao + eslip if side > 0 else bo - eslip
@@ -208,6 +210,8 @@ def simulate_trade_fast(a: SymbolArrays, i0: int, side: int, sl: float, exits: E
     if i0 >= n:
         return None
     t0 = int(a.t[i0])
+    if deadline_ns is not None and deadline_ns <= t0:
+        return None  # expired before it could be filled
     max_ns = int(exits.max_hold_hours * 3600e9)
     i_time = int(np.searchsorted(a.t, t0 + max_ns, side="left"))
     i_end = min(i_time, n - 1)

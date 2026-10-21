@@ -24,7 +24,7 @@ import pandas as pd
 
 from ..backtest.costs import CostModel
 from ..backtest.engine import PortfolioBacktest
-from ..backtest.fills import simulate_trade
+from ..backtest.fills import simulate_trade_fast
 from ..config import ExitConfig
 from ..symbols import KNOWN_MAJORS
 
@@ -43,21 +43,28 @@ def r_net_of_path(path, symbol: str, costs: CostModel, account_ccy: str = "USD")
 
 
 def simulate_signals(bt: PortfolioBacktest, sig: pd.DataFrame, exits: ExitConfig, costs: CostModel) -> pd.DataFrame:
-    """Per-signal isolated simulation. ``sig`` needs key, symbol, time, side, sl, atr_e."""
+    """Per-signal isolated simulation (no portfolio limits). ``sig`` needs key, symbol, time, side, sl,
+    atr_e; optional ``tp`` (fixed target price) and ``deadline`` (forced exit time) are honoured exactly as
+    the portfolio backtest honours them. Uses the vectorised simulator (differential-tested against
+    the bar-by-bar reference in tests/test_strategies.py)."""
     rows = []
+    has_tp, has_dl = "tp" in sig.columns, "deadline" in sig.columns
     for r in sig.itertuples(index=False):
         a = bt._arrays[r.symbol]
         ts = pd.Timestamp(r.time).value
         i0 = a.index_at_or_after(ts)
         if i0 >= len(a.t) or a.t[i0] - ts > 5 * 60 * NS:
             continue
-        p = simulate_trade(a, i0, int(r.side), float(r.sl), exits, costs, float(r.atr_e))
+        tp_price = float(r.tp) if has_tp and pd.notna(r.tp) else None
+        deadline = int(pd.Timestamp(r.deadline).value) if has_dl and pd.notna(r.deadline) else None
+        p = simulate_trade_fast(a, i0, int(r.side), float(r.sl), exits, costs, float(r.atr_e),
+                                tp_price=tp_price, deadline_ns=deadline)
         if p is None:
             continue
         rows.append({"key": r.key, "symbol": r.symbol, "time": r.time, "side": r.side, "r_net": r_net_of_path(p, r.symbol, costs),
                      "r_gross": p.r_gross, "reason": p.reason, "mfe_r": p.mfe_r, "mae_r": p.mae_r,
                      "hold_h": (p.t_exit - p.t_entry) / 3600e9})
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=["key", "symbol", "time", "side", "r_net", "r_gross", "reason", "mfe_r", "mae_r", "hold_h"])
 
 
 @dataclass
@@ -115,9 +122,21 @@ def random_entry_test(bt: PortfolioBacktest, signals: pd.DataFrame, exits: ExitC
 
     sig_hours = pd.DatetimeIndex(sig["time"]).hour.to_numpy()
     sig_reg = sig["regime"].astype(str).to_numpy() if ("regime" in sig and match_regime) else np.full(len(sig), "*")
-    stop_atr = ((sig["ref_close"] - sig["sl"]).abs() / sig["atr_e"]).to_numpy() if "ref_close" in sig else np.full(len(sig), 1.5)
+    ref = sig["ref_close"].to_numpy(float) if "ref_close" in sig else None
+    stop_dist = np.abs(ref - sig["sl"].to_numpy(float)) if ref is not None else None
+    stop_atr = stop_dist / sig["atr_e"].to_numpy(float) if ref is not None else np.full(len(sig), 1.5)
+    # Same exit structure for the random entries: target at the same multiple of the stop, forced exit
+    # after the same time-to-deadline (strategies without these columns get NaN = not used).
+    tp_r = (np.abs(sig["tp"].to_numpy(float) - ref) / stop_dist) if ("tp" in sig and ref is not None) else np.full(len(sig), np.nan)
+    if "deadline" in sig:
+        dl = pd.to_datetime(sig["deadline"], utc=True)
+        dl_off = (dl - pd.to_datetime(sig["time"], utc=True)).to_numpy()
+    else:
+        dl_off = np.full(len(sig), np.timedelta64("NaT", "ns"))
     sides = sig["side"].to_numpy()
     syms = sig["symbol"].to_numpy()
+    arr = {sym: (f["close"].to_numpy(float), f["atr_e"].to_numpy(float), pd.DatetimeIndex(f["close_time"]))
+           for sym, f in frames.items()}
 
     null_means = np.empty(n_perm)
     for k in range(n_perm):
@@ -131,11 +150,14 @@ def random_entry_test(bt: PortfolioBacktest, signals: pd.DataFrame, exits: ExitC
             if pool is None or len(pool) == 0:
                 continue
             i = int(rng.choice(pool))
-            row = frames[sym].iloc[i]
+            c_arr, a_arr, t_arr = arr[sym]
             side = int(sides[j])
-            close, atr_e = float(row["close"]), float(row["atr_e"])
+            close, atr_e, t = float(c_arr[i]), float(a_arr[i]), t_arr[i]
             sl = close - side * stop_atr[j] * atr_e
-            rows.append({"key": f"perm{k}-{j}", "symbol": sym, "time": row["close_time"], "side": side, "sl": sl, "atr_e": atr_e})
+            tp = close + side * tp_r[j] * abs(close - sl) if np.isfinite(tp_r[j]) else np.nan
+            deadline = t + pd.Timedelta(dl_off[j]) if not pd.isna(dl_off[j]) else pd.NaT
+            rows.append({"key": f"perm{k}-{j}", "symbol": sym, "time": t, "side": side, "sl": sl, "atr_e": atr_e,
+                         "tp": tp, "deadline": deadline})
         sim = simulate_signals(bt, pd.DataFrame(rows), exits, costs)
         null_means[k] = float(sim["r_net"].mean()) if len(sim) else np.nan
     null_means = null_means[np.isfinite(null_means)]

@@ -363,7 +363,10 @@ class TradingService:
         ex = self.strategy.exits
         hold_h = ex.max_hold_hours
         if out.deadline is not None:
-            hold_h = max(0.25, min(hold_h, (out.deadline - pd.Timestamp(now)).total_seconds() / 3600))
+            left_h = (out.deadline - pd.Timestamp(now)).total_seconds() / 3600
+            if left_h <= 0.25:  # never open a trade whose forced-exit time has passed or is minutes away
+                return self._block(sym, out, f"forced-exit deadline {out.deadline:%Y-%m-%d %H:%M} UTC passed or < 15 min away")
+            hold_h = min(hold_h, left_h)
         exit_params = {"hold_h": round(hold_h, 2), "be_r": ex.breakeven_trigger_r if ex.breakeven_enabled else 0,
                        "be_pts": ex.breakeven_offset_points, "trail_r": ex.trailing_start_r if ex.trailing_enabled else -1,
                        "trail_atr": ex.trailing_atr_mult, "trail_tf": TF_MIN[self.strategy.trend_tf]}

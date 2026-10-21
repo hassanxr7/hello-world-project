@@ -232,6 +232,57 @@ def cmd_model(args) -> None:
           f"{'Approvable' if rep['approvable'] else 'NOT approvable - gates failed'}.")
 
 
+def cmd_experiment(args) -> None:
+    """Research plan v2 runs. Validation only for candidates whose development run passed."""
+    from concurrent.futures import ProcessPoolExecutor
+    import multiprocessing as mp
+    from .research import experiments as ex
+    plan = {lbl: (name, exits) for lbl, name, exits in ex.PLAN_V2}
+    labels = list(plan) if args.candidates == ["all"] else args.candidates
+    unknown = [c for c in labels if c not in plan]
+    if unknown:
+        raise SystemExit(f"not in the pre-declared plan: {unknown}; choose from {list(plan)}")
+    if args.stage in ("validation", "known"):
+        allowed = []
+        for c in labels:
+            dev = ex.latest_result(args.out, c, "dev")
+            if dev is None or not dev.get("passed"):
+                print(f"{c}: refused - development stage {'not run' if dev is None else 'failed'} "
+                      f"(plan v2: later stages only for survivors)")
+            else:
+                allowed.append(c)
+        labels = allowed
+    if not labels:
+        return print("nothing to run")
+    start, end = ex.STAGES[args.stage]
+    args.start_year, args.end_year = (start - pd.Timedelta(days=400)).year, (end - pd.Timedelta(days=1)).year
+    global _EXP_DATA
+    _EXP_DATA, desc = _load_data(args, ["EURUSD", "GBPUSD", "USDCAD", "AUDUSD"])
+    print(f"data: {desc}; symbols {list(_EXP_DATA)}; stage {args.stage} {start.date()}..{end.date()}", flush=True)
+    jobs = [(c, plan[c][0], plan[c][1], args.stage, args.out, args.n_perm) for c in labels]
+    if args.jobs <= 1:
+        results = [_run_one(j) for j in jobs]
+    else:
+        with ProcessPoolExecutor(args.jobs, mp_context=mp.get_context("fork")) as pool:
+            results = list(pool.map(_run_one, jobs))
+    for line in results:
+        print(line)
+
+
+_EXP_DATA: dict = {}
+
+
+def _run_one(job) -> str:
+    from .research.experiments import run_experiment
+    label, name, exits, stage, out, n_perm = job
+    t0 = time.time()
+    r = run_experiment(name, _EXP_DATA, stage, out_root=out, n_perm=n_perm, exits=exits, label=label)
+    failed = [g.name for g in r.gates if not g.passed]
+    return (f"{r.id}: {'PASS' if r.passed else 'FAIL ' + ', '.join(failed)} | trades {r.stats.get('trades')} "
+            f"exp {r.stats.get('expectancy_r')}R PF {r.stats.get('profit_factor')} perm p {r.permutation.get('p_value')} "
+            f"({time.time() - t0:.0f}s)")
+
+
 def cmd_estop(args) -> None:
     from .bridge.file_bridge import FileBridge
     from .config import resolve_bridge_dir
@@ -312,6 +363,14 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--end-year", type=int, default=2020)
     sp.add_argument("--first-test", default="2016-07-01")
     sp.set_defaults(fn=cmd_model)
+    sp = sub.add_parser("experiment", help="run pre-declared research plan v2 candidates on one stage")
+    data_args(sp)
+    sp.add_argument("--stage", choices=["dev", "validation", "known"], required=True)
+    sp.add_argument("--candidates", nargs="+", default=["all"])
+    sp.add_argument("--n-perm", type=int, default=200)
+    sp.add_argument("--jobs", type=int, default=1)
+    sp.add_argument("--out", default="reports/experiments")
+    sp.set_defaults(fn=cmd_experiment)
     sp = sub.add_parser("estop")
     sp.add_argument("--policy", choices=["close_all", "hold"], default="close_all")
     sp.set_defaults(fn=cmd_estop)

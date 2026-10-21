@@ -41,6 +41,12 @@ def test_output_contract_and_stops(m1, name):
         tl, ts = longs.dropna(subset=["tp"]), shorts.dropna(subset=["tp"])
         assert (tl["tp"] > tl["close"]).all() and (ts["tp"] < ts["close"]).all()
     assert f["candidate_side"].isin([-1, 0, 1]).all()
+    if "deadline" in f:
+        d = pd.to_datetime(s["deadline"], utc=True)
+        ok = d.notna()
+        assert ok.all(), f"{name}: signal without deadline"
+        ahead = d - s["close_time"]
+        assert (ahead > pd.Timedelta(0)).all() and (ahead < pd.Timedelta(days=3)).all(), (name, ahead.describe())
 
 
 @pytest.mark.parametrize("name", list(REGISTRY))

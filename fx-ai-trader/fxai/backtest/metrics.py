@@ -82,6 +82,10 @@ def compute_stats(trades: pd.DataFrame, equity_hourly: pd.Series, initial: float
     out["best_month"] = round(float(by_m.max()), 2)
     yearly = trades.set_index("exit_time")["net"].resample("YE").sum()
     out["yearly_net"] = {str(k.year): round(float(v), 2) for k, v in yearly.items()}
+    # Return per calendar year relative to the balance at the start of that year (closed trades).
+    start_bal = initial + yearly.cumsum().shift(1, fill_value=0.0)
+    out["yearly_return_pct"] = {str(k.year): round(float(v / b * 100), 2) if b > 0 else None
+                                for (k, v), b in zip(yearly.items(), start_bal)}
     out["by_symbol"] = {s: {"trades": int(len(g)), "net": round(float(g["net"].sum()), 2),
                             "expectancy_r": round(float(g["r_multiple"].mean()), 3),
                             "win_rate_pct": round(float((g["net"] > 0).mean() * 100), 1)}

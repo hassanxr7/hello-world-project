@@ -23,6 +23,18 @@ from .permutation import random_entry_test, simulate_signals
 
 K_CANDIDATES = 6  # pre-declared set size for the Bonferroni correction
 
+# The pre-declared candidate set of docs/RESEARCH_PLAN_v2.md: (run label, strategy, exit overrides).
+# Parameters are the strategies' a-priori defaults; nothing here may change after results are seen.
+PLAN_V2: list[tuple[str, str, dict | None]] = [
+    ("trend_pullback_be25", "trend_pullback", {"breakeven_offset_points": 25}),  # sanity variant of the baseline
+    ("donchian_trend", "donchian_trend", None),
+    ("range_reversion", "range_reversion", None),
+    ("london_breakout", "london_breakout", None),
+    ("pullback_rejection", "pullback_rejection", None),
+    ("vol_breakout", "vol_breakout", None),
+]
+assert len(PLAN_V2) == K_CANDIDATES
+
 STAGES = {
     "dev": (pd.Timestamp("2007-01-01", tz="UTC"), pd.Timestamp("2015-01-01", tz="UTC")),
     "validation": (pd.Timestamp("2015-01-01", tz="UTC"), pd.Timestamp("2018-01-01", tz="UTC")),
@@ -61,27 +73,36 @@ class ExperimentResult:
                 "adverse": self.adverse, "gates": [g.__dict__ for g in self.gates], "passed": self.passed}
 
 
+def _v(d: dict, key: str, missing: float) -> float:
+    """A gate input; a missing value (e.g. too few signals for a permutation test) counts as failing."""
+    v = d.get(key)
+    return missing if v is None or (isinstance(v, float) and np.isnan(v)) else float(v)
+
+
 def dev_gates(r: ExperimentResult, stage: str) -> list[Gate]:
     s, ps, pm, yr, adv = r.stats, r.per_signal, r.permutation, r.yearly, r.adverse
     years = [v for v in yr.values()]
     n_pos = sum(1 for v in years if v > 0)
-    worst_year_pct = min(years) / 10_000 * 100 if years else 0.0
+    yr_pct = [v for v in (s.get("yearly_return_pct") or {}).values() if v is not None]
+    worst_year_pct = min(yr_pct) if yr_pct else 0.0  # vs. balance at the start of that year
     if stage == "dev":
         return [
-            Gate("per_signal_expectancy_positive", ps.get("mean_r_net", -1) > 0, ps.get("mean_r_net"), "> 0"),
-            Gate("profit_factor", s.get("profit_factor", 0) >= 1.10, s.get("profit_factor"), ">= 1.10"),
-            Gate("trades", s.get("trades", 0) >= 150, s.get("trades"), ">= 150"),
-            Gate("permutation_p_bonferroni", pm.get("p_value", 1) < 0.05 / K_CANDIDATES, pm.get("p_value"), f"< {0.05 / K_CANDIDATES:.4f}"),
-            Gate("years_positive", n_pos >= 5 and worst_year_pct > -8, f"{n_pos}/{len(years)} positive, worst {worst_year_pct:.1f}%", ">= 5 of 8, worst > -8%"),
-            Gate("adverse_costs_positive", adv.get("net_profit", -1) > 0, adv.get("net_profit"), "> 0 (spread x1.5, slippage x2)"),
-            Gate("max_drawdown", s.get("max_drawdown_pct", 100) < 15, s.get("max_drawdown_pct"), "< 15%"),
+            Gate("per_signal_expectancy_positive", _v(ps, "mean_r_net", -1) > 0, ps.get("mean_r_net"), "> 0"),
+            Gate("profit_factor", _v(s, "profit_factor", 0) >= 1.10, s.get("profit_factor"), ">= 1.10"),
+            Gate("trades", _v(s, "trades", 0) >= 150, s.get("trades"), ">= 150"),
+            Gate("permutation_p_bonferroni", _v(pm, "p_value", 1) < 0.05 / K_CANDIDATES, pm.get("p_value"),
+                 f"< {0.05 / K_CANDIDATES:.4f}"),
+            Gate("years_positive", n_pos >= 5 and worst_year_pct > -8,
+                 f"{n_pos}/{len(years)} positive, worst {worst_year_pct:.1f}%", ">= 5 of 8, worst > -8%"),
+            Gate("adverse_costs_positive", _v(adv, "net_profit", -1) > 0, adv.get("net_profit"), "> 0 (spread x1.5, slippage x2)"),
+            Gate("max_drawdown", _v(s, "max_drawdown_pct", 100) < 15, s.get("max_drawdown_pct"), "< 15%"),
         ]
     if stage == "validation":
         return [
-            Gate("expectancy_positive", s.get("expectancy_r", -1) > 0, s.get("expectancy_r"), "> 0"),
-            Gate("profit_factor", s.get("profit_factor", 0) >= 1.05, s.get("profit_factor"), ">= 1.05"),
-            Gate("max_drawdown", s.get("max_drawdown_pct", 100) < 15, s.get("max_drawdown_pct"), "< 15%"),
-            Gate("permutation_p", pm.get("p_value", 1) < 0.05, pm.get("p_value"), "< 0.05"),
+            Gate("expectancy_positive", _v(s, "expectancy_r", -1) > 0, s.get("expectancy_r"), "> 0"),
+            Gate("profit_factor", _v(s, "profit_factor", 0) >= 1.05, s.get("profit_factor"), ">= 1.05"),
+            Gate("max_drawdown", _v(s, "max_drawdown_pct", 100) < 15, s.get("max_drawdown_pct"), "< 15%"),
+            Gate("permutation_p", _v(pm, "p_value", 1) < 0.05, pm.get("p_value"), "< 0.05"),
         ]
     return []
 
@@ -119,7 +140,7 @@ def run_experiment(strategy_name: str, m1: dict[str, pd.DataFrame], stage: str, 
     adv = bt.run(costs=adverse_costs, paths=apaths, start=start, end=end, label="adverse").stats
     bt.trade_paths(costs)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    eid = f"{stage}-{strategy_name}-{stamp}"
+    eid = f"{stage}-{label or strategy_name}-{stamp}"
     r = ExperimentResult(eid, bt.strategy.full_version, stage, (str(start.date()), str(end.date())), res.stats, per_signal,
                          perm, yearly, {k: adv.get(k) for k in ("net_profit", "profit_factor", "expectancy_r", "trades")})
     r.gates = dev_gates(r, stage)
@@ -129,11 +150,32 @@ def run_experiment(strategy_name: str, m1: dict[str, pd.DataFrame], stage: str, 
     (out / "config.json").write_text(json.dumps({"config": raw, "effective_exits": bt.exits.model_dump(),
                                                  "timeframes": [bt.strategy.entry_tf, bt.strategy.trend_tf],
                                                  "params": bt.strategy.p.model_dump(), "costs": costs.describe(),
-                                                 "n_perm": n_perm, "symbols": bt.symbols}, indent=2, default=str))
+                                                 "n_perm": n_perm, "symbols": bt.symbols, "label": label,
+                                                 "data_period_loaded": [str(lo.date()), str(end.date())],
+                                                 "code": git_revision()}, indent=2, default=str))
     res.trades.to_csv(out / "trades.csv", index=False)
     per.to_csv(out / "per_signal.csv", index=False)
     _append_index(Path(out_root), r)
     return r
+
+
+def git_revision() -> dict:
+    """Commit hash and dirty flag of the code that produced a result (reproducibility)."""
+    import subprocess
+    here = Path(__file__).resolve().parent
+    try:
+        rev = subprocess.run(["git", "rev-parse", "HEAD"], cwd=here, capture_output=True, text=True, timeout=10).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--", str(here.parent)], cwd=here,
+                                    capture_output=True, text=True, timeout=10).stdout.strip())
+        return {"commit": rev or None, "dirty": dirty}
+    except Exception:
+        return {"commit": None, "dirty": None}
+
+
+def latest_result(root: str | Path, label: str, stage: str) -> dict | None:
+    """Most recent recorded result for ``label`` at ``stage`` (None if never run)."""
+    runs = sorted(Path(root).glob(f"{stage}-{label}-*/result.json"))
+    return json.loads(runs[-1].read_text()) if runs else None
 
 
 def _append_index(root: Path, r: ExperimentResult) -> None:
