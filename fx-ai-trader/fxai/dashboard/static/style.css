@@ -160,3 +160,17 @@ input { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border
 body.login { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
 .login-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: min(360px, 100%); }
 .login-card form { display: grid; gap: 10px; margin-top: 16px; }
+
+/* data-kind labels: text is always present, colour is only a second cue */
+.kind { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.05rem 0.4rem;
+        border-radius: 0.3rem; border: 1px solid currentColor; vertical-align: middle; margin-left: 0.35rem; }
+.kind-actual { color: var(--good-text); }
+.kind-simulated { color: var(--text-secondary); border-style: dotted; }
+.kind-forecast { color: var(--series-1); }
+.kind-scenario { color: var(--text-secondary); border-style: dashed; }
+.legend { margin: 0.2rem 0 0.8rem; }
+.insufficient { font-weight: 600; margin: 0.2rem 0 0.4rem; }
+.checks li.ok::marker { content: "✓ "; }
+.checks li.fail::marker { content: "✕ "; }
+.reasons { margin: 0; padding-left: 1rem; }
+.reasons li { margin: 0; }

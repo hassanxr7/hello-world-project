@@ -66,10 +66,14 @@ hard_limits:                   # the dashboard can never set limits above these
   max_entries_per_day: 20
 
 strategy:
+  # One of: trend_pullback, donchian_trend, range_reversion, london_breakout, pullback_rejection,
+  # vol_breakout. Each has its own timeframes, parameters and exit policy (fxai/strategy/).
+  # NONE has passed validation (docs/RESEARCH_LOG.md entries 3-7); demo only.
   name: trend_pullback
-  decision_timeframe: H1       # H1/H4 chosen by the pre-declared protocol (docs/RESEARCH_LOG.md);
-  trend_timeframe: H4          #   NO variant showed a positive edge in the validation data
-  signal_ttl_s: 90
+  decision_timeframe: H1       # optional: overrides the strategy's default entry timeframe
+  trend_timeframe: H4          # optional: overrides the strategy's default trend timeframe
+  signal_ttl_s: 90             # a signal older than this is never executed
+  scan_interval_s: 60          # opportunity scan + watchlist re-evaluation (at least once per minute)
   params:
     atr_period: 14
     adx_period: 14
@@ -94,15 +98,18 @@ strategy:
     fractal_n: 3
     friday_cutoff_utc: "18:00"
 
-exits:                         # mirrored by EA inputs (BreakEven*, Trailing*, MaxHoldHours)
-  take_profit_r: 2.0
-  breakeven_enabled: true
-  breakeven_trigger_r: 1.0
-  breakeven_offset_points: 10
-  trailing_enabled: false
-  trailing_start_r: 1.5
-  trailing_atr_mult: 2.0
-  max_hold_hours: 48
+# exits: optional overrides of the strategy's OWN exit policy. Leave them out to trade exactly what
+# was backtested. Every order carries its exit policy to the EA (hold time, break-even, trailing
+# distance); the EA inputs (BreakEven*, Trailing*, MaxHoldHours) apply only to orders without one.
+# exits:
+#   take_profit_r: 2.0
+#   breakeven_enabled: true
+#   breakeven_trigger_r: 1.0
+#   breakeven_offset_points: 25   # keep above your round-trip cost, or break-even exits lose money
+#   trailing_enabled: false
+#   trailing_start_r: 1.5
+#   trailing_atr_mult: 2.0
+#   max_hold_hours: 48
 
 ml:
   enabled: false               # only a model approved with `python -m fxai model approve` is ever loaded
@@ -136,6 +143,15 @@ dashboard:
   port: 8787
   session_ttl_min: 720
   secure_cookies: false        # true when served over HTTPS
+
+reporting:
+  # Your aspirational daily result, in account currency. Used ONLY by the scenario analysis
+  # (dashboard + `python -m fxai scenario`). It never changes position size, leverage, trade
+  # frequency or any limit, and it is never shown as a forecast.
+  aspirational_daily_target: [15, 230]
+  capital_for_scenarios: null  # used when no broker balance is available (e.g. before the EA connects)
+  forecast_min_trades: 100     # forecast ranges need a validated strategy AND this much forward evidence
+  forecast_min_days: 120
 
 storage:
   db_path: data/fxai.sqlite

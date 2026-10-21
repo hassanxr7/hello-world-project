@@ -83,11 +83,13 @@ def cmd_service(args) -> None:
     if cfg.mode == "live":
         if not cfg.live_trading_acknowledged:
             raise SystemExit("mode=live requires live_trading_acknowledged: true (see docs/DEMO_AND_LIVE.md)")
-        vs = Path("reports/validation_status.json")
+        from .strategy import build_strategy
+        vs = Path(cfg.reporting.validation_status_path)
         status = json.loads(vs.read_text()) if vs.is_file() else {}
-        if not status.get("passed"):
-            raise SystemExit("live mode refused: reports/validation_status.json does not record a passed validation "
-                             "and demo forward test for this strategy version (docs/DEMO_AND_LIVE.md)")
+        version = build_strategy(cfg).full_version
+        if not status.get("passed") or status.get("strategy_version") != version:
+            raise SystemExit(f"live mode refused: {vs} does not record a passed validation and demo forward test "
+                             f"for the configured strategy version {version} (docs/DEMO_AND_LIVE.md)")
     root = resolve_bridge_dir(cfg.bridge)
     st = Storage(cfg.storage.db_path)
     svc = TradingService(cfg, st, FileBridge(root, cfg.bridge.magic_number))
@@ -128,7 +130,7 @@ def cmd_paper(args) -> None:
     broker = SimBroker(specs=specs, balance=args.balance)
     from .strategy import build_strategy
     _s = build_strategy(cfg)
-    tfs = sorted({_s.entry_tf, _s.trend_tf})
+    tfs = sorted({_s.entry_tf, _s.trend_tf, "D1"})  # D1 for the scan's daily-bias context
     ea = EAEmulator(root, broker, EAInputs(enable_trading=True, symbols=list(m1), bars_timeframes=tfs,
                                            magic=cfg.bridge.magic_number), m1=m1)
     now = {"t": start.to_pydatetime()}
@@ -283,6 +285,29 @@ def _run_one(job) -> str:
             f"({time.time() - t0:.0f}s)")
 
 
+def cmd_scenario(args) -> None:
+    """Profit-target scenario analysis (hypothetical arithmetic, not a forecast)."""
+    from .analytics import assess_target, observed_evidence, render_markdown
+    cfg = _cfg(args)
+    target = tuple(args.target) if args.target else (tuple(cfg.reporting.aspirational_daily_target)
+                                                     if cfg.reporting.aspirational_daily_target else None)
+    capital = args.capital or cfg.reporting.capital_for_scenarios
+    ev = observed_evidence(cfg.reporting.experiments_dir)
+    a = assess_target(capital, args.currency, target, args.risk_pct or cfg.risk.risk_per_trade_pct,
+                      cfg.hard_limits.risk_per_trade_pct, cfg.risk.max_daily_loss_pct, ev,
+                      tuple(args.expectancy), tuple(args.trades_per_day), args.r_sd, args.leverage)
+    md = render_markdown(a)
+    if not capital:
+        md = ("> Starting capital is unknown. Re-run with `--capital <amount> --currency <code>` (or set "
+              "`reporting.capital_for_scenarios`) for figures for your account. The grid below shows the capital each "
+              "hypothetical case would need.\n\n" + md)
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(md, encoding="utf-8")
+    print(md)
+    print(f"written to {out}")
+
+
 def cmd_estop(args) -> None:
     from .bridge.file_bridge import FileBridge
     from .config import resolve_bridge_dir
@@ -371,6 +396,17 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--jobs", type=int, default=1)
     sp.add_argument("--out", default="reports/experiments")
     sp.set_defaults(fn=cmd_experiment)
+    sp = sub.add_parser("scenario", help="profit-target scenario analysis (hypothetical, not a forecast)")
+    sp.add_argument("--capital", type=float, help="starting capital in account currency")
+    sp.add_argument("--currency", default="USD")
+    sp.add_argument("--target", type=float, nargs=2, metavar=("LOW", "HIGH"), help="aspirational daily target range")
+    sp.add_argument("--risk-pct", type=float, help="risk per trade (default: config; never above hard limit)")
+    sp.add_argument("--expectancy", type=float, nargs="+", default=[0.05, 0.1, 0.2], help="hypothetical R per trade")
+    sp.add_argument("--trades-per-day", type=float, nargs="+", default=[0.5, 1, 2, 5])
+    sp.add_argument("--r-sd", type=float, default=1.2, help="per-trade standard deviation in R")
+    sp.add_argument("--leverage", type=float, help="account leverage (margin only)")
+    sp.add_argument("--out", default="reports/scenario/SCENARIO.md")
+    sp.set_defaults(fn=cmd_scenario)
     sp = sub.add_parser("estop")
     sp.add_argument("--policy", choices=["close_all", "hold"], default="close_all")
     sp.set_defaults(fn=cmd_estop)

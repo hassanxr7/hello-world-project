@@ -248,6 +248,25 @@ class NewsConfig(_Strict):
     max_feed_age_days: int = Field(default=7, ge=1)
 
 
+class ReportingConfig(_Strict):
+    """Dashboard reporting. The aspirational target is used ONLY by the scenario analysis: it never
+    changes position size, leverage, trade frequency or any limit, and it is never shown as a forecast."""
+
+    aspirational_daily_target: list[float] | None = None  # [low, high] in account currency, e.g. [15, 230]
+    capital_for_scenarios: float | None = Field(default=None, gt=0)  # when no broker balance is available
+    forecast_min_trades: int = Field(default=100, ge=30)
+    forecast_min_days: int = Field(default=120, ge=20)
+    experiments_dir: str = "reports/experiments"
+    validation_status_path: str = "reports/validation_status.json"
+
+    @model_validator(mode="after")
+    def _target(self) -> "ReportingConfig":
+        t = self.aspirational_daily_target
+        if t is not None and (len(t) != 2 or not 0 < t[0] <= t[1]):
+            raise ValueError("aspirational_daily_target must be [low, high] with 0 < low <= high")
+        return self
+
+
 class DashboardConfig(_Strict):
     host: str = "127.0.0.1"
     port: int = Field(default=8787, ge=1, le=65535)
@@ -274,6 +293,7 @@ class AppConfig(_Strict):
     llm: LLMConfig = Field(default_factory=LLMConfig)
     news: NewsConfig = Field(default_factory=NewsConfig)
     dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
+    reporting: ReportingConfig = Field(default_factory=ReportingConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
 
     @model_validator(mode="after")

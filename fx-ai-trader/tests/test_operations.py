@@ -101,9 +101,12 @@ def test_watchlist_lifecycle(tmp_path):
     # same bar seen again on the next scan: no extra confirmation
     wl.refresh("EURUSD", v, [setup(created=t2, stage=0.9)], (t2 + pd.Timedelta(minutes=1)).to_pydatetime(), 1.1001, t2)
     assert st.watch_active("EURUSD")[0]["confirmations"] == 2
-    # price crosses the invalidation level -> invalidated
-    notes = wl.refresh("EURUSD", v, [], (t2 + pd.Timedelta(minutes=2)).to_pydatetime(), 1.0949, t2)
+    # price crosses the invalidation level -> invalidated, and the same bar's setup is NOT re-listed
+    notes = wl.refresh("EURUSD", v, [setup(created=t2, stage=0.9)], (t2 + pd.Timedelta(minutes=2)).to_pydatetime(),
+                       1.0949, t2)
     assert not st.watch_active("EURUSD") and "invalidation" in notes[0]
+    wl.refresh("EURUSD", v, [setup(created=t2, stage=0.9)], (t2 + pd.Timedelta(minutes=3)).to_pydatetime(), 1.1000, t2)
+    assert not st.watch_active("EURUSD")
     # a new setup that is never re-confirmed expires
     t3 = T + pd.Timedelta(hours=5)
     wl.refresh("EURUSD", v, [setup(created=t3, ttl_h=1)], t3.to_pydatetime(), 1.1000, t3)

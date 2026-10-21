@@ -313,6 +313,11 @@ class Storage:
             c.execute("UPDATE watchlist SET status=?, status_reason=?, signal_id=?, updated=? WHERE id=? "
                       "AND status='active'", (status, reason[:300], signal_id, utcnow().isoformat(), wid))
 
+    def watch_closed_since(self, symbol: str, strategy: str, side: int, bar: datetime) -> bool:
+        """True if a setup for (symbol, strategy, side) was already closed after being confirmed on ``bar`` or later."""
+        return bool(self.query("SELECT 1 FROM watchlist WHERE status!='active' AND symbol=? AND strategy=? AND side=? "
+                               "AND last_bar >= ? LIMIT 1", (symbol, strategy, side, _iso(bar))))
+
     def watch_recent(self, limit: int = 50) -> list[dict[str, Any]]:
         rows = self.query("SELECT * FROM watchlist ORDER BY (status='active') DESC, updated DESC LIMIT ?", (limit,))
         return [self._watch_row(r) for r in rows]

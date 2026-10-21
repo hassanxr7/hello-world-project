@@ -48,7 +48,7 @@ from .llm import LLMAnalyst, ReviewResult, apply_policy
 from .ml import ModelRegistry
 from .news import Calendar
 from .risk import EffectiveLimits, RiskContext, RiskEngine, RiskState
-from .risk.exposure import currency_exposure, exposure_items, total_open_risk
+from .risk.exposure import currency_exposure, exposure_items, position_risk_money, total_open_risk
 from .analysis.scanner import assess_pair, rank
 from .storage import Storage
 from .strategy import StrategyOutput, build_strategy
@@ -646,10 +646,17 @@ class TradingService:
                                "ea_count": ea.entries_today, "failed": max(self.risk.failed_attempts_today, ea.failed_today),
                                "modifications": max(self.risk.modifications_today, ea.modifications_today),
                                "partial_closes": max(self.risk.partial_closes_today, ea.partial_closes_today)}
-            data["positions"] = [{"ticket": p.ticket, "symbol": p.symbol, "side": p.side.value, "volume": p.volume,
-                                  "open_price": p.open_price, "sl": p.sl, "tp": p.tp, "profit": round(p.net_profit, 2),
-                                  "open_time": p.open_time_utc.isoformat(), "system": p.system_owned}
-                                 for p in state.positions]
+            data["positions"] = []
+            for p in state.positions:
+                spec = state.specs.get(p.symbol)
+                risk, protected = position_risk_money(p, spec) if spec else (None, p.sl > 0)
+                data["positions"].append({
+                    "ticket": p.ticket, "symbol": p.symbol, "side": p.side.value, "volume": p.volume,
+                    "open_price": p.open_price, "sl": p.sl, "tp": p.tp, "profit": round(p.net_profit, 2),
+                    "swap": round(p.swap, 2), "commission": round(p.commission, 2),
+                    "risk": None if risk is None or risk == float("inf") else round(risk, 2), "protected": protected,
+                    "open_time": p.open_time_utc.isoformat(), "system": p.system_owned})
+            data["account"]["server_offset_s"] = state.offset_s
             data["quotes"] = {s: {"bid": q.bid, "ask": q.ask,
                                   "spread_pts": round((q.ask - q.bid) / state.specs[s].point, 1),
                                   "age_s": round((now - q.time_utc).total_seconds(), 1)}

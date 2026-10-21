@@ -20,6 +20,7 @@ import csv
 import io
 import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .. import __version__
+from ..analytics import (assess_target, daily_returns_pct, drawdown, evidence_gate, forecast, next_trading_days,
+                         observed_evidence, period_summary, risk_allowance)
 from ..bridge.file_bridge import FileBridge
 from ..config import AppConfig, Secrets, resolve_bridge_dir
 from ..storage import Storage
@@ -54,6 +57,14 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
     signer = SessionSigner(secret_key.encode(), cfg.dashboard.session_ttl_min * 60)
     strategy = build_strategy(cfg)
     limiter = LoginLimiter()
+    cache: dict[str, Any] = {"t": 0.0, "v": None}
+
+    def reports(st: dict[str, Any]) -> dict[str, Any]:
+        """ACTUAL / FORECAST / SCENARIO / SIMULATED sections, each labelled with its kind (cached 10 s)."""
+        if cache["v"] is not None and time.monotonic() - cache["t"] < 10:
+            return cache["v"]
+        cache["v"], cache["t"] = build_reports(cfg, storage, strategy.full_version, st), time.monotonic()
+        return cache["v"]
     templates = Jinja2Templates(directory=str(HERE / "templates"))
     app = FastAPI(title="fxai dashboard", docs_url=None, redoc_url=None, openapi_url=None)
     app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
@@ -137,6 +148,7 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
         age = (utcnow() - datetime.fromisoformat(written)).total_seconds() if written else None
         return {
             "status": st, "status_age_s": age, "service_running": age is not None and age < 10,
+            "reports": reports(st),
             "events": storage.recent_events(60),
             "errors": storage.recent_events(30, min_level="warning"),
             "decisions": storage.recent_decisions(40),
@@ -203,6 +215,28 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
         return Response(buf.getvalue(), media_type="text/csv",
                         headers={"Content-Disposition": 'attachment; filename="fxai_trades.csv"'})
 
+    @app.get("/api/watchlist.csv")
+    def export_watchlist(request: Request):
+        require(request)
+        buf = io.StringIO()
+        cols = ["id", "symbol", "strategy", "side", "status", "status_reason", "stage", "trigger_level", "invalidation",
+                "created", "expires", "last_bar", "confirmations", "signal_id", "conditions", "evidence"]
+        w = csv.DictWriter(buf, fieldnames=cols, extrasaction="ignore")
+        w.writeheader()
+        for r in storage.watch_recent(100_000):
+            w.writerow({**r, "conditions": json.dumps(r["conditions"]), "evidence": " | ".join(r["evidence"])})
+        return Response(buf.getvalue(), media_type="text/csv",
+                        headers={"Content-Disposition": 'attachment; filename="fxai_watchlist.csv"'})
+
+    @app.get("/api/report.json")
+    def export_report(request: Request):
+        require(request)
+        st = storage.read_status() or {}
+        body = json.dumps({"generated": utcnow().isoformat(), "reports": build_reports(cfg, storage, strategy.full_version, st),
+                           "scan": st.get("scan"), "limits": st.get("limits")}, indent=2, default=str)
+        return Response(body, media_type="application/json",
+                        headers={"Content-Disposition": 'attachment; filename="fxai_report.json"'})
+
     @app.get("/api/decisions.csv")
     def export_decisions(request: Request):
         require(request)
@@ -217,6 +251,50 @@ def create_app(cfg: AppConfig, storage: Storage, password_hash: str | None = Non
                         headers={"Content-Disposition": 'attachment; filename="fxai_decisions.csv"'})
 
     return app
+
+
+def build_reports(cfg: AppConfig, storage: Storage, version: str, st: dict[str, Any]) -> dict[str, Any]:
+    # The service's clock (equal to wall-clock time in demo/live; simulated time in paper mode).
+    try:
+        now = datetime.fromisoformat((st.get("service") or {})["now"])
+    except (KeyError, TypeError, ValueError):
+        now = utcnow()
+    acct, pnl, ex, lim = st.get("account") or {}, st.get("pnl") or {}, st.get("exposure") or {}, st.get("limits") or {}
+    zone, hour, off = cfg.daily_reset.zone, cfg.daily_reset.hour, acct.get("server_offset_s")
+    basis = f"trading day rolls at {hour:02d}:00 {zone} time"
+    if zone == "server" and off is None:  # no EA snapshot yet: fall back to UTC calendar days (labelled)
+        zone, hour, basis = "UTC", 0, "UTC calendar days (broker server offset not known yet)"
+    trades = storage.trades(100_000)
+    eq = storage.equity_curve(200_000)
+    out: dict[str, Any] = {"day_basis": basis}
+    out["performance"] = period_summary(trades, now, zone, hour, off)
+    out["drawdown"] = drawdown(eq)
+    out["allowance"] = risk_allowance(pnl.get("day_start_equity") or 0.0, acct.get("equity") or 0.0,
+                                      pnl.get("net_flows") or 0.0, lim.get("max_daily_loss_pct") or cfg.risk.max_daily_loss_pct,
+                                      ex.get("open_risk") or 0.0)
+    out["execution"] = {"kind": "actual", "by_symbol": storage.execution_quality()}
+    # forecast: only this strategy version's own forward trades on this account
+    mine = [t for t in trades if str(t.get("signal_id") or "").startswith(version + ":")]
+    daily = daily_returns_pct(mine, eq, zone, hour, off)
+    vpath = Path(cfg.reporting.validation_status_path)
+    try:
+        validation = json.loads(vpath.read_text()) if vpath.is_file() else None
+    except (OSError, json.JSONDecodeError):
+        validation = None
+    n_closed = len([t for t in mine if t.get("status") == "CLOSED"])
+    gate = evidence_gate(validation, version, n_closed, len(daily), cfg.reporting.forecast_min_trades,
+                         cfg.reporting.forecast_min_days)
+    out["forecast"] = forecast(daily, next_trading_days(now), acct.get("equity") or 0.0, n_closed, gate)
+    ev = observed_evidence(cfg.reporting.experiments_dir)
+    capital = acct.get("balance") or cfg.reporting.capital_for_scenarios
+    t = cfg.reporting.aspirational_daily_target
+    out["scenario"] = assess_target(capital, acct.get("currency") or cfg.account_currency, tuple(t) if t else None,
+                                    lim.get("risk_per_trade_pct") or cfg.risk.risk_per_trade_pct,
+                                    cfg.hard_limits.risk_per_trade_pct, cfg.risk.max_daily_loss_pct, ev,
+                                    trades_per_day=(0.5, 1, 2), leverage=acct.get("leverage"))
+    out["research"] = {"kind": "simulated", "runs": ev.get("detail", []), "any_passed": ev.get("any_passed", False),
+                       "note": "backtests on historical data with modelled costs - not account results"}
+    return out
 
 
 def _downsample(rows: list[dict], n: int) -> list[dict]:

@@ -74,6 +74,10 @@ class Watchlist:
             created = _ts(s.created)
             if _ts(s.expires) <= now_t:
                 continue  # already past its expiry when first seen (e.g. after downtime) - never listed
+            if price is not None and s.invalidation is not None and (price - float(s.invalidation)) * side <= 0:
+                continue  # price is already beyond its invalidation level
+            if self.st.watch_closed_since(symbol, s.strategy, side, created.to_pydatetime()):
+                continue  # this bar's setup was already closed; only a newer bar can re-form it
             self.st.watch_upsert({"symbol": symbol, "strategy": s.strategy, "side": side, "created": created,
                                   "expires": _ts(s.expires), "last_bar": created, "stage": round(float(s.stage), 3),
                                   "trigger_level": s.trigger_level, "invalidation": s.invalidation,

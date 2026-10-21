@@ -20,6 +20,7 @@ const signed = (v, d = 2) => (v == null ? "-" : (v > 0 ? "+" : "") + fmt(v, d));
 const ago = (s) => (s == null ? "-" : s < 90 ? `${Math.round(s)}s` : s < 5400 ? `${Math.round(s / 60)}m` : `${(s / 3600).toFixed(1)}h`);
 const tone = (v) => (v > 0 ? "pos" : v < 0 ? "neg" : "");  // zero stays neutral
 const shortTime = (iso) => (iso ? iso.replace("T", " ").slice(0, 19) : "-");
+const px = (v) => (v == null || Number.isNaN(Number(v)) ? "-" : String(Number(Number(v).toPrecision(6))));  // prices: 6 significant digits
 
 // status badge: color is never alone - icon glyph + label
 const ICON = { good: "✓", warning: "!", serious: "!", critical: "✕", neutral: "•" };
@@ -151,12 +152,17 @@ function render(d) {
   if (acct) {
     tiles.push(tile("Equity", fmt(acct.equity), `${acct.currency} · balance ${fmt(acct.balance)}`));
     tiles.push(tile("Floating P&L", signed(pnl.floating), "open positions", tone(pnl.floating)));
-    tiles.push(tile("Realized today", signed(pnl.realized_today), "closed trades (UTC date)", tone(pnl.realized_today)));
+    const today = ((d.reports || {}).performance || {}).today || {};
+    tiles.push(tile("Realized today", signed(today.net ?? pnl.realized_today), `${today.trades ?? 0} closed · commission ${fmt(today.commission)} · swap ${fmt(today.swap)}`, tone(today.net ?? pnl.realized_today)));
     tiles.push(tile("Daily P&L", signed(pnl.daily_pnl), `vs day start ${fmt(pnl.day_start_equity)}, net flows ${fmt(pnl.net_flows)}`, tone(pnl.daily_pnl)));
     tiles.push(meterTile("Daily loss vs limit", `${fmt(pnl.daily_loss_pct, 2)}%`, `limit ${fmt(pnl.daily_loss_limit_pct, 2)}%`, pnl.daily_loss_pct / pnl.daily_loss_limit_pct));
     tiles.push(meterTile("Entries today", `${ent.today ?? 0} / ${ent.cap ?? "-"}`, `failed ${ent.failed ?? 0} · mods ${ent.modifications ?? 0} · partial ${ent.partial_closes ?? 0}`, (ent.today || 0) / (ent.cap || 1), 0.75, 1.0));
     tiles.push(meterTile("Open stop-loss risk", `${fmt(ex.open_risk_pct, 2)}%`, `${fmt(ex.open_risk)} · max ${fmt(lim.max_total_risk_pct, 2)}%`, (ex.open_risk_pct || 0) / (lim.max_total_risk_pct || 1)));
-    tiles.push(tile("Margin", acct.margin_level ? `${fmt(acct.margin_level, 0)}%` : "no margin used", `used ${fmt(acct.margin)} · free ${fmt(acct.free_margin)}`));
+    tiles.push(tile("Margin", acct.margin_level ? `${fmt(acct.margin_level, 0)}%` : "no margin used", `used ${fmt(acct.margin)} · free ${fmt(acct.free_margin)} · 1:${acct.leverage ?? "-"}`));
+    const al = (d.reports || {}).allowance || {};
+    if (al.limit_money != null) tiles.push(meterTile("Daily loss allowance left", fmt(al.remaining_before_halt), `of ${fmt(al.limit_money)} · if all stops hit: ${signed(al.remaining_if_all_stops_hit)}`, (al.used_money || 0) / (al.limit_money || 1)));
+    const dd = (d.reports || {}).drawdown || {};
+    tiles.push(tile("Drawdown", dd.current_pct == null ? "-" : `${fmt(dd.current_pct, 2)}%`, dd.max_pct == null ? "no equity history" : `max ${fmt(dd.max_pct, 2)}% · peak ${fmt(dd.peak)}`, dd.current_pct > 0 ? "neg" : ""));
   } else {
     tiles.push(tile("Account", "no data", "waiting for the EA snapshot"));
   }
@@ -190,7 +196,10 @@ function render(d) {
     { label: "Ticket", get: (r) => r.ticket }, { label: "Symbol", get: (r) => r.symbol }, { label: "Side", get: (r) => r.side },
     { label: "Lots", num: true, get: (r) => fmt(r.volume, 2) }, { label: "Open", num: true, get: (r) => r.open_price },
     { label: "SL", num: true, get: (r) => (r.sl > 0 ? r.sl : "NONE"), cls: (r) => (r.sl > 0 ? "" : "neg") },
-    { label: "TP", num: true, get: (r) => r.tp || "-" }, { label: "Net P&L", num: true, get: (r) => signed(r.profit), cls: (r) => tone(r.profit) },
+    { label: "TP", num: true, get: (r) => r.tp || "-" },
+    { label: "Risk at SL", num: true, get: (r) => (r.risk == null ? (r.protected ? "-" : "UNLIMITED") : fmt(r.risk)), cls: (r) => (r.protected ? "" : "neg") },
+    { label: "Swap", num: true, get: (r) => signed(r.swap) }, { label: "Comm.", num: true, get: (r) => signed(r.commission) },
+    { label: "Net P&L", num: true, get: (r) => signed(r.profit), cls: (r) => tone(r.profit) },
     { label: "Opened (UTC)", get: (r) => shortTime(r.open_time) }, { label: "Owner", get: (r) => (r.system ? "system" : "manual (untouched)") },
   ], st.positions || []));
   const ccy = Object.entries(ex.by_currency || {}).map(([k, v]) => `${k} ${signed(v)}`).join(" · ");
@@ -209,11 +218,13 @@ function render(d) {
   const m = st.models || {}, ml = m.ml || {}, llm = m.llm || {}, news = st.news || {};
   replace("models", kv([
     ["Strategy", `${svc.strategy} (${svc.decision_tf} entries / ${svc.trend_tf} trend)`],
-    ["ML meta-filter", ml.enabled ? (ml.version ? `${ml.version} · ${ml.calibrated ? "calibrated probability" : "uncalibrated score"}` : ml.error) : "disabled"],
-    ["LLM review", llm.mode === "off" ? "off" : `${llm.mode} · ${llm.model} · ${llm.calls_24h}/${llm.max_calls} calls · $${fmt(llm.cost_24h_usd, 3)}/${fmt(llm.max_cost_usd, 2)} (24h)${llm.error ? " · " + llm.error : ""}`],
+    ["Trained model (ML meta-filter)", ml.enabled ? (ml.version ? `${ml.version} · ${ml.calibrated ? "calibrated probability" : "uncalibrated score"} · can only remove trades` : ml.error) : "disabled (no model has shown value on unseen data)"],
+    ["Claude review (LLM)", llm.mode === "off" ? "off" : `${llm.mode} · veto only, never opens or sizes trades · ${llm.model} · ${llm.calls_24h}/${llm.max_calls} calls · $${fmt(llm.cost_24h_usd, 3)}/${fmt(llm.max_cost_usd, 2)} (24h)${llm.error ? " · " + llm.error : ""}`],
     ["Economic calendar", news.provider === "none" ? badge("warning", "not configured - news filter inactive") : (news.active ? badge("good", `${news.events} events`) : badge("serious", news.detail))],
     ["Model registry", (d.models || []).map((x) => `${x.version} (${x.status})`).join(", ") || "no models"],
   ]));
+
+  renderReports(d.reports || {}, st);
 
   replace("trades", table([
     { label: "Ticket", get: (r) => r.ticket }, { label: "Symbol", get: (r) => r.symbol }, { label: "Side", get: (r) => r.side },
@@ -233,6 +244,93 @@ function render(d) {
     { label: "Action", get: (r) => r.action }, { label: "Regime", get: (r) => r.regime },
     { label: "Reason", get: (r) => (r.reasons || []).filter((x) => /WAIT:|BUY:|SELL:|risk|LLM|ML/.test(x)).slice(-1)[0] || (r.reasons || [])[0] || "" },
   ], d.decisions || []));
+}
+
+// ------------------------------------------------------------------ reports (ACTUAL / FORECAST / SCENARIO / SIMULATED)
+function renderReports(rep, st) {
+  const perf = rep.performance || {};
+  $("perf-note").textContent = `${rep.day_basis || ""} · current trading day ${perf.trading_day || "-"} · spread and slippage are inside fill prices (see execution quality)`;
+  const P = [["Today", perf.today], ["This week", perf.week], ["This month", perf.month], ["All time", perf.all]].filter((x) => x[1]);
+  replace("performance", table([
+    { label: "Period", get: (r) => r[0] }, { label: "Trades", num: true, get: (r) => r[1].trades },
+    { label: "Win %", num: true, get: (r) => fmt(r[1].win_rate_pct, 1) }, { label: "Gross", num: true, get: (r) => signed(r[1].gross), cls: (r) => tone(r[1].gross) },
+    { label: "Commission", num: true, get: (r) => signed(r[1].commission) }, { label: "Swap", num: true, get: (r) => signed(r[1].swap) },
+    { label: "Net", num: true, get: (r) => signed(r[1].net), cls: (r) => tone(r[1].net) },
+    { label: "Expectancy (R)", num: true, get: (r) => (r[1].expectancy_r == null ? "-" : signed(r[1].expectancy_r, 3)) },
+    { label: "Best / worst", num: true, get: (r) => (r[1].best == null ? "-" : `${signed(r[1].best)} / ${signed(r[1].worst)}`) },
+  ], P));
+  replace("daily-pnl", (perf.daily || []).length ? table([
+    { label: "Trading day", get: (r) => r.day }, { label: "Net", num: true, get: (r) => signed(r.net), cls: (r) => tone(r.net) },
+  ], (perf.daily || []).slice(-10).reverse()) : el("p", { class: "empty", text: "No closed trades yet" }));
+
+  const fc = rep.forecast || {};
+  if (!fc.ok) {
+    replace("forecast", el("div", null, el("p", { class: "insufficient", text: fc.message || "Insufficient evidence for a reliable estimate." }),
+      el("ul", { class: "checks" }, (fc.checks || []).map((c) => el("li", { class: c.ok ? "ok" : "fail", text: `${c.check}: ${c.detail}` }))),
+      el("p", { class: "muted small", text: "Ranges appear only for a validated strategy with enough of its own forward results on this account." })));
+  } else {
+    const H = Object.entries(fc.horizons || {});
+    replace("forecast", el("div", null, table([
+      { label: "Horizon", get: (r) => r[0].replaceAll("_", " ") }, { label: "Days", num: true, get: (r) => r[1].days },
+      { label: "Downside (P10)", num: true, get: (r) => signed(r[1].downside), cls: (r) => tone(r[1].downside) },
+      { label: "Central (P50)", num: true, get: (r) => signed(r[1].central), cls: (r) => tone(r[1].central) },
+      { label: "Upside (P90)", num: true, get: (r) => signed(r[1].upside), cls: (r) => tone(r[1].upside) },
+      { label: "P(loss)", num: true, get: (r) => (r[1].p_loss == null ? "-" : `${fmt(r[1].p_loss * 100, 0)}%`) },
+      { label: "P(no trades)", num: true, get: (r) => (r[1].p_no_trades == null ? "-" : `${fmt(r[1].p_no_trades * 100, 0)}%`) },
+    ], H), el("ul", { class: "muted small" }, (fc.assumptions || []).map((a) => el("li", { text: a })))));
+  }
+
+  const sc = rep.scenario || {};
+  const grid = (sc.grid || []).slice(0, 9);
+  replace("scenario", el("div", null,
+    el("p", { class: "muted small", text: `${sc.label || ""} · capital ${sc.capital ? fmt(sc.capital) + " " + sc.currency : "unknown"} · target ${sc.target ? sc.target.join("-") + " " + sc.currency + "/day (aspirational)" : "not set"}` }),
+    el("ul", { class: "reasons" }, (sc.conclusions || []).map((c) => el("li", { text: c }))),
+    grid.length ? table([
+      { label: "E (R/trade)", num: true, get: (r) => r.expectancy_r }, { label: "Trades/day", num: true, get: (r) => r.trades_per_day },
+      { label: "Mean/day", num: true, get: (r) => (r.mean_per_day == null ? "-" : fmt(r.mean_per_day)) },
+      { label: "Losing days", num: true, get: (r) => (r.p_losing_day == null ? "-" : `${fmt(r.p_losing_day * 100, 0)}%`) },
+      { label: "Capital for target (low / high)", num: true, get: (r) => (r.capital_for_target_low == null ? "-" : `${fmt(r.capital_for_target_low, 0)} / ${fmt(r.capital_for_target_high, 0)}`) },
+    ], grid) : null));
+
+  const scan = st.scan || {};
+  $("scan-note").textContent = scan.at ? `scan ${shortTime(scan.at)} UTC · every ${scan.interval_s}s · ${scan.note}` : (scan.note || "");
+  replace("attention", table([
+    { label: "#", num: true, get: (r) => r._i }, { label: "Symbol", get: (r) => r.symbol },
+    { label: "Score", num: true, get: (r) => fmt(r.score, 0) }, { label: "Status", get: (r) => r.status },
+    { label: "Signal", get: (r) => r.signal || "-" },
+    { label: "Trend", get: (r) => (r.trend ? `${r.trend.trend_tf_regime || "-"} · ${r.trend.alignment || "-"}${r.trend.d1_bias ? " · D1 " + r.trend.d1_bias : ""}` : "-") },
+    { label: "RSI", num: true, get: (r) => (r.momentum ? fmt(r.momentum.rsi14, 0) : "-") },
+    { label: "ATR pct", num: true, get: (r) => (r.volatility && r.volatility.atr_percentile_250 != null ? `${fmt(r.volatility.atr_percentile_250 * 100, 0)}%` : "-") },
+    { label: "Spread", num: true, get: (r) => (r.spread && r.spread.points != null ? fmt(r.spread.points, 1) : "-") },
+    { label: "Location", get: (r) => (r.structure ? r.structure.location || "-" : "-") },
+    { label: "Why", get: (r) => el("ul", { class: "reasons" }, (r.attention || []).slice(0, 4).map((x) => el("li", { text: x }))) },
+  ], (scan.pairs || []).map((p, i) => ({ ...p, _i: i + 1 }))));
+
+  replace("watchlist", table([
+    { label: "Symbol", get: (r) => r.symbol }, { label: "Side", get: (r) => (r.side > 0 ? "BUY" : "SELL") },
+    { label: "Status", get: (r) => r.status, cls: (r) => (r.status === "active" ? "pos" : "") },
+    { label: "Formed", num: true, get: (r) => (r.stage == null ? "-" : `${fmt(r.stage * 100, 0)}%`) },
+    { label: "Trigger", num: true, get: (r) => px(r.trigger_level) }, { label: "Invalidation", num: true, get: (r) => px(r.invalidation) },
+    { label: "Created (UTC)", get: (r) => shortTime(r.created) }, { label: "Expires (UTC)", get: (r) => shortTime(r.expires) },
+    { label: "Confirmed", num: true, get: (r) => r.confirmations },
+    { label: "Pending conditions", get: (r) => Object.entries(r.conditions || {}).filter((c) => !c[1]).map((c) => c[0]).join(", ") || "-" },
+    { label: "Outcome", get: (r) => r.status_reason || "-" },
+  ], st.watchlist || []));
+
+  const exq = Object.entries(((rep.execution || {}).by_symbol) || {});
+  replace("execution", table([
+    { label: "Symbol", get: (r) => r[0] }, { label: "Orders", num: true, get: (r) => r[1].orders }, { label: "Filled", num: true, get: (r) => r[1].filled },
+    { label: "Rejected/expired", num: true, get: (r) => r[1].rejected }, { label: "Unknown", num: true, get: (r) => r[1].unknown },
+    { label: "Mean adverse slippage", num: true, get: (r) => (r[1].mean_adverse_slippage == null ? "-" : fmt(r[1].mean_adverse_slippage, 6)) },
+    { label: "Worst", num: true, get: (r) => (r[1].worst_adverse_slippage == null ? "-" : fmt(r[1].worst_adverse_slippage, 6)) },
+  ], exq));
+
+  const rs = rep.research || {};
+  replace("research", el("div", null, el("p", { class: "muted small", text: rs.note || "" }), table([
+    { label: "Run", get: (r) => r.id }, { label: "Stage", get: (r) => r.stage }, { label: "Trades", num: true, get: (r) => r.trades },
+    { label: "Exp. (R)", num: true, get: (r) => signed(r.expectancy_r, 3), cls: (r) => tone(r.expectancy_r) },
+    { label: "Gates", get: (r) => (r.passed ? "PASS" : "fail") },
+  ], rs.runs || [])));
 }
 
 let limitsRendered = false;

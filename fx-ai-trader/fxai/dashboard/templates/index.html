@@ -31,10 +31,36 @@
     <span class="spacer"></span>
     <a class="btn ghost" href="/api/trades.csv">Export trades CSV</a>
     <a class="btn ghost" href="/api/decisions.csv">Export decisions CSV</a>
+    <a class="btn ghost" href="/api/watchlist.csv">Export watchlist CSV</a>
+    <a class="btn ghost" href="/api/report.json">Export report JSON</a>
   </section>
   <p id="control-msg" class="muted small" role="status"></p>
 
   <section class="tiles" id="tiles" aria-label="Key figures"></section>
+  <p class="muted small legend">Labels: <span class="kind kind-actual">ACTUAL</span> broker records ·
+    <span class="kind kind-simulated">SIMULATED</span> backtests on historical data ·
+    <span class="kind kind-forecast">FORECAST</span> evidence-gated ranges ·
+    <span class="kind kind-scenario">SCENARIO</span> hypothetical arithmetic. The profit target is never a forecast.</p>
+
+  <section class="card">
+    <div class="card-head"><h2>Performance <span class="kind kind-actual">ACTUAL</span></h2><span class="muted small" id="perf-note"></span></div>
+    <div id="performance" class="table-scroll"></div>
+    <div id="daily-pnl" class="table-scroll"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Forecast <span class="kind kind-forecast">FORECAST</span></h2></div><div id="forecast" class="table-scroll"></div></section>
+    <section class="card"><div class="card-head"><h2>Target scenario <span class="kind kind-scenario">SCENARIO</span></h2></div><div id="scenario" class="table-scroll"></div></section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2>Pairs by attention</h2><span class="muted small" id="scan-note"></span></div>
+    <div id="attention" class="table-scroll"></div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Watchlist</h2><span class="muted small">setups re-evaluated every scan; expired setups are never executed</span></div>
+    <div id="watchlist" class="table-scroll"></div>
+  </section>
 
   <section class="card">
     <div class="card-head"><h2>Equity</h2><span class="muted small" id="equity-note"></span></div>
@@ -47,7 +73,7 @@
     <section class="card"><div class="card-head"><h2>Connection and data feed</h2></div><div id="connection"></div><div id="quotes" class="table-scroll"></div></section>
   </div>
 
-  <section class="card"><div class="card-head"><h2>Open positions</h2><span class="muted small" id="exposure-note"></span></div><div id="positions" class="table-scroll"></div></section>
+  <section class="card"><div class="card-head"><h2>Open positions <span class="kind kind-actual">ACTUAL</span></h2><span class="muted small" id="exposure-note"></span></div><div id="positions" class="table-scroll"></div></section>
 
   <div class="grid2">
     <section class="card">
@@ -59,10 +85,15 @@
         <button class="btn primary" type="submit">Apply limits</button>
       </form>
     </section>
-    <section class="card"><div class="card-head"><h2>Strategy, models and data</h2></div><div id="models"></div></section>
+    <section class="card"><div class="card-head"><h2>Strategy, AI and data status</h2></div><div id="models"></div></section>
   </div>
 
-  <section class="card"><div class="card-head"><h2>Recent trades</h2></div><div id="trades" class="table-scroll"></div></section>
+  <div class="grid2">
+    <section class="card"><div class="card-head"><h2>Execution quality <span class="kind kind-actual">ACTUAL</span></h2></div><div id="execution" class="table-scroll"></div></section>
+    <section class="card"><div class="card-head"><h2>Research results <span class="kind kind-simulated">SIMULATED</span></h2></div><div id="research" class="table-scroll"></div></section>
+  </div>
+
+  <section class="card"><div class="card-head"><h2>Recent trades <span class="kind kind-actual">ACTUAL</span></h2></div><div id="trades" class="table-scroll"></div></section>
   <div class="grid2">
     <section class="card"><div class="card-head"><h2>Warnings and errors</h2></div><div id="errors" class="table-scroll"></div></section>
     <section class="card"><div class="card-head"><h2>Event log</h2></div><div id="events" class="table-scroll"></div></section>
