@@ -223,4 +223,4 @@ tests/test_time_and_storage.py::test_cash_flow_dedup PASSED              [ 99%]
 tests/test_time_and_storage.py::test_command_seq_monotonic_and_unique_signal PASSED [ 99%]
 tests/test_time_and_storage.py::test_decision_dedup PASSED               [100%]
 
-======================= 215 passed, 1 skipped in 38.60s ========================
+======================= 215 passed, 1 skipped in 38.91s ========================

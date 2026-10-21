@@ -122,6 +122,7 @@ def test_exit_policy_bounds_match_python():
         assert f'KV(k, v, "{k}"' in EA, k
     assert "exit policy persisted BEFORE OrderSend" in EA
     assert EA.count("MoveExitsToTicket(tag,") == 2  # on fill and on reconciliation
+    assert EA.count('DeleteExits("T" + tag)') == 3  # protection failure, broker rejection, not found
 
 
 def test_bar_export_default_matches_emulator():

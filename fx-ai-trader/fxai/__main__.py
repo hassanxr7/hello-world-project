@@ -262,6 +262,9 @@ def cmd_experiment(args) -> None:
     _EXP_DATA, desc = _load_data(args, ["EURUSD", "GBPUSD", "USDCAD", "AUDUSD"])
     print(f"data: {desc}; symbols {list(_EXP_DATA)}; stage {args.stage} {start.date()}..{end.date()}", flush=True)
     jobs = [(c, plan[c][0], plan[c][1], args.stage, args.out, args.n_perm) for c in labels]
+    if args.jobs > 1 and "fork" not in mp.get_all_start_methods():
+        print("parallel jobs share the loaded data via fork (Linux/macOS only); running sequentially")
+        args.jobs = 1
     if args.jobs <= 1:
         results = [_run_one(j) for j in jobs]
     else:

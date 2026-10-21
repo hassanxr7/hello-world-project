@@ -873,7 +873,7 @@ void HandleOpen(string &k[], string &v[], const long seq)
       }
       else
       {
-         RemovePending(tag);
+         RemovePending(tag); DeleteExits("T" + tag);
          g_failed++; SaveCounters();
          WriteResult(seq, "OPEN", "REJECTED", sid, 0, err, attempts, "broker rejected");
          LogEvent("warning", "OPEN_FAILED", StringFormat("%s err %d", sid, err));
@@ -944,7 +944,7 @@ void ReconcilePending()
       else if((long)TimeGMT() - (long)g_pendSince[i] > ReconcileWindowSec)
       {
          string id2 = g_pendId[i];
-         RemovePending(tag);
+         RemovePending(tag); DeleteExits("T" + tag);
          g_failed++; SaveCounters();
          LogEvent("error", "NOT_FOUND", id2 + " not found after reconcile window - not retried");
       }

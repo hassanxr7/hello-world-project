@@ -521,6 +521,7 @@ class EAEmulator:
                 self.log("warning", "RECONCILED", f"{info['id']} found as ticket {o.ticket}")
             elif self.now.timestamp() - info["since"] > self.inp.reconcile_window_s:
                 self.gv["pending_reconcile"].pop(tag)
+                self.gv["exits_tag"].pop(tag, None)
                 self.gv["failed"] += 1
                 self.log("error", "NOT_FOUND", f"{info['id']} not found after reconcile window")
 
