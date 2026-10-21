@@ -116,3 +116,53 @@ the v1 development period to explain the loss. Full write-up: `docs/STRATEGY_AUD
 **Outcome:** no change to the baseline. The candidate set in plan v2 is unchanged (it was
 fixed before these numbers existed). Evaluations on 2015-2017 so far: v1 development (2
 variants), ML walk-forward (2), this audit (2 variants, diagnostic).
+
+## Entry 7 - research plan v2, stage 1 (development 2007-01-01 to 2014-12-31)
+
+Run once per pre-declared candidate with `python -m fxai experiment --stage dev --n-perm 200`
+from commit e3bac4d (clean tree; recorded in each `config.json`). Data: Oanda M1 mids,
+AUDUSD / EURUSD / GBPUSD / USDCAD; 2005-11 to 2006 loaded for indicator warm-up only; nothing
+after 2014 was loaded. Default costs; 0.25 % risk per trade and the default portfolio limits.
+
+Before any candidate ran, preparing the runs found and fixed three tooling defects (commit
+e3bac4d). London-breakout deadlines were being read in the wrong time unit. The per-signal and
+random-entry simulations ignored fixed targets and deadlines. The gates crashed on missing
+statistics. No result existed before these fixes.
+
+| Candidate | Trades | Net % | PF | Exp. R (portfolio) | Max DD % | Per-signal net R | Per-signal gross R | Random-entry null R | p | Years + | Adverse-cost net |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| trend_pullback, BE +25 pts (sanity variant) | 828 | -11.3 | 0.88 | -0.057 | 16.7 | -0.068 | -0.038 | -0.058 | 0.60 | 2/8 | -1,470 |
+| S1 donchian_trend (H4, trailing) | 947 | -6.7 | 0.94 | -0.037 | 17.8 | -0.054 | -0.026 | -0.021 | 0.90 | 2/8 | -847 |
+| S2 range_reversion (H1) | 2,035 | -32.3 | 0.84 | -0.085 | 33.7 | -0.102 | -0.077 | -0.051 | 1.00 | 2/8 | -3,724 |
+| S3 london_breakout (M15) | 2,725 | -42.3 | 0.80 | -0.089 | 43.1 | -0.097 | -0.072 | -0.059 | 0.99 | 1/8 | -4,910 |
+| S4 pullback_rejection (H1) | 1,923 | -35.2 | 0.82 | -0.093 | 36.9 | -0.101 | -0.060 | -0.102 | 0.47 | 0/8 | -4,303 |
+| S5 vol_breakout (H4) | 2,175 | -26.4 | 0.90 | -0.060 | 31.4 | -0.042 | -0.018 | -0.030 | 0.72 | 1/8 | -3,232 |
+
+Gate thresholds: per-signal net R > 0, PF >= 1.10, >= 150 trades, p < 0.0083 (0.05 / 6),
+>= 5 of 8 positive years with none below -8 %, positive under adverse costs, max DD < 15 %.
+
+**Outcome: no candidate survives.** Each fails every gate except the trade count. Per the plan:
+
+- no stage-2 (validation 2015-2017) or "known" (2018-2020) run was made for any candidate;
+- no parameter was changed and no candidate will be re-run with new parameters;
+- the default configuration stays `trend_pullback` (H1/H4). That is not a selection: nothing
+  qualifies, and the system remains demo-only.
+
+What the numbers say:
+
+- **Every candidate is negative before costs** (per-signal gross R from -0.018 to -0.077).
+  Costs are 9-21 % of gross profit; they deepen the losses but do not cause them.
+- **None beats its random-entry null.** Two are significantly *worse* than random entries
+  with the same exits:
+  - range_reversion: z = -3.1. Fading 2-sigma extensions in ADX < 20 conditions lost more
+    than random entries in the same regime and hours.
+  - london_breakout: z = -2.3. The first break of the Asian range tended to reverse.
+- The S4 hypothesis from the audit failed. Entering at the pullback rather than after the
+  resumption does not help on 2007-2014 (p = 0.47; real equals random).
+- The closest to zero are the slower trend and volatility rules (S1, S5, per-signal
+  -0.04 to -0.05 R). S1 made +8.7 % in 2007 and +1.8 % in 2008, then lost in 5 of the next
+  6 years. That is consistent with the published decline of simple FX trend-following
+  returns after 2008, but it is one sample and is not evidence of an edge.
+
+Evaluations so far on 2007-2014: 6, all in this entry. On 2015-2017: v1 development (2), ML
+walk-forward (2), baseline audit (2, diagnostic). On 2018-2020-05: v1 holdout (2).

@@ -1,0 +1,86 @@
+{
+  "config": {
+    "strategy": {
+      "name": "donchian_trend",
+      "params": {}
+    }
+  },
+  "effective_exits": {
+    "take_profit_r": 20.0,
+    "breakeven_enabled": false,
+    "breakeven_trigger_r": 1.0,
+    "breakeven_offset_points": 10,
+    "trailing_enabled": true,
+    "trailing_start_r": 0.0,
+    "trailing_atr_mult": 3.0,
+    "max_hold_hours": 720.0
+  },
+  "timeframes": [
+    "H4",
+    "D1"
+  ],
+  "params": {
+    "channel_bars": 55,
+    "atr_period": 14,
+    "stop_atr": 2.0,
+    "watch_zone_atr": 0.5
+  },
+  "costs": {
+    "spread_pips": {
+      "EURUSD": 0.5,
+      "GBPUSD": 0.9,
+      "AUDUSD": 0.6,
+      "USDCAD": 0.9,
+      "USDJPY": 0.5,
+      "USDCHF": 0.9,
+      "NZDUSD": 1.2
+    },
+    "spread_multiplier": 1.0,
+    "hour_multipliers_utc": [
+      1.5,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.2,
+      3.0,
+      3.0,
+      1.5
+    ],
+    "commission_per_lot_rt": 7.0,
+    "slippage_entry_pips": 0.1,
+    "slippage_stop_pips": 0.3,
+    "swap_pips_per_night": -0.3
+  },
+  "n_perm": 200,
+  "symbols": [
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "USDCAD"
+  ],
+  "label": "donchian_trend",
+  "data_period_loaded": [
+    "2005-11-27",
+    "2015-01-01"
+  ],
+  "code": {
+    "commit": "e3bac4d742f63ce715e0d74133402097d965afcd",
+    "dirty": false
+  }
+}

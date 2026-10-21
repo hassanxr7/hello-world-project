@@ -1,0 +1,107 @@
+{
+  "config": {
+    "strategy": {
+      "name": "trend_pullback",
+      "params": {}
+    },
+    "exits": {
+      "breakeven_offset_points": 25
+    }
+  },
+  "effective_exits": {
+    "take_profit_r": 2.0,
+    "breakeven_enabled": true,
+    "breakeven_trigger_r": 1.0,
+    "breakeven_offset_points": 25,
+    "trailing_enabled": false,
+    "trailing_start_r": 1.5,
+    "trailing_atr_mult": 2.0,
+    "max_hold_hours": 48.0
+  },
+  "timeframes": [
+    "H1",
+    "H4"
+  ],
+  "params": {
+    "atr_period": 14,
+    "adx_period": 14,
+    "adx_min": 20.0,
+    "ema_fast": 50,
+    "ema_slow": 200,
+    "ema_slope_bars": 5,
+    "vol_ratio_max": 2.0,
+    "vol_median_window": 500,
+    "ema_entry": 20,
+    "pullback_lookback": 6,
+    "pullback_atr_tol": 0.25,
+    "rsi_period": 14,
+    "rsi_long_min": 50.0,
+    "rsi_long_max": 70.0,
+    "max_extension_atr": 1.0,
+    "stop_buffer_atr": 0.2,
+    "min_stop_atr": 1.0,
+    "max_stop_atr": 2.5,
+    "min_room_r": 1.0,
+    "swing_lookback_bars": 200,
+    "fractal_n": 3,
+    "friday_cutoff_utc": "18:00"
+  },
+  "costs": {
+    "spread_pips": {
+      "EURUSD": 0.5,
+      "GBPUSD": 0.9,
+      "AUDUSD": 0.6,
+      "USDCAD": 0.9,
+      "USDJPY": 0.5,
+      "USDCHF": 0.9,
+      "NZDUSD": 1.2
+    },
+    "spread_multiplier": 1.0,
+    "hour_multipliers_utc": [
+      1.5,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.2,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.2,
+      3.0,
+      3.0,
+      1.5
+    ],
+    "commission_per_lot_rt": 7.0,
+    "slippage_entry_pips": 0.1,
+    "slippage_stop_pips": 0.3,
+    "swap_pips_per_night": -0.3
+  },
+  "n_perm": 200,
+  "symbols": [
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "USDCAD"
+  ],
+  "label": "trend_pullback_be25",
+  "data_period_loaded": [
+    "2005-11-27",
+    "2015-01-01"
+  ],
+  "code": {
+    "commit": "e3bac4d742f63ce715e0d74133402097d965afcd",
+    "dirty": false
+  }
+}

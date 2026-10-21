@@ -1,0 +1,197 @@
+{
+  "id": "dev-london_breakout-20261021T114807Z",
+  "strategy": "london_breakout-1.0.0",
+  "stage": "dev",
+  "period": [
+    "2007-01-01",
+    "2015-01-01"
+  ],
+  "stats": {
+    "period_start": "2007-01-01 00:00:00+00:00",
+    "period_end": "2015-01-01 00:00:00+00:00",
+    "years": 8.0,
+    "trades": 2725,
+    "initial_balance": 10000.0,
+    "net_profit": -4234.31,
+    "final_balance": 5765.69,
+    "return_pct": -42.34,
+    "cagr_pct": -6.65,
+    "max_drawdown": 4342.21,
+    "max_drawdown_pct": 43.07,
+    "profit_factor": 0.804,
+    "win_rate_pct": 50.28,
+    "expectancy_per_trade": -1.55,
+    "expectancy_r": -0.089,
+    "avg_win_r": 0.722,
+    "avg_loss_r": -0.908,
+    "trades_per_year": 340.6,
+    "avg_hold_hours": 3.46,
+    "max_consecutive_losses": 10,
+    "max_consecutive_wins": 9,
+    "costs": {
+      "spread": 1196.94,
+      "commission": 1112.58,
+      "swap": 0.36,
+      "slippage": 403.23,
+      "total": 2713.11,
+      "pct_of_gross_profit": 15.7
+    },
+    "exit_reasons": {
+      "tp": 1267,
+      "sl": 1148,
+      "time": 286,
+      "sl_gap": 24
+    },
+    "ambiguous_bars_total": 0,
+    "trades_with_ambiguous_bar": 0,
+    "exposure_pct": 9.98,
+    "months": 96,
+    "losing_months": 69,
+    "worst_month": -264.13,
+    "best_month": 180.17,
+    "yearly_net": {
+      "2007": -285.57,
+      "2008": -1343.24,
+      "2009": 228.91,
+      "2010": -587.34,
+      "2011": -816.27,
+      "2012": -473.64,
+      "2013": -447.59,
+      "2014": -509.57
+    },
+    "yearly_return_pct": {
+      "2007": -2.86,
+      "2008": -13.83,
+      "2009": 2.73,
+      "2010": -6.83,
+      "2011": -10.19,
+      "2012": -6.58,
+      "2013": -6.66,
+      "2014": -8.12
+    },
+    "by_symbol": {
+      "AUDUSD": {
+        "trades": 277,
+        "net": -536.97,
+        "expectancy_r": -0.089,
+        "win_rate_pct": 47.7
+      },
+      "EURUSD": {
+        "trades": 742,
+        "net": -773.04,
+        "expectancy_r": -0.06,
+        "win_rate_pct": 51.8
+      },
+      "GBPUSD": {
+        "trades": 801,
+        "net": -1129.84,
+        "expectancy_r": -0.092,
+        "win_rate_pct": 50.4
+      },
+      "USDCAD": {
+        "trades": 905,
+        "net": -1794.46,
+        "expectancy_r": -0.11,
+        "win_rate_pct": 49.7
+      }
+    },
+    "daily_return_sharpe_annualised": -2.091,
+    "max_entries_in_a_day": 4,
+    "label": "london_breakout",
+    "daily_loss_halts": 0
+  },
+  "per_signal": {
+    "n": 3015,
+    "mean_r_net": -0.0967,
+    "mean_r_gross": -0.0724,
+    "win_pct": 50.1,
+    "by_symbol": {
+      "AUDUSD": -0.0614,
+      "EURUSD": -0.0591,
+      "GBPUSD": -0.1101,
+      "USDCAD": -0.1282
+    },
+    "exit_reasons": {
+      "tp": 1387,
+      "sl": 1267,
+      "time": 331,
+      "sl_gap": 30
+    }
+  },
+  "permutation": {
+    "n_signals": 3015,
+    "real_mean_r": -0.0967,
+    "null_mean_r": -0.0592,
+    "null_sd": 0.0161,
+    "z_score": -2.33,
+    "p_value": 0.99,
+    "n_perm": 200,
+    "real_by_symbol": {
+      "AUDUSD": -0.0614,
+      "EURUSD": -0.0591,
+      "GBPUSD": -0.1101,
+      "USDCAD": -0.1282
+    }
+  },
+  "yearly": {
+    "2007": -285.57,
+    "2008": -1343.24,
+    "2009": 228.91,
+    "2010": -587.34,
+    "2011": -816.27,
+    "2012": -473.64,
+    "2013": -447.59,
+    "2014": -509.57
+  },
+  "adverse": {
+    "net_profit": -4909.55,
+    "profit_factor": 0.763,
+    "expectancy_r": -0.11,
+    "trades": 2719
+  },
+  "gates": [
+    {
+      "name": "per_signal_expectancy_positive",
+      "passed": false,
+      "value": -0.0967,
+      "threshold": "> 0"
+    },
+    {
+      "name": "profit_factor",
+      "passed": false,
+      "value": 0.804,
+      "threshold": ">= 1.10"
+    },
+    {
+      "name": "trades",
+      "passed": true,
+      "value": 2725,
+      "threshold": ">= 150"
+    },
+    {
+      "name": "permutation_p_bonferroni",
+      "passed": false,
+      "value": 0.99,
+      "threshold": "< 0.0083"
+    },
+    {
+      "name": "years_positive",
+      "passed": false,
+      "value": "1/8 positive, worst -13.8%",
+      "threshold": ">= 5 of 8, worst > -8%"
+    },
+    {
+      "name": "adverse_costs_positive",
+      "passed": false,
+      "value": -4909.55,
+      "threshold": "> 0 (spread x1.5, slippage x2)"
+    },
+    {
+      "name": "max_drawdown",
+      "passed": false,
+      "value": 43.07,
+      "threshold": "< 15%"
+    }
+  ],
+  "passed": false
+}
