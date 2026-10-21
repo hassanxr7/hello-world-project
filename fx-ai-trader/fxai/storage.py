@@ -171,6 +171,31 @@ CREATE TABLE IF NOT EXISTS status (
     ts TEXT NOT NULL,
     data TEXT NOT NULL
 );
+
+-- Watchlist: partially formed setups, re-evaluated against fresh data every scan.
+-- status: active | triggered | expired | invalidated. Only one active row per
+-- (symbol, strategy, side); a re-confirmation on a newer bar refreshes it.
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    strategy TEXT NOT NULL,
+    side INTEGER NOT NULL,
+    created TEXT NOT NULL,
+    expires TEXT NOT NULL,
+    updated TEXT NOT NULL,
+    last_bar TEXT,
+    confirmations INTEGER NOT NULL DEFAULT 1,
+    stage REAL,
+    trigger_level REAL,
+    invalidation REAL,
+    conditions TEXT,
+    evidence TEXT,
+    status TEXT NOT NULL,
+    status_reason TEXT,
+    signal_id TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_watch_active ON watchlist(symbol, strategy, side) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS ix_watch_status ON watchlist(status, updated);
 """
 
 
@@ -256,6 +281,72 @@ class Storage:
                 "SELECT * FROM events WHERE level IN ('warning','error','critical') ORDER BY id DESC LIMIT ?", (limit,)
             )
         return self.query("SELECT * FROM events ORDER BY id DESC LIMIT ?", (limit,))
+
+    # -- watchlist ---------------------------------------------------------------
+    def watch_active(self, symbol: str | None = None) -> list[dict[str, Any]]:
+        sql, args = "SELECT * FROM watchlist WHERE status='active'", ()
+        if symbol:
+            sql, args = sql + " AND symbol=?", (symbol,)
+        return [self._watch_row(r) for r in self.query(sql + " ORDER BY id", args)]
+
+    def watch_upsert(self, w: dict[str, Any]) -> int:
+        """Insert a new active setup, or refresh the active one for (symbol, strategy, side)."""
+        with self.tx() as c:
+            cur = c.execute("SELECT id, confirmations, last_bar FROM watchlist WHERE status='active' AND symbol=? "
+                            "AND strategy=? AND side=?", (w["symbol"], w["strategy"], w["side"])).fetchone()
+            vals = (_iso(w["expires"]), utcnow().isoformat(), _iso(w["last_bar"]), w["stage"], w["trigger_level"],
+                    w["invalidation"], _dumps(w["conditions"]), _dumps(w["evidence"]))
+            if cur is None:
+                c.execute("INSERT INTO watchlist(symbol, strategy, side, created, expires, updated, last_bar, stage, "
+                          "trigger_level, invalidation, conditions, evidence, status) "
+                          "VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'active')",
+                          (w["symbol"], w["strategy"], w["side"], _iso(w["created"]), *vals))
+                return int(c.execute("SELECT last_insert_rowid()").fetchone()[0])
+            conf = cur["confirmations"] + (1 if cur["last_bar"] != _iso(w["last_bar"]) else 0)
+            c.execute("UPDATE watchlist SET expires=?, updated=?, last_bar=?, stage=?, trigger_level=?, invalidation=?, "
+                      "conditions=?, evidence=?, confirmations=? WHERE id=?", (*vals, conf, cur["id"]))
+            return int(cur["id"])
+
+    def watch_close(self, wid: int, status: str, reason: str, signal_id: str | None = None) -> None:
+        assert status in ("triggered", "expired", "invalidated")
+        with self.tx() as c:
+            c.execute("UPDATE watchlist SET status=?, status_reason=?, signal_id=?, updated=? WHERE id=? "
+                      "AND status='active'", (status, reason[:300], signal_id, utcnow().isoformat(), wid))
+
+    def watch_recent(self, limit: int = 50) -> list[dict[str, Any]]:
+        rows = self.query("SELECT * FROM watchlist ORDER BY (status='active') DESC, updated DESC LIMIT ?", (limit,))
+        return [self._watch_row(r) for r in rows]
+
+    @staticmethod
+    def _watch_row(r: dict[str, Any]) -> dict[str, Any]:
+        r["conditions"] = json.loads(r["conditions"] or "{}")
+        r["evidence"] = json.loads(r["evidence"] or "[]")
+        return r
+
+    def execution_quality(self, limit: int = 50) -> dict[str, dict[str, Any]]:
+        """Per symbol, over the last ``limit`` OPEN commands: fills, rejections, unknown outcomes and the
+        fill price versus the decision-time reference price (positive = adverse slippage, in price units)."""
+        rows = self.query(
+            "SELECT c.symbol, c.status, c.payload, t.open_price, t.side FROM commands c "
+            "LEFT JOIN trades t ON t.signal_id = c.signal_id WHERE c.type='OPEN' ORDER BY c.seq DESC LIMIT ?", (limit,))
+        out: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            q = out.setdefault(r["symbol"], {"orders": 0, "filled": 0, "rejected": 0, "unknown": 0, "slippage": []})
+            q["orders"] += 1
+            st = r["status"]
+            q["filled"] += st == "FILLED"
+            q["rejected"] += st in ("REJECTED", "EXPIRED", "WITHDRAWN")
+            q["unknown"] += st in ("UNKNOWN", "NOT_FOUND")
+            if st == "FILLED" and r["open_price"] is not None:
+                ref = json.loads(r["payload"] or "{}").get("ref")
+                if ref:
+                    sign = 1 if r["side"] == "BUY" else -1
+                    q["slippage"].append((float(r["open_price"]) - float(ref)) * sign)
+        for q in out.values():
+            sl = q.pop("slippage")
+            q["mean_adverse_slippage"] = sum(sl) / len(sl) if sl else None
+            q["worst_adverse_slippage"] = max(sl) if sl else None
+        return out
 
     # -- decisions & signals ---------------------------------------------------
     def record_decision(self, symbol: str, bar_time: datetime, action: str, regime: str | None,

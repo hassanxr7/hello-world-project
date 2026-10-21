@@ -71,6 +71,7 @@ class StrategyOutput:
     invalidation: list[str] = field(default_factory=list)
     features: dict[str, float] = field(default_factory=dict)
     setup: Setup | None = None
+    atr_entry: float | None = None  # entry-timeframe ATR at the signal bar (fixed trailing distance)
 
 
 def session_mask(close_time: pd.Series, session_window: str, friday_cutoff_utc: str = "18:00",
@@ -183,8 +184,10 @@ class StrategyBase:
         action = Action.BUY if row["signal"] > 0 else Action.SELL
         tp_price = float(row["tp"]) if "tp" in row and pd.notna(row.get("tp")) else None
         deadline = pd.Timestamp(row["deadline"]) if "deadline" in row and pd.notna(row.get("deadline")) else None
+        atr_e = float(row["atr_e"]) if pd.notna(row.get("atr_e")) else None
         return StrategyOutput(symbol, action, bar_open, close_t, regime, reasons, float(row["close"]), float(row["sl"]),
-                              self.exits.take_profit_r, tp_price, deadline, self.invalidation_notes(row), feats)
+                              self.exits.take_profit_r, tp_price, deadline, self.invalidation_notes(row), feats,
+                              atr_entry=atr_e)
 
 
 def mark(ok: bool) -> str:

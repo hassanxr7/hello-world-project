@@ -37,6 +37,29 @@ CMD_TYPES = {"OPEN", "MODIFY", "CLOSE", "CLOSE_ALL", "CANCEL_PENDING", "ESTOP", 
 RESULT_STATUSES = {"FILLED", "REJECTED", "UNKNOWN", "EXPIRED", "DUPLICATE", "DONE", "ERROR"}
 COMMENT_PREFIX = "FXAI|"
 
+# Per-order exit policy carried by OPEN (same ranges as ValidateExits() in FXAI_Bridge.mq4;
+# tests/test_ea_source.py checks they match). Out-of-range values make the EA reject the order.
+EXIT_KEYS = ("hold_h", "be_r", "be_pts", "trail_r", "trail_dist")
+EXIT_RANGES = {"hold_h": (0.0, 1080.0), "be_r": (0.0, 20.0), "be_pts": (0.0, 2000.0), "trail_r": (-1.0, 50.0)}
+TRAIL_DIST_MAX_FRACTION = 0.05  # of price
+
+
+def validate_exit_params(x: dict[str, Any], price: float) -> str | None:
+    """None if the exit policy is acceptable, else the reason the EA would reject it."""
+    try:
+        v = {k: float(x[k]) for k in EXIT_KEYS if k in x}
+    except (TypeError, ValueError):
+        return "exit params must be numbers"
+    for k, (lo, hi) in EXIT_RANGES.items():
+        if k in v and not (lo <= v[k] <= hi):
+            return f"{k} outside [{lo:g}, {hi:g}]"
+    td = v.get("trail_dist", 0.0)
+    if not (0.0 <= td <= TRAIL_DIST_MAX_FRACTION * price):
+        return "trail_dist outside [0, 5% of price]"
+    if v.get("trail_r", -1.0) >= 0 and td <= 0:
+        return "trailing enabled without trail_dist"
+    return None
+
 
 class ProtocolError(ValueError):
     pass

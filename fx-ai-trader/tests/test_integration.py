@@ -82,8 +82,10 @@ class Harness:
         tp = round(e + side.sign * 2 * sl_pips * 0.0001, 5)
         return TradeIntent(sid, sym, side, e, sl, tp, "t", "v1", self.clock(), self.clock())
 
-    def submit(self, sid: str = "S1", volume: float = 0.1, **kw) -> int | None:
+    def submit(self, sid: str = "S1", volume: float = 0.1, exits: dict | None = None, **kw) -> int | None:
         it = self.intent(sid, **kw)
+        if exits is not None:
+            it = replace(it, exit_params=exits)
         planned = volume * abs(it.entry_price - it.stop_loss) * 100_000  # USD-quoted pairs
         dec = RiskDecision(True, volume, planned, planned / 100, [CheckResult("x", True)])
         return self.svc.om.submit_open(it, dec, self.svc.risk.day_id or "d", 10, 20)
@@ -400,3 +402,48 @@ def test_live_account_blocked_by_ea_without_flag(tmp_path):
     h.tick(2)
     assert status(h, seq) == "REJECTED"
     assert "live account" in h.storage.command(seq)["result"]["msg"]
+
+
+# --------------------------------------------------------------------------- per-order exit policy
+TRAIL = {"hold_h": 100, "be_r": 0, "be_pts": 0, "trail_r": 0.0, "trail_dist": 0.0010}
+
+
+def test_order_exit_policy_trails_at_fixed_distance_and_survives_restart(h):
+    h.tick()
+    seq = h.submit("X1", exits=TRAIL)
+    h.tick(2)
+    assert status(h, seq) == "FILLED"
+    o = system_orders(h)[0]
+    assert h.ea.gv["exits"][str(o.ticket)] == {k: float(v) for k, v in TRAIL.items()}
+    h.restart_ea()  # policy is persisted per ticket (EA: GlobalVariables)
+    assert h.ea.gv["exits"][str(o.ticket)]["trail_dist"] == pytest.approx(0.0010)
+    entry = o.open_price
+    h.set_quotes(entry + 0.0030, 1.3)
+    h.ea.step(h.clock())
+    bid = h.broker.quotes["EURUSD"][0]
+    assert system_orders(h)[0].sl == pytest.approx(round(bid - 0.0010, 5))  # fixed distance, not current ATR
+    h.set_quotes(entry + 0.0025, 1.3)  # pull-back above the stop: the stop never loosens
+    h.ea.step(h.clock())
+    assert system_orders(h)[0].sl == pytest.approx(round(bid - 0.0010, 5))
+
+
+def test_order_exit_policy_time_exit_and_default_for_orders_without_policy(h):
+    h.tick()
+    h.submit("X2", exits={**TRAIL, "hold_h": 1, "trail_r": -1, "trail_dist": 0})
+    h.submit("X3", sym="GBPUSD")  # no policy of its own -> EA inputs (48 h)
+    h.tick(2)
+    assert len(system_orders(h)) == 2
+    h.clock.advance(3601)
+    h.ea.step(h.clock())
+    left = system_orders(h)
+    assert [o.symbol for o in left] == ["GBPUSD"]
+
+
+@pytest.mark.parametrize("bad", [{**TRAIL, "trail_dist": 0}, {**TRAIL, "hold_h": 5000}, {**TRAIL, "be_r": -1},
+                                 {**TRAIL, "trail_dist": 0.2}])
+def test_invalid_exit_policy_is_rejected_by_the_ea(h, bad):
+    h.tick()
+    seq = h.submit("X4", exits=bad)
+    h.tick(2)
+    assert status(h, seq) == "REJECTED" and not system_orders(h)
+    assert "invalid exit params" in (h.storage.command(seq)["result"] or {}).get("msg", "")

@@ -67,14 +67,14 @@ input double   TrailingATRMult      = 2.0;
 input ENUM_TIMEFRAMES TrailingATRTimeframe = PERIOD_H1;
 input int      TrailingATRPeriod    = 14;
 input int      TrailingStepPoints   = 10;
-input double   MaxHoldHours         = 48;
+input double   MaxHoldHours         = 48;      // default when an order carries no exit policy of its own
 input bool     AllowTwoStepSL       = true;    // market-execution brokers: open, then attach SL immediately
 input int      UnprotectedGraceSec  = 10;      // system position without SL -> restore SL or close
 input int      MaxEntryRetries      = 2;       // only for errors that mean "definitely not executed"
 input int      ReconcileWindowSec   = 60;
 //--- data export
 sinput string  _s5 = "=== Data export ===";
-input string   BarTimeframes        = "M15,H1,H4";
+input string   BarTimeframes        = "M15,H1,H4,D1";
 input int      BarsToExport         = 800;
 input int      TimerMs              = 500;
 input bool     ExportManualOrders   = true;    // include manual trades in state (read-only, for exposure)
@@ -316,6 +316,53 @@ double GvGet(const string key, const double dflt)
 {
    string n = GvName(key);
    return GlobalVariableCheck(n) ? GlobalVariableGet(n) : dflt;
+}
+
+//--- per-order exit policy ------------------------------------------------------------
+// An OPEN command may carry its strategy's exit policy (validated backtest exits):
+//   hold_h  max holding hours (0 = none)        be_r   break-even trigger in R (0 = off)
+//   be_pts  break-even offset in points          trail_r trailing start in R (< 0 = off)
+//   trail_dist fixed trailing distance in price units (<= 5% of price; as in the backtest)
+// Values outside the ranges below REJECT the order. Missing keys fall back to the EA inputs.
+// The policy is stored per tag before OrderSend and moved to the ticket on fill, so it
+// survives restarts and ambiguous-result reconciliation. These rules only ever TIGHTEN a
+// stop or close a position; the stop is never widened.
+string ValidateExits(const double xh, const double xbr, const double xbp, const double xtr, const double xtd,
+                     const double price)
+{
+   if(!(xh >= 0 && xh <= 1080)) return "hold_h outside [0, 1080]";
+   if(!(xbr >= 0 && xbr <= 20)) return "be_r outside [0, 20]";
+   if(!(xbp >= 0 && xbp <= 2000)) return "be_pts outside [0, 2000]";
+   if(!(xtr >= -1 && xtr <= 50)) return "trail_r outside [-1, 50]";
+   if(!(xtd >= 0 && xtd <= 0.05 * price)) return "trail_dist outside [0, 5% of price]";
+   if(xtr >= 0 && xtd <= 0) return "trailing enabled without trail_dist";
+   return "";
+}
+
+void SaveExits(const string id, const double xh, const double xbr, const double xbp, const double xtr, const double xtd)
+{
+   GlobalVariableSet(GvName("XH_" + id), xh);
+   GlobalVariableSet(GvName("XBR_" + id), xbr);
+   GlobalVariableSet(GvName("XBP_" + id), xbp);
+   GlobalVariableSet(GvName("XTR_" + id), xtr);
+   GlobalVariableSet(GvName("XTD_" + id), xtd);
+   GlobalVariableSet(GvName("XOK_" + id), 1);
+   GlobalVariablesFlush();
+}
+
+void DeleteExits(const string id)
+{
+   string keys[6] = {"XH_", "XBR_", "XBP_", "XTR_", "XTD_", "XOK_"};
+   for(int i = 0; i < 6; i++) GlobalVariableDel(GvName(keys[i] + id));
+}
+
+void MoveExitsToTicket(const string tag, const int ticket)
+{
+   string from = "T" + tag;
+   if(GvGet("XOK_" + from, 0) <= 0) return;
+   SaveExits(IntegerToString(ticket), GvGet("XH_" + from, MaxHoldHours), GvGet("XBR_" + from, 0),
+             GvGet("XBP_" + from, BreakEvenOffsetPoints), GvGet("XTR_" + from, -1), GvGet("XTD_" + from, 0));
+   DeleteExits(from);
 }
 
 void SaveCounters()
@@ -772,6 +819,13 @@ void HandleOpen(string &k[], string &v[], const long seq)
       return;
    }
    string why = GuardOpen(bsym, cmd, vol, sl, ref, maxdev, maxrisk);
+   double xh  = StringToDouble(KV(k, v, "hold_h", DoubleToString(MaxHoldHours, 2)));
+   double xbr = StringToDouble(KV(k, v, "be_r", BreakEvenEnabled ? DoubleToString(BreakEvenTriggerR, 4) : "0"));
+   double xbp = StringToDouble(KV(k, v, "be_pts", IntegerToString(BreakEvenOffsetPoints)));
+   double xtr = StringToDouble(KV(k, v, "trail_r", "-1"));
+   double xtd = StringToDouble(KV(k, v, "trail_dist", "0"));
+   bool own = (KV(k, v, "hold_h") != "" || KV(k, v, "be_r") != "" || KV(k, v, "trail_r") != "");
+   if(why == "" && own) why = ValidateExits(xh, xbr, xbp, xtr, xtd, ref > 0 ? ref : MarketInfo(bsym, MODE_BID));
    if(why != "")
    {
       g_failed++; SaveCounters();
@@ -779,6 +833,7 @@ void HandleOpen(string &k[], string &v[], const long seq)
       LogEvent("warning", "OPEN_REJECTED", sid + ": " + why);
       return;
    }
+   if(own) SaveExits("T" + tag, xh, xbr, xbp, xtr, xtd);   // exit policy persisted BEFORE OrderSend
    AddPending(tag, seq, sid);
    int digits = (int)MarketInfo(bsym, MODE_DIGITS);
    string comment = "FXAI|" + tag;
@@ -842,7 +897,7 @@ void HandleOpen(string &k[], string &v[], const long seq)
       if(!ok)
       {
          CloseTicket(ticket, 0, "stop-loss could not be attached");
-         RemovePending(tag); AddTag(tag, ticket);
+         RemovePending(tag); AddTag(tag, ticket); DeleteExits("T" + tag);
          g_entries++; SaveCounters();
          WriteResult(seq, "OPEN", "REJECTED", sid, ticket, GetLastError(), attempts,
                      "stop-loss could not be attached - position closed immediately");
@@ -857,6 +912,7 @@ void ConfirmFill(const long seq, const string sid, const string tag, const int t
 {
    RemovePending(tag);
    AddTag(tag, ticket);
+   MoveExitsToTicket(tag, ticket);
    if(OrderSelect(ticket, SELECT_BY_TICKET) && OrderStopLoss() > 0)
    {
       GlobalVariableSet(GvName("R_" + IntegerToString(ticket)), MathAbs(OrderOpenPrice() - OrderStopLoss()));
@@ -879,6 +935,7 @@ void ReconcilePending()
          string id = g_pendId[i];
          RemovePending(tag);
          AddTag(tag, t);
+         MoveExitsToTicket(tag, t);
          g_entries++; SaveCounters();
          if(OrderSelect(t, SELECT_BY_TICKET) && OrderStopLoss() > 0)
             GlobalVariableSet(GvName("R_" + IntegerToString(t)), MathAbs(OrderOpenPrice() - OrderStopLoss()));
@@ -1056,21 +1113,30 @@ void ManagePositions()
          continue;
       }
 
-      double r = GvGet("R_" + IntegerToString(ticket), 0);
-      if(r <= 0) { r = MathAbs(OrderOpenPrice() - sl); GlobalVariableSet(GvName("R_" + IntegerToString(ticket)), r); }
+      string tk = IntegerToString(ticket);
+      double r = GvGet("R_" + tk, 0);
+      if(r <= 0) { r = MathAbs(OrderOpenPrice() - sl); GlobalVariableSet(GvName("R_" + tk), r); }
+      // exit policy: the order's own (from its strategy) or, for older orders, the EA inputs
+      bool own = GvGet("XOK_" + tk, 0) > 0;
+      double holdH = own ? GvGet("XH_" + tk, MaxHoldHours) : MaxHoldHours;
+      double beR   = own ? GvGet("XBR_" + tk, 0) : (BreakEvenEnabled ? BreakEvenTriggerR : 0);
+      double bePts = own ? GvGet("XBP_" + tk, BreakEvenOffsetPoints) : BreakEvenOffsetPoints;
+      double trR   = own ? GvGet("XTR_" + tk, -1) : (TrailingEnabled ? TrailingStartR : -1);
+      double trD   = own ? GvGet("XTD_" + tk, 0) : 0;
       double prof = (px - OrderOpenPrice()) * sign;
       double newSl = sl;
-      if(BreakEvenEnabled && r > 0 && prof >= BreakEvenTriggerR * r)
+      if(beR > 0 && r > 0 && prof >= beR * r)
       {
-         double be = NormalizeDouble(OrderOpenPrice() + sign * BreakEvenOffsetPoints * point, digits);
+         double be = NormalizeDouble(OrderOpenPrice() + sign * bePts * point, digits);
          if((be - newSl) * sign > 0) newSl = be;
       }
-      if(TrailingEnabled && r > 0 && prof >= TrailingStartR * r)
+      if(trR >= 0 && r > 0 && prof >= trR * r)
       {
-         double a = iATR(sym, TrailingATRTimeframe, TrailingATRPeriod, 1);
-         if(a > 0)
+         double dist = trD;
+         if(dist <= 0) { double a = iATR(sym, TrailingATRTimeframe, TrailingATRPeriod, 1); dist = TrailingATRMult * a; }
+         if(dist > 0)
          {
-            double cand = NormalizeDouble(px - sign * TrailingATRMult * a, digits);
+            double cand = NormalizeDouble(px - sign * dist, digits);
             if((cand - newSl) * sign >= TrailingStepPoints * point) newSl = cand;
          }
       }
@@ -1080,7 +1146,7 @@ void ManagePositions()
          if(OrderModify(ticket, OrderOpenPrice(), newSl, OrderTakeProfit(), 0, clrNONE)) { g_mods++; SaveCounters(); }
          else LogEvent("warning", "MODIFY_FAILED", StringFormat("#%d err %d", ticket, GetLastError()));
       }
-      if(MaxHoldHours > 0 && (double)(ServerNow() - OrderOpenTime()) >= MaxHoldHours * 3600)
+      if(holdH > 0 && (double)(ServerNow() - OrderOpenTime()) >= holdH * 3600)
          CloseTicket(ticket, 0, "max holding time");
    }
 }

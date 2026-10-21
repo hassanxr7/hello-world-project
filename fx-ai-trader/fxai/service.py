@@ -11,8 +11,13 @@ Each iteration:
  7. for each symbol with a NEWLY COMPLETED entry-timeframe bar: strategy ->
     (news blackout) -> (ML meta-filter) -> risk engine -> (LLM review) ->
     risk engine again with fresh state -> submit; every decision (incl. WAIT
-    and its reasons) is stored once per bar
- 8. write the status snapshot for the dashboard
+    and its reasons) is stored once per bar. Signals arriving in the same step
+    are ranked (attention score, then spread cost per R) before the risk engine
+    sees them, so the limits admit the best-conditioned ones first
+ 8. at least once per minute: opportunity scan of every pair (trend, structure,
+    candles, volatility, spread, session, exposure, execution quality, events)
+    and the watchlist lifecycle (active -> triggered / expired / invalidated)
+ 9. write the status snapshot for the dashboard
 
 Monitoring runs every second; decisions only happen on completed bars.
 Protective logic (SL on the broker, break-even/trailing, daily-loss halt,
@@ -33,19 +38,21 @@ import pandas as pd
 
 from . import __version__
 from .bridge.file_bridge import FileBridge
-from .bridge.protocol import BridgeState
-from .config import TF_MIN, AppConfig
+from .bridge.protocol import BridgeState, validate_exit_params
+from .config import AppConfig
 from .domain import Action, Side, TradeIntent
 from .execution.order_manager import FillEvent, OrderManager
 from .execution.tracker import TradeTracker
+from .execution.watchlist import Watchlist
 from .llm import LLMAnalyst, ReviewResult, apply_policy
 from .ml import ModelRegistry
 from .news import Calendar
 from .risk import EffectiveLimits, RiskContext, RiskEngine, RiskState
 from .risk.exposure import currency_exposure, exposure_items, total_open_risk
+from .analysis.scanner import assess_pair, rank
 from .storage import Storage
 from .strategy import StrategyOutput, build_strategy
-from .timeutil import utcnow
+from .timeutil import in_window, utcnow
 
 log = logging.getLogger("fxai.service")
 
@@ -99,6 +106,9 @@ class TradingService:
         self._corr: dict[tuple[str, str], float] | None = None
         self._corr_ts = 0.0
         self.loop_ms = 0.0
+        self.watchlist = Watchlist(storage)
+        self.scan: dict[str, Any] = {"at": None, "pairs": [], "note": "first scan pending"}
+        self._last_scan_ts = 0.0
         self.st.log_event("info", "service", "START", f"fxai {__version__} mode={cfg.mode} "
                           f"strategy={self.strategy.full_version}")
 
@@ -135,6 +145,13 @@ class TradingService:
             if self.health["healthy"]:
                 self._decide(state, now)
             self._process_reviews(state, now)
+            if now.timestamp() - self._last_scan_ts >= self.cfg.strategy.scan_interval_s:
+                self._last_scan_ts = now.timestamp()
+                try:
+                    self._scan(state, now)
+                except Exception as e:  # the scan is advisory; never let it stop monitoring
+                    log.exception("scan failed")
+                    self.st.log_event("error", "scan", "SCAN_FAILED", repr(e)[:300])
         self.risk.save(self.st)
         self.loop_ms = (time.monotonic() - t0) * 1000
         self._write_status(state, now)
@@ -316,6 +333,7 @@ class TradingService:
 
     def _decide(self, state: BridgeState, now: datetime) -> None:
         etf, ttf = self.strategy.entry_tf, self.strategy.trend_tf
+        candidates: list[StrategyOutput] = []
         for sym, info in self.symbols.items():
             if sym not in state.specs:
                 self.latest[sym] = {"action": "WAIT", "reasons": ["symbol not reported by EA"], "regime": "UNKNOWN"}
@@ -341,7 +359,93 @@ class TradingService:
             if out.action is Action.WAIT:
                 self._record(sym, out, "WAIT", out.reasons)
                 continue
-            self._candidate(state, now, sym, out)
+            candidates.append(out)
+        ranked = self.rank_candidates(state, candidates)
+        for i, out in enumerate(ranked):
+            if len(ranked) > 1:
+                out.reasons = out.reasons + [f"opportunity rank {i + 1}/{len(ranked)} this step "
+                                             f"(attention {self._attention(out.symbol):.0f}, spread {self._cost_r(state, out):.3f} R)"]
+            self._candidate(state, now, out.symbol, out)
+
+    def _attention(self, sym: str) -> float:
+        for p in self.scan.get("pairs", []):
+            if p["symbol"] == sym:
+                return float(p["score"])
+        return 0.0
+
+    @staticmethod
+    def _cost_r(state: BridgeState, out: StrategyOutput) -> float:
+        q = state.quotes.get(out.symbol)
+        if q is None or out.entry_ref is None or out.stop_loss is None or out.entry_ref == out.stop_loss:
+            return 9.0
+        return (q.ask - q.bid) / abs(out.entry_ref - out.stop_loss)
+
+    def rank_candidates(self, state: BridgeState, outs: list[StrategyOutput]) -> list[StrategyOutput]:
+        """Order simultaneous signals: higher attention score, then lower spread cost per R, then symbol.
+        A heuristic for which signal the limits admit first; it never creates or upgrades a signal."""
+        return sorted(outs, key=lambda o: (-self._attention(o.symbol), self._cost_r(state, o), o.symbol))
+
+    # ================================================================== scan + watchlist
+    def _scan(self, state: BridgeState, now: datetime) -> None:
+        t0 = time.monotonic()
+        etf, ttf = self.strategy.entry_tf, self.strategy.trend_tf
+        items = exposure_items(state.positions, state.specs)
+        ccy = currency_exposure(items, state.specs)
+        held = {p.symbol for p in state.positions}
+        corr = self._correlations(now) or {}
+        thr = self.cfg.risk.correlation_threshold
+        quality = self.st.execution_quality()
+        cal = self.calendar.status(now)
+        views = []
+        for sym, info in self.symbols.items():
+            spec = state.specs.get(sym)
+            q = state.quotes.get(sym)
+            entry = self.bridge.read_bars(sym, etf, state.offset_s) if spec else None
+            trend = self.bridge.read_bars(sym, ttf, state.offset_s) if spec else None
+            daily = self.bridge.read_bars(sym, "D1", state.offset_s) if spec and ttf != "D1" else trend
+            nt = pd.Timestamp(now)
+            entry = entry[entry["close_time"] <= nt] if entry is not None else None
+            trend = trend[trend["close_time"] <= nt] if trend is not None else None
+            daily = daily[daily["close_time"] <= nt] if daily is not None else None
+            window = "00:00-24:00" if self.strategy.ignores_session_window else info.trading_hours_utc
+            frame, setups = None, []
+            if entry is not None and trend is not None and len(entry) >= 30 and len(trend) >= 30:
+                frame = self.strategy.compute(entry, trend, window)
+                setups = self.strategy.setups(frame, sym)
+            price = (q.bid + q.ask) / 2 if q else None
+            signal = None
+            if frame is not None and not frame.empty and int(frame["signal"].iloc[-1] or 0) != 0:
+                side = int(frame["signal"].iloc[-1])
+                bar = pd.Timestamp(frame["close_time"].iloc[-1])
+                signal = (side, f"{self.strategy.full_version}:{sym}:{bar:%Y%m%dT%H%M}:{'BUY' if side > 0 else 'SELL'}")
+            latest_bar = pd.Timestamp(frame["close_time"].iloc[-1]) if frame is not None and not frame.empty else None
+            for note in self.watchlist.refresh(sym, self.strategy.full_version, setups, now, price, latest_bar, signal):
+                self.st.log_event("info", "watchlist", "WATCH", note)
+            act = self.st.watch_active(sym)
+            setup = None
+            if act:
+                w = act[-1]
+                setup = {k: w[k] for k in ("id", "side", "stage", "trigger_level", "invalidation", "created", "expires",
+                                           "confirmations", "conditions")}
+            ev = {"source": cal.get("provider"), "note": cal.get("detail")}
+            if spec and cal.get("active"):
+                ev["blocking"] = self.calendar.blocking_reason((spec.base, spec.quote), now)
+                ev["upcoming"] = [{"time": e.time_utc.isoformat(), "currency": e.currency, "impact": e.impact,
+                                   "title": e.title} for e in self.calendar.upcoming(now, 12)
+                                  if e.currency in (spec.base, spec.quote)][:5]
+            cor = sorted({b for (a, b), c in corr.items() if a == sym and b in held and b != sym and abs(c) >= thr})
+            note = None
+            if spec:
+                parts = [f"{c} {ccy.get(c, 0):+.0f}" for c in (spec.base, spec.quote) if abs(ccy.get(c, 0)) > 0]
+                note = ", ".join(parts) or "none"
+            views.append(assess_pair(
+                sym, now, entry, frame, daily, (q.bid, q.ask, q.time_utc) if q else None,
+                spec.point if spec else 0.00001, info.max_spread_points, in_window(now, window), setup,
+                sym in held, note, cor, ev, quality.get(sym), self.cfg.risk.max_quote_age_s))
+        ranked = rank(views)
+        self.scan = {"at": now.isoformat(), "duration_ms": round((time.monotonic() - t0) * 1000, 1),
+                     "interval_s": self.cfg.strategy.scan_interval_s, "pairs": [v.as_dict() for v in ranked],
+                     "note": "attention score = unvalidated heuristic for prioritising; it never opens a trade"}
 
     def _block(self, sym: str, out: StrategyOutput, why: str) -> None:
         self._record(sym, out, "WAIT", out.reasons + [f"WAIT: {why}"])
@@ -367,9 +471,19 @@ class TradingService:
             if left_h <= 0.25:  # never open a trade whose forced-exit time has passed or is minutes away
                 return self._block(sym, out, f"forced-exit deadline {out.deadline:%Y-%m-%d %H:%M} UTC passed or < 15 min away")
             hold_h = min(hold_h, left_h)
+        # The strategy's own exit policy, exactly as backtested: the trailing stop keeps a FIXED distance of
+        # trailing_atr_mult x entry-timeframe ATR at the signal bar (see fxai/backtest/fills.py).
+        trail_dist = 0.0
+        if ex.trailing_enabled:
+            if not out.atr_entry or out.atr_entry <= 0:
+                return self._block(sym, out, "trailing exit needs the entry-timeframe ATR, which is missing")
+            trail_dist = round(ex.trailing_atr_mult * out.atr_entry, spec.digits)
         exit_params = {"hold_h": round(hold_h, 2), "be_r": ex.breakeven_trigger_r if ex.breakeven_enabled else 0,
                        "be_pts": ex.breakeven_offset_points, "trail_r": ex.trailing_start_r if ex.trailing_enabled else -1,
-                       "trail_atr": ex.trailing_atr_mult, "trail_tf": TF_MIN[self.strategy.trend_tf]}
+                       "trail_dist": trail_dist}
+        bad = validate_exit_params(exit_params, entry)
+        if bad:
+            return self._block(sym, out, f"exit policy rejected: {bad}")
         sid = f"{self.strategy.full_version}:{sym}:{out.bar_close_time:%Y%m%dT%H%M}:{side.value}"
         intent = TradeIntent(signal_id=sid, symbol=sym, side=side, entry_price=entry,
                              stop_loss=spec.round_price(out.stop_loss), take_profit=tp,
@@ -488,12 +602,13 @@ class TradingService:
             "service": {"version": __version__, "mode": self.cfg.mode, "live_enabled": self.cfg.live_enabled,
                         "started_at": self.started.isoformat(), "now": now.isoformat(),
                         "loop_ms": round(self.loop_ms, 1), "strategy": self.strategy.full_version,
-                        "decision_tf": self.cfg.strategy.decision_timeframe,
-                        "trend_tf": self.cfg.strategy.trend_timeframe},
+                        "decision_tf": self.strategy.entry_tf, "trend_tf": self.strategy.trend_tf},
             "bridge": {**self.health, "last_error": self.bridge.last_error},
             "limits": lim.__dict__,
             "block_reasons": self.block_reasons(state, lim),
             "decisions": self.latest,
+            "scan": self.scan,
+            "watchlist": self.st.watch_recent(40),
             "models": {"ml": {"enabled": self.cfg.ml.enabled, "version": self.model.version if self.model else None,
                               "calibrated": bool(self.model and self.model.calibrated), "error": self.model_error},
                        "llm": self.analyst.status()},
@@ -550,3 +665,4 @@ class TradingService:
                                        "daily_loss_pct": self.risk.current_daily_loss_pct(a.equity),
                                        "open_risk": open_risk})
         self.st.write_status(data)
+

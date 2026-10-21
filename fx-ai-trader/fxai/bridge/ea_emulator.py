@@ -27,7 +27,7 @@ from ..execution.sim_broker import (ERR_INVALID_STOPS, NOT_EXECUTED_RETRYABLE, O
                                     is_ambiguous)
 from ..timeutil import as_utc, trading_day_id
 from .file_bridge import atomic_write
-from .protocol import COMMENT_PREFIX, ProtocolError, decode_kv, encode_kv, kv_text
+from .protocol import COMMENT_PREFIX, ProtocolError, decode_kv, encode_kv, kv_text, validate_exit_params
 
 EA_VERSION = "1.0.0-emulator"
 
@@ -65,7 +65,7 @@ class EAInputs:
     allow_two_step_sl: bool = True
     max_entry_retries: int = 2
     reconcile_window_s: int = 60
-    bars_timeframes: list[str] = field(default_factory=lambda: ["M15", "H1", "H4"])
+    bars_timeframes: list[str] = field(default_factory=lambda: ["M15", "H1", "H4", "D1"])
     bars_count: int = 800
     server_offset_hours: float = 2.0  # emulator only: broker server time = UTC + offset
 
@@ -88,11 +88,13 @@ class EAEmulator:
 
     # ------------------------------------------------------------------ persistence
     def _load_gv(self) -> dict:
-        if self.gv_path.is_file():
-            return json.loads(self.gv_path.read_text())
-        return {"day": "", "dse": 0.0, "flows": 0.0, "flow_tickets": [], "entries": 0, "failed": 0, "mods": 0,
-                "partials": 0, "halt": False, "halt_reason": "", "estop": False, "paused": False,
-                "last_seq": 0, "tags": {}, "r": {}, "pending_reconcile": {}}
+        gv = json.loads(self.gv_path.read_text()) if self.gv_path.is_file() else {
+            "day": "", "dse": 0.0, "flows": 0.0, "flow_tickets": [], "entries": 0, "failed": 0, "mods": 0,
+            "partials": 0, "halt": False, "halt_reason": "", "estop": False, "paused": False,
+            "last_seq": 0, "tags": {}, "r": {}, "pending_reconcile": {}}
+        gv.setdefault("exits", {})      # ticket -> exit policy (EA: XH_/XBR_/... GlobalVariables)
+        gv.setdefault("exits_tag", {})  # tag -> exit policy persisted before sending
+        return gv
 
     def _save_gv(self) -> None:
         atomic_write(self.gv_path, json.dumps(self.gv))
@@ -233,14 +235,23 @@ class EAEmulator:
             prof = (px - o.open_price) * (1 if long else -1)
             sign = 1 if long else -1
             new_sl = o.sl
-            if inp.breakeven_enabled and r > 0 and prof >= inp.breakeven_trigger_r * r:
-                be = round(o.open_price + sign * inp.breakeven_offset_points * spec.point, spec.digits)
+            x = self.gv["exits"].get(str(o.ticket))  # the order's own policy, else the EA inputs
+            hold_h = x["hold_h"] if x else inp.max_hold_hours
+            be_r = x["be_r"] if x else (inp.breakeven_trigger_r if inp.breakeven_enabled else 0)
+            be_pts = x["be_pts"] if x else inp.breakeven_offset_points
+            trail_r = x["trail_r"] if x else (inp.trailing_start_r if inp.trailing_enabled else -1)
+            trail_dist = x["trail_dist"] if x else 0.0
+            if be_r > 0 and r > 0 and prof >= be_r * r:
+                be = round(o.open_price + sign * be_pts * spec.point, spec.digits)
                 if (be - new_sl) * sign > 0:
                     new_sl = be
-            if inp.trailing_enabled and r > 0 and prof >= inp.trailing_start_r * r:
-                a = self._atr(o.symbol)
-                if a:
-                    cand = round(px - sign * inp.trailing_atr_mult * a, spec.digits)
+            if trail_r >= 0 and r > 0 and prof >= trail_r * r:
+                dist = trail_dist
+                if dist <= 0:
+                    a = self._atr(o.symbol)
+                    dist = inp.trailing_atr_mult * a if a else 0.0
+                if dist > 0:
+                    cand = round(px - sign * dist, spec.digits)
                     if (cand - new_sl) * sign > 0:
                         new_sl = cand
             lvl = spec.stop_level_points * spec.point
@@ -248,7 +259,7 @@ class EAEmulator:
                 err = self.b.order_modify(o.ticket, new_sl, o.tp)
                 if err == 0:
                     self.gv["mods"] += 1
-            if (self.now - as_utc(o.open_time)).total_seconds() >= inp.max_hold_hours * 3600:
+            if hold_h > 0 and (self.now - as_utc(o.open_time)).total_seconds() >= hold_h * 3600:
                 self.b.order_close(o.ticket, reason="[time]")
                 self.log("info", "TIME_EXIT", f"ticket {o.ticket} max hold reached")
 
@@ -406,11 +417,19 @@ class EAEmulator:
                               msg="signal already executed")
             return
         reason = self._guard(cmd)
+        own = any(k in cmd for k in ("hold_h", "be_r", "trail_r"))
+        policy = self._exit_policy(cmd) if own else None
+        if not reason and policy is not None:
+            ref = float(cmd.get("ref") or self.b.quotes[cmd["symbol"]][0])
+            bad = validate_exit_params(policy, ref)
+            reason = f"invalid exit params: {bad}" if bad else None
         if reason:
             self.gv["failed"] += 1
             self.write_result(seq, type="OPEN", id=sid, status="REJECTED", err=0, msg=reason)
             self.log("warning", "OPEN_REJECTED", f"{sid}: {reason}")
             return
+        if policy is not None:
+            self.gv["exits_tag"][tag] = policy  # persisted with the in-flight marker below, BEFORE sending
         sym, side = cmd["symbol"], cmd["side"]
         op = OP_BUY if side == "BUY" else OP_SELL
         vol, sl, tp = float(cmd["volume"]), float(cmd["sl"]), float(cmd.get("tp", 0))
@@ -447,6 +466,7 @@ class EAEmulator:
                 return
         if o is None:
             self.gv["pending_reconcile"].pop(tag, None)
+            self.gv["exits_tag"].pop(tag, None)
             self.gv["failed"] += 1
             self.write_result(seq, type="OPEN", id=sid, status="REJECTED", err=err, attempts=attempts,
                               msg="broker rejected")
@@ -460,6 +480,7 @@ class EAEmulator:
             if not ok:
                 self.b.order_close(o.ticket, reason="[noSL]")
                 self.gv["pending_reconcile"].pop(tag, None)
+                self.gv["exits_tag"].pop(tag, None)
                 self.gv["tags"][tag] = o.ticket
                 self.gv["entries"] += 1
                 self.write_result(seq, type="OPEN", id=sid, status="REJECTED", ticket=o.ticket,
@@ -468,9 +489,22 @@ class EAEmulator:
                 return
         self._confirm_fill(seq, sid, tag, o, attempts)
 
+    def _exit_policy(self, cmd: dict) -> dict:
+        inp = self.inp
+        return {"hold_h": float(cmd.get("hold_h", inp.max_hold_hours)),
+                "be_r": float(cmd.get("be_r", inp.breakeven_trigger_r if inp.breakeven_enabled else 0)),
+                "be_pts": float(cmd.get("be_pts", inp.breakeven_offset_points)),
+                "trail_r": float(cmd.get("trail_r", -1)), "trail_dist": float(cmd.get("trail_dist", 0))}
+
+    def _move_exits(self, tag: str, ticket: int) -> None:
+        x = self.gv["exits_tag"].pop(tag, None)
+        if x is not None:
+            self.gv["exits"][str(ticket)] = x
+
     def _confirm_fill(self, seq: int, sid: str, tag: str, o, attempts: int) -> None:
         self.gv["pending_reconcile"].pop(tag, None)
         self.gv["tags"][tag] = o.ticket
+        self._move_exits(tag, o.ticket)
         self.gv["r"][str(o.ticket)] = abs(o.open_price - o.sl) if o.sl > 0 else 0.0
         self.gv["entries"] += 1
         self.write_result(seq, type="OPEN", id=sid, status="FILLED", ticket=o.ticket, price=o.open_price,
@@ -482,6 +516,7 @@ class EAEmulator:
             if o is not None:
                 self.gv["pending_reconcile"].pop(tag)
                 self.gv["tags"][tag] = o.ticket
+                self._move_exits(tag, o.ticket)
                 self.gv["entries"] += 1
                 self.log("warning", "RECONCILED", f"{info['id']} found as ticket {o.ticket}")
             elif self.now.timestamp() - info["since"] > self.inp.reconcile_window_s:

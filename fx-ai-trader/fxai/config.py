@@ -167,6 +167,7 @@ class StrategyConfig(_Strict):
     decision_timeframe: Literal["M15", "M30", "H1", "H4"] | None = None
     trend_timeframe: Literal["H1", "H4", "D1"] | None = None
     signal_ttl_s: int = Field(default=90, ge=10, le=900)
+    scan_interval_s: int = Field(default=60, ge=5, le=60)  # opportunity scan + watchlist: at least once a minute
     params: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")

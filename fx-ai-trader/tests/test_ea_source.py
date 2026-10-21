@@ -110,3 +110,19 @@ def test_safety_invariants_present():
     code = strip_comments_and_strings(EA)
     assert "#import" not in code  # no DLL imports
     assert "WebRequest" not in code
+
+
+def test_exit_policy_bounds_match_python():
+    from fxai.bridge.protocol import EXIT_KEYS, EXIT_RANGES, TRAIL_DIST_MAX_FRACTION
+    var = {"hold_h": "xh", "be_r": "xbr", "be_pts": "xbp", "trail_r": "xtr"}
+    for k, (lo, hi) in EXIT_RANGES.items():
+        assert f"{var[k]} >= {lo:g} && {var[k]} <= {hi:g}" in EA, k
+    assert f"xtd <= {TRAIL_DIST_MAX_FRACTION:g} * price" in EA
+    for k in EXIT_KEYS:
+        assert f'KV(k, v, "{k}"' in EA, k
+    assert "exit policy persisted BEFORE OrderSend" in EA
+    assert EA.count("MoveExitsToTicket(tag,") == 2  # on fill and on reconciliation
+
+
+def test_bar_export_default_matches_emulator():
+    assert inputs()["BarTimeframes"] == ",".join(EAInputs().bars_timeframes)
